@@ -12,7 +12,6 @@ from six.moves.urllib.parse import urljoin
 import csv
 import json
 import dateutil.parser
-import hashlib
 import logging
 import datetime
 import requests
@@ -20,6 +19,8 @@ import warnings
 
 from .__version__ import __version__, __title__
 import kiteconnect.exceptions as ex
+
+from flask import session
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class KiteConnect(object):
     # Default root API endpoint. It's possible to
     # override this by passing the `root` parameter during initialisation.
     _default_root_uri = "https://api.kite.trade"
-    _default_login_uri = "https://kite.zerodha.com/connect/login"
+    _default_login_uri = "https://kite.zerodha.com"
     _default_timeout = 7  # In seconds
 
     # Kite connect header version
@@ -106,6 +107,10 @@ class KiteConnect(object):
 
     # URIs to various calls
     _routes = {
+        "login.requestId": "/api/login",
+        "generate.otp": "/oms/trusted/kitefront/user/{user_id}/twofa/generate_otp",
+        "verify.otp": "/api/twofa",
+        
         "api.token": "/session/token",
         "api.token.invalidate": "/session/token",
         "api.token.renew": "/session/refresh_token",
@@ -166,8 +171,7 @@ class KiteConnect(object):
     }
 
     def __init__(self,
-                 api_key,
-                 access_token=None,
+                 enc_token=None,
                  root=None,
                  debug=False,
                  timeout=None,
@@ -197,10 +201,9 @@ class KiteConnect(object):
         If set requests won't throw SSLError if its set to custom `root` url without SSL.
         """
         self.debug = debug
-        self.api_key = api_key
         self.session_expiry_hook = None
         self.disable_ssl = disable_ssl
-        self.access_token = access_token
+        self.enc_token = enc_token
         self.proxies = proxies if proxies else {}
 
         self.root = root or self._default_root_uri
@@ -216,107 +219,44 @@ class KiteConnect(object):
         # disable requests SSL warning
         requests.packages.urllib3.disable_warnings()
 
-    def set_session_expiry_hook(self, method):
+    def expire_current_session(self):
+        self.set_enc_token_in_session(self, None)
+
+    @staticmethod
+    def set_enc_token_in_session(self, enc_token):
+        """Set the `enc_token` received after a successful authentication."""
+        self.enc_token = enc_token
+        session["enc_token"] = enc_token
+
+    def generate_request_id(self, user_id, password):
         """
-        Set a callback hook for session (`TokenError` -- timeout, expiry etc.) errors.
-
-        An `access_token` (login session) can become invalid for a number of
-        reasons, but it doesn't make sense for the client to
-        try and catch it during every API call.
-
-        A callback method that handles session errors
-        can be set here and when the client encounters
-        a token error at any point, it'll be called.
-
-        This callback, for instance, can log the user out of the UI,
-        clear session cookies, or initiate a fresh login.
+        Generate request_id for two-factor authentication using user id and password
         """
-        if not callable(method):
-            raise TypeError("Invalid input type. Only functions are accepted.")
+        resp = self._post("login.requestId", params={
+            "user_id": user_id,
+            "password": password,
+        })
+        if "request_id" in resp:
+            return resp["request_id"]
+        return None
 
-        self.session_expiry_hook = method
-
-    def set_access_token(self, access_token):
-        """Set the `access_token` received after a successful authentication."""
-        self.access_token = access_token
-
-    def login_url(self):
-        """Get the remote login url to which a user should be redirected to initiate the login flow."""
-        return "%s?api_key=%s&v=%s" % (self._default_login_uri, self.api_key, self.kite_header_version)
-
-    def generate_session(self, request_token, api_secret):
-        """
-        Generate user session details like `access_token` etc by exchanging `request_token`.
-        Access token is automatically set if the session is retrieved successfully.
-
-        Do the token exchange with the `request_token` obtained after the login flow,
-        and retrieve the `access_token` required for all subsequent requests. The
-        response contains not just the `access_token`, but metadata for
-        the user who has authenticated.
-
-        - `request_token` is the token obtained from the GET paramers after a successful login redirect.
-        - `api_secret` is the API api_secret issued with the API key.
-        """
-        h = hashlib.sha256(self.api_key.encode("utf-8") + request_token.encode("utf-8") + api_secret.encode("utf-8"))
-        checksum = h.hexdigest()
-
-        resp = self._post("api.token", params={
-            "api_key": self.api_key,
-            "request_token": request_token,
-            "checksum": checksum
+    def generate_otp_for_login_request(self, request_id, user_id):
+        self._post("generate.otp", url_args={"user_id": user_id}, params={
+            "request_id": request_id,
+            "twofa_type": "sms"
         })
 
-        if "access_token" in resp:
-            self.set_access_token(resp["access_token"])
-
-        if resp["login_time"] and len(resp["login_time"]) == 19:
-            resp["login_time"] = dateutil.parser.parse(resp["login_time"])
-
+    def verify_otp_for_request_id(self, request_id, otp, user_id):
+        resp = self._post("verify.otp", params={
+            "user_id": user_id,
+            "request_id": request_id,
+            "twofa_value": otp,
+            "twofa_type": "sms"
+        })
         return resp
 
-    def invalidate_access_token(self, access_token=None):
-        """
-        Kill the session by invalidating the access token.
-
-        - `access_token` to invalidate. Default is the active `access_token`.
-        """
-        access_token = access_token or self.access_token
-        return self._delete("api.token.invalidate", params={
-            "api_key": self.api_key,
-            "access_token": access_token
-        })
-
-    def renew_access_token(self, refresh_token, api_secret):
-        """
-        Renew expired `refresh_token` using valid `refresh_token`.
-
-        - `refresh_token` is the token obtained from previous successful login flow.
-        - `api_secret` is the API api_secret issued with the API key.
-        """
-        h = hashlib.sha256(self.api_key.encode("utf-8") + refresh_token.encode("utf-8") + api_secret.encode("utf-8"))
-        checksum = h.hexdigest()
-
-        resp = self._post("api.token.renew", params={
-            "api_key": self.api_key,
-            "refresh_token": refresh_token,
-            "checksum": checksum
-        })
-
-        if "access_token" in resp:
-            self.set_access_token(resp["access_token"])
-
-        return resp
-
-    def invalidate_refresh_token(self, refresh_token):
-        """
-        Invalidate refresh token.
-
-        - `refresh_token` is the token which is used to renew access token.
-        """
-        return self._delete("api.token.invalidate", params={
-            "api_key": self.api_key,
-            "refresh_token": refresh_token
-        })
+    def generate_session_via_enc_token(self, enc_token):
+        self.set_enc_token_in_session(self, enc_token)
 
     def margins(self, segment=None):
         """Get account balance and cash margin details for a particular segment.
@@ -394,6 +334,7 @@ class KiteConnect(object):
         """Exit a CO order."""
         return self.cancel_order(variety, order_id, parent_order_id=parent_order_id)
 
+    @staticmethod
     def _format_response(self, data):
         """Parse and format responses."""
 
@@ -641,6 +582,7 @@ class KiteConnect(object):
 
         return self._format_historical(data)
 
+    @staticmethod
     def _format_historical(self, data):
         records = []
         for d in data["candles"]:
@@ -796,12 +738,14 @@ class KiteConnect(object):
                           params=params,
                           is_json=True)
 
-    def _warn(self, message):
+    @staticmethod
+    def _warn(message):
         """ Add deprecation warning message """
         warnings.simplefilter('always', DeprecationWarning)
         warnings.warn(message, DeprecationWarning)
 
-    def _parse_instruments(self, data):
+    @staticmethod
+    def _parse_instruments(data):
         # decode to string for Python 3
         d = data
         # Decode unicode data
@@ -826,7 +770,8 @@ class KiteConnect(object):
 
         return records
 
-    def _parse_mf_instruments(self, data):
+    @staticmethod
+    def _parse_mf_instruments(data):
         # decode to string for Python 3
         d = data
         if not PY2 and type(d) == bytes:
@@ -853,7 +798,8 @@ class KiteConnect(object):
 
         return records
 
-    def _user_agent(self):
+    @staticmethod
+    def _user_agent():
         return (__title__ + "-python/").capitalize() + __version__
 
     def _get(self, route, url_args=None, params=None, is_json=False):
@@ -888,10 +834,10 @@ class KiteConnect(object):
             "User-Agent": self._user_agent()
         }
 
-        if self.api_key and self.access_token:
+        if self.enc_token:
             # set authorization header
-            auth_header = self.api_key + ":" + self.access_token
-            headers["Authorization"] = "token {}".format(auth_header)
+            auth_header = self.enc_token
+            headers["authorization"] = "enctoken {}".format(auth_header)
 
         if self.debug:
             log.debug("Request: {method} {url} {params} {headers}".format(method=method, url=url, params=params, headers=headers))
@@ -929,12 +875,18 @@ class KiteConnect(object):
             # api error
             if data.get("status") == "error" or data.get("error_type"):
                 # Call session hook if its registered and TokenException is raised
-                if self.session_expiry_hook and r.status_code == 403 and data["error_type"] == "TokenException":
-                    self.session_expiry_hook()
+                if r.status_code == 403 and data["error_type"] == "TokenException":
+                    self.expire_current_session()
 
                 # native Kite errors
                 exp = getattr(ex, data.get("error_type"), ex.GeneralException)
                 raise exp(data["message"], code=r.status_code)
+
+            # set enc_token from cookies if cookies exist and enc_token is not present
+            if r.cookies and not self.enc_token:
+                enctoken = r.cookies.get("enctoken")
+                if enctoken:
+                    self.set_enc_token_in_session(self, enctoken)
 
             return data["data"]
         elif "csv" in r.headers["content-type"]:
