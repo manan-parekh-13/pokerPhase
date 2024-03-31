@@ -4,7 +4,7 @@ import logging
 from datetime import date, datetime
 from decimal import Decimal
 
-from flask import Flask, jsonify, session, abort
+from flask import Flask, jsonify, request, session, abort
 from kiteconnect import KiteConnect
 
 logging.basicConfig(level=logging.DEBUG)
@@ -23,6 +23,8 @@ app.secret_key = os.urandom(24)
 # Templates
 status_template = """
     <div>App is live on port - <b>{port}</b>.</div>
+    <div>Request Id - <b>{request_id}</b>.</div>
+    <div>Enc token - <b>{enc_token}</b>.</div>
     """
 
 
@@ -31,7 +33,7 @@ def get_kite_client(root=None):
     """
     user_id = get_sensitive_parameter('USER_ID')
     password = get_sensitive_parameter('PASSWORD')
-    kite = KiteConnect(debug=True, auto_login=False, root=root, user_id=user_id, password=password)
+    kite = KiteConnect(debug=True, root=root, user_id=user_id, password=password)
     if "enc_token" in session:
         kite.set_enc_token_in_session(kite, session["enc_token"])
     if "request_id" in session:
@@ -41,8 +43,11 @@ def get_kite_client(root=None):
 
 @app.route("/status")
 def status():
+    kite = get_kite_client();
     return status_template.format(
-        port=PORT
+        port=PORT,
+        request_id=kite.request_id,
+        enc_token=kite.enc_token
     )
 
 
@@ -76,6 +81,17 @@ def login():
         abort(500, "Unable to verify otp / Token not fetched")
 
     return "Successfully logged in!"
+
+
+@app.route("/login/enctoken", methods=['GET'])
+def login_via_enc_token():
+    enc_token = request.form.get('enc_token')
+    kite = get_kite_client()
+    kite.set_enc_token_in_session(kite, enc_token)
+    if not kite.enc_token:
+        abort(500, "Unable to set enc token")
+
+    return "Successfully logged in via enc token"
 
 
 @app.route("/holdings.json")

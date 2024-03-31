@@ -391,7 +391,7 @@ class KiteConnect(object):
         return self.cancel_order(variety, order_id, parent_order_id=parent_order_id)
 
     @staticmethod
-    def _format_response(self, data):
+    def _format_response(data):
         """Parse and format responses."""
 
         if type(data) == list:
@@ -639,7 +639,7 @@ class KiteConnect(object):
         return self._format_historical(data)
 
     @staticmethod
-    def _format_historical(self, data):
+    def _format_historical(data):
         records = []
         for d in data["candles"]:
             record = {
