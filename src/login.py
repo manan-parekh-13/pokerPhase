@@ -1,28 +1,11 @@
-###############################################################################
-#
-# The MIT License (MIT)
-#
-# Copyright (c) Zerodha Technology Pvt. Ltd.
-#
-# This is simple Flask based webapp to generate access token and get basic
-# account info like holdings and order.
-#
-# To run this you need Kite Connect python client and Flask webserver
-#
-#   pip install Flask
-#   pip install kiteconnect
-#
-#   python examples/flask_app.py
-###############################################################################
 import os
-from utils import get_sensitive_parameter, set_timezone_in_datetime
+from kiteconnect.utils import get_sensitive_parameter, set_timezone_in_datetime
 import logging
 from datetime import date, datetime
 from decimal import Decimal
 
 from flask import Flask, jsonify, session, abort
 from kiteconnect import KiteConnect
-from gmail import return_latest_otp_later_than
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -46,9 +29,13 @@ status_template = """
 def get_kite_client(root=None):
     """Returns a kite client object
     """
-    kite = KiteConnect(debug=True, auto_login=False, root=root)
+    user_id = get_sensitive_parameter('USER_ID')
+    password = get_sensitive_parameter('PASSWORD')
+    kite = KiteConnect(debug=True, auto_login=False, root=root, user_id=user_id, password=password)
     if "enc_token" in session:
         kite.set_enc_token_in_session(kite, session["enc_token"])
+    if "request_id" in session:
+        kite.set_request_id_in_session(kite, session["request_id"])
     return kite
 
 
@@ -61,36 +48,29 @@ def status():
 
 @app.route("/login")
 def login():
-    user_id = get_sensitive_parameter('USER_ID')
-    password = get_sensitive_parameter('PASSWORD')
-
-    if not user_id:
-        abort(500, "Invalid user_id.")
-
-    if not password:
-        abort(500, "Invalid password.")
 
     kite = get_kite_client("https://kite.zerodha.com")
-    request_id = kite.generate_request_id(user_id, password)
+    if not kite.user_id:
+        abort(500, "Invalid user_id.")
 
-    if not request_id:
+    if not kite.password:
+        abort(500, "Invalid password.")
+
+    kite.generate_request_id()
+
+    if not kite.request_id:
         abort(500, "Couldn't generate request for login")
 
     otp_sent_timestamp = set_timezone_in_datetime(datetime.now())
 
-    try:
-        kite.generate_otp_for_login_request(request_id, user_id)
-    except RuntimeError:
-        abort(500, "Unable to generate otp")
+    kite.generate_otp_for_login_request()
 
-    otp = return_latest_otp_later_than(otp_sent_timestamp)
+    otp = kite.return_latest_otp_later_than(otp_sent_timestamp)
 
     if not otp:
         abort(500, "Unable to fetch otp")
 
-    print(otp)
-
-    kite.verify_otp_for_request_id(request_id, otp, user_id)
+    kite.verify_otp_for_request_id(otp)
 
     if not kite.enc_token:
         abort(500, "Unable to verify otp / Token not fetched")

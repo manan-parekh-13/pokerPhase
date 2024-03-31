@@ -16,8 +16,10 @@ import logging
 import datetime
 import requests
 import warnings
+import time
 
 from .__version__ import __version__, __title__
+from kiteconnect.utils import get_sensitive_parameter, convert_str_to_datetime, truncate_microseconds
 import kiteconnect.exceptions as ex
 
 from flask import session
@@ -177,7 +179,10 @@ class KiteConnect(object):
                  timeout=None,
                  proxies=None,
                  pool=None,
-                 disable_ssl=False):
+                 disable_ssl=False,
+                 user_id=None,
+                 password=None,
+                 request_id=None):
         """
         Initialise a new Kite Connect client instance.
 
@@ -206,6 +211,10 @@ class KiteConnect(object):
         self.enc_token = enc_token
         self.proxies = proxies if proxies else {}
 
+        self.user_id = user_id
+        self.password = password
+        self.request_id = request_id
+
         self.root = root or self._default_root_uri
         self.timeout = timeout or self._default_timeout
 
@@ -228,28 +237,75 @@ class KiteConnect(object):
         self.enc_token = enc_token
         session["enc_token"] = enc_token
 
-    def generate_request_id(self, user_id, password):
+    @staticmethod
+    def get_latest_otp_from_mail():
+        gmail_api_key = get_sensitive_parameter('GMAIL_API_KEY')
+        gmail_api_path = get_sensitive_parameter('GMAIL_API_PATH')
+
+        params = {
+            "label": "zerodha-otp",
+            "passkey": gmail_api_key
+        }
+
+        response = requests.get(gmail_api_path, params=params)
+
+        if response.status_code == 200:
+            meta_obj = json.loads(response.text)
+            meta_obj["timestamp"] = convert_str_to_datetime(meta_obj["timestamp"])
+            print("Response content:", meta_obj)
+            return meta_obj
+        else:
+            print("GET request failed with status code:", response.status_code)
+
+    def return_latest_otp_later_than(self, given_timestamp, max_attempts=3, wait_time=5):
+        attempts = 0
+        given_timestamp = truncate_microseconds(given_timestamp)
+
+        while attempts < max_attempts:
+            otp_meta = self.get_latest_otp_from_mail()
+            otp = otp_meta["otp"]
+            timestamp = truncate_microseconds(otp_meta["timestamp"])
+
+            if timestamp >= given_timestamp:
+                return otp
+
+            attempts += 1
+            if attempts < max_attempts:
+                print(
+                    f"Latest OTP timestamp ({timestamp}) is not later than the given timestamp ({given_timestamp}). Retrying in {wait_time} seconds...")
+                time.sleep(wait_time)
+
+        return None
+
+    @staticmethod
+    def set_request_id_in_session(self, request_id):
+        """Set the `request_id` received after a creating a login request."""
+        self.request_id = request_id
+        session["request_id"] = request_id
+
+    def generate_request_id(self):
         """
         Generate request_id for two-factor authentication using user id and password
         """
         resp = self._post("login.requestId", params={
-            "user_id": user_id,
-            "password": password,
+            "user_id": self.user_id,
+            "password": self.password,
         })
         if "request_id" in resp:
-            return resp["request_id"]
+            self.set_request_id_in_session(self, resp["request_id"])
+            return self.request_id
         return None
 
-    def generate_otp_for_login_request(self, request_id, user_id):
-        self._post("generate.otp", url_args={"user_id": user_id}, params={
-            "request_id": request_id,
+    def generate_otp_for_login_request(self):
+        self._post("generate.otp", url_args={"user_id": self.user_id}, params={
+            "request_id": self.request_id,
             "twofa_type": "sms"
         })
 
-    def verify_otp_for_request_id(self, request_id, otp, user_id):
+    def verify_otp_for_request_id(self, otp):
         resp = self._post("verify.otp", params={
-            "user_id": user_id,
-            "request_id": request_id,
+            "user_id": self.user_id,
+            "request_id": self.request_id,
             "twofa_value": otp,
             "twofa_type": "sms"
         })
