@@ -18,8 +18,8 @@ from urllib.parse import quote
 
 logging.basicConfig(level=logging.DEBUG)
 
-# RELIANCE BSE
-tokens = [738561]
+# RELIANCE BSE & NSE
+tokens = [738561, 128083204]
 
 
 # Callback for tick reception.
@@ -33,7 +33,7 @@ def on_connect(ws, response):
     logging.info("Successfully connected. Response: {}".format(response))
     ws.subscribe(tokens)
     ws.set_mode(ws.MODE_FULL, tokens)
-    logging.info("Subscribe to tokens in Full mode: {}".format(tokens))
+    logging.info("Subscribe to tokens in Ltp mode: {}".format(tokens))
 
 
 # Callback when current connection is closed.
@@ -71,21 +71,21 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries):
 
 def update_web_socket(kws):
     count = 0
-    while True:
-        count += 1
-        if count == 4:
-            if kws.is_connected():
-                logging.info("### Closing websocket connection")
-                kws._close(code=3001, reason="Terminal Count Achieved")
-                break
-        if count % 2 == 0:
-            if kws.is_connected():
-                logging.info("### Set mode to LTP for all tokens")
-                kws.set_mode(kws.MODE_LTP, tokens)
-        else:
-            if kws.is_connected():
-                logging.info("### Set mode to quote for all tokens")
-                kws.set_mode(kws.MODE_QUOTE, tokens)
-
-        time.sleep(5)
+    # while True:
+    #     count += 1
+    #     if count == 4:
+    #         if kws.is_connected():
+    #             logging.info("### Closing websocket connection")
+    #             kws._close(code=3001, reason="Terminal Count Achieved")
+    #             break
+    #     if count % 2 == 0:
+    #         if kws.is_connected():
+    #             logging.info("### Set mode to LTP for all tokens")
+    #             kws.set_mode(kws.MODE_LTP, tokens)
+    #     else:
+    #         if kws.is_connected():
+    #             logging.info("### Set mode to quote for all tokens")
+    #             kws.set_mode(kws.MODE_QUOTE, tokens)
+    #
+    #     time.sleep(5)
     return None
