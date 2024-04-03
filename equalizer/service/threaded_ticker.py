@@ -15,6 +15,7 @@ import time
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
+from equalizer.service.ticker_service import save_ticker_data
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -25,7 +26,8 @@ tokens = [738561, 128083204]
 # Callback for tick reception.
 def on_ticks(ws, ticks):
     if len(ticks) > 0:
-        logging.info("Current mode: {}".format(ticks[0]["mode"]))
+        logging.info("Received {} ticks for {} tokens".format(len(ticks), len(tokens)))
+        save_ticker_data(ticks)
 
 
 # Callback for successful connection.
@@ -33,7 +35,7 @@ def on_connect(ws, response):
     logging.info("Successfully connected. Response: {}".format(response))
     ws.subscribe(tokens)
     ws.set_mode(ws.MODE_FULL, tokens)
-    logging.info("Subscribe to tokens in Ltp mode: {}".format(tokens))
+    logging.info("Subscribe to tokens in {} mode: {}".format(ws.MODE_FULL, tokens))
 
 
 # Callback when current connection is closed.

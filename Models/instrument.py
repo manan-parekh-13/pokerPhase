@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
-from equalizer.mysql_config import engine
+from mysql_config import engine
 
 Base = declarative_base()
 

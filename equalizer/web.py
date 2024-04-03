@@ -9,7 +9,7 @@ from service.login import login_via_enc_token_and_return_client, get_kite_client
 from service.threaded_ticker import init_kite_web_socket, update_web_socket
 
 from mysql_config import add_all
-from repository import instrument
+from Models import instrument
 
 logging.basicConfig(level=logging.DEBUG)
 
