@@ -2,14 +2,22 @@ from datetime import datetime
 
 from Models.tickerData import TickerData
 from Models.depthData import DepthData
-from mysql_config import add_all
+from mysql_config import add_all, add
 
 
 def save_ticker_data(ticks):
     if not ticks:
         return
-    processed_ticks = list(map(lambda x: process_tick(x), ticks))
-    add_all(processed_ticks)
+    for tick in ticks:
+        processed_tick_and_depth = process_tick(tick)
+        processed_tick = processed_tick_and_depth[0]
+        saved_tick = add(processed_tick)
+
+        processed_depths = processed_tick_and_depth[1]
+        for depth in processed_depths:
+            depth.ticker_id = saved_tick.id
+
+        add_all(processed_depths)
 
 
 def process_tick(tick):
@@ -24,9 +32,8 @@ def process_tick(tick):
     if 'depth' in tick:
         flat_depths = flatten_depth(tick['depth'], tick['exchange_timestamp'], tick['instrument_token'])
         tick.pop('depth', None)
-        add_all(flat_depths)
 
-    return TickerData(**tick)
+    return TickerData(**tick), flat_depths
 
 
 def flatten_depth(depth, exchange_timestamp, instrument_token):

@@ -9,6 +9,7 @@ class DepthData(Base):
     __tablename__ = 'depth_data'
 
     id = Column(Integer, primary_key=True)
+    ticker_id=Column(Integer, nullable=False)
     exchange_timestamp = Column(DateTime, nullable=False)
     instrument_token = Column(Integer, nullable=False)
     type = Column(String(255), nullable=False)  # 'buy' or 'sell'

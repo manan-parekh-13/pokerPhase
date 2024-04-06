@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from flask import Flask, jsonify, request, abort
 
-from service.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
+from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
 from service.threaded_ticker import init_kite_web_socket, update_web_socket
 
 from mysql_config import add_all

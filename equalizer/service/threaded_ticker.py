@@ -19,8 +19,8 @@ from equalizer.service.ticker_service import save_ticker_data
 
 logging.basicConfig(level=logging.DEBUG)
 
-# RELIANCE BSE & NSE
-tokens = [738561, 128083204]
+# METROPOLIS BSE & NSE
+tokens = [2452737, 138918404]
 
 
 # Callback for tick reception.
