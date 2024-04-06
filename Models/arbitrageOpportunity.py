@@ -30,8 +30,8 @@ class ArbitrageOpportunity(Base):
     __tablename__ = 'arbitrage_opportunities'
 
     id = Column(Integer, primary_key=True)
-    buy_source = Column(String)
-    sell_source = Column(String)
+    buy_source = Column(String(255))
+    sell_source = Column(String(255))
     buy_price = Column(Float)
     sell_price = Column(Float)
     quantity = Column(Integer)
