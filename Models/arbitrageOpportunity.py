@@ -9,7 +9,7 @@ def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
                                  sell_price, quantity, buy_threshold,
                                  threshold_percentage, buy_source_ticker_time,
                                  sell_source_ticker_time, profit_percent,
-                                 buy_value):
+                                 buy_value, created_at):
     # Create a new row for the ArbitrageOpportunity table
     return ArbitrageOpportunity(
         buy_source=buy_source,
@@ -22,7 +22,8 @@ def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
         buy_source_ticker_time=buy_source_ticker_time,
         sell_source_ticker_time=sell_source_ticker_time,
         buy_value=buy_value,
-        profit_percent=profit_percent
+        profit_percent=profit_percent,
+        created_at=created_at
     )
 
 

@@ -47,20 +47,21 @@ def flatten_depth(depth, exchange_timestamp, instrument_token):
     return flat_depth_list
 
 
-# Function to check if the ticker is not older than a certain time difference from the current time
-def is_recent_ticker(ticker, max_time_diff_in_sec):
-    current_time = datetime.now()
-    ticker_time = ticker['exchange_timestamp']
-    time_difference = current_time - ticker_time
-    return time_difference.total_seconds() <= max_time_diff_in_sec
+# Function to check if the ticker is valid
+def is_ticker_valid(ticker):
+    mode = ticker['mode']
+    if mode == 'full':
+        return 'depth' in ticker.keys()
+    if mode == 'quote':
+        return 'ohlc' in ticker.keys()
+    return False
 
 
-def are_all_tickers_recent(latest_ticks, max_time_diff_in_sec):
-    ticks = list(latest_ticks.values())
-    all_ticks_recent = True
+def are_tickers_valid(ticks):
+    all_ticks_valid = True
     for tick in ticks:
-        recent = is_recent_ticker(tick, max_time_diff_in_sec)
-        if not recent:
-            all_ticks_recent = False
-    return all_ticks_recent
+        valid = is_ticker_valid(tick)
+        if not valid:
+            all_ticks_valid = False
+    return all_ticks_valid
 
