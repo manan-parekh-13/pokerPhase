@@ -49,6 +49,9 @@ def flatten_depth(depth, exchange_timestamp, instrument_token):
 
 # Function to check if the ticker is valid
 def is_ticker_valid(ticker):
+    if not ticker:
+        return False
+
     if not ticker['tradable']:
         return False
 
@@ -63,13 +66,4 @@ def is_ticker_valid(ticker):
     if mode == 'quote':
         return 'ohlc' in ticker.keys()
     return False
-
-
-def are_tickers_valid(ticks):
-    all_ticks_valid = True
-    for tick in ticks:
-        valid = is_ticker_valid(tick)
-        if not valid:
-            all_ticks_valid = False
-    return all_ticks_valid
 

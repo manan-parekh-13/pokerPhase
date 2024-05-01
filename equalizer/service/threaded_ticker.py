@@ -15,36 +15,37 @@ import time
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
-from equalizer.service.ticker_service import save_ticker_data, are_tickers_valid
+from equalizer.service.ticker_service import save_ticker_data, is_ticker_valid
 from equalizer.service.arbitrage_service import check_arbitrage, save_arbitrage_opportunities
 
-
 logging.basicConfig(level=logging.DEBUG)
-
-# METROPOLIS BSE & NSE
-tokens = [2452737, 138918404]
-# Min profit percentage required for ticker to be arbitrage opportunity
-threshold_percentage = 0
-# Min buy value required for arbitrage to be feasible
-buy_threshold = 1
 
 
 # Callback for tick reception.
 def on_ticks(ws, ticks):
-    if len(ticks) > 0:
-        logging.info("Received {} ticks for {} tokens".format(len(ticks), len(tokens)))
-        if len(ticks) != len(tokens):
-            return
-        all_valid = are_tickers_valid(ticks)
-        if all_valid:
-            opportunities = check_arbitrage(ticks[0], ticks[1], threshold_percentage, buy_threshold)
-            save_arbitrage_opportunities(opportunities)
-        save_ticker_data(ticks)
+    if len(ticks.keys()) > 0:
+        tokens = list(ws.token_map.keys())
+        logging.info("Received {} ticks for {} tokens".format(len(ticks.keys()), len(tokens)))
+
+        for instrument_token in list(ticks.keys()):
+            latest_tick_for_instrument = ticks.get(instrument_token)
+            instrument = ws.token_map.get(instrument_token)
+            equivalent_token = instrument.equivalent_token
+            latest_tick_for_equivalent = ws.latest_tick_map.get(equivalent_token)
+
+            if is_ticker_valid(latest_tick_for_equivalent) and is_ticker_valid(latest_tick_for_instrument):
+                opportunities = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
+                                                instrument.threshold_percentage, instrument.buy_threshold)
+                save_arbitrage_opportunities(opportunities)
+            ws.latest_tick_map[instrument_token] = latest_tick_for_instrument
+
+        save_ticker_data(ticks.values())
 
 
 # Callback for successful connection.
 def on_connect(ws, response):
     logging.info("Successfully connected. Response: {}".format(response))
+    tokens = list(ws.token_map.keys())
     ws.subscribe(tokens)
     ws.set_mode(ws.MODE_FULL, tokens)
     logging.info("Subscribe to tokens in {} mode: {}".format(ws.MODE_FULL, tokens))
@@ -70,8 +71,8 @@ def on_noreconnect(ws):
     logging.info("Reconnect failed.")
 
 
-def init_kite_web_socket(kite_client, debug, reconnect_max_tries):
-    kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries)
+def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map):
+    kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries, token_map=token_map)
 
     # Assign the callbacks.
     kws.on_ticks = on_ticks

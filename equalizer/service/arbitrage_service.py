@@ -1,7 +1,9 @@
 from Models.arbitrageOpportunity import init_arbitrage_opportunities
+from Models.arbitrage_instruments import ArbitrageInstruments
 from mysql_config import add_all
 
 from datetime import datetime
+from copy import deepcopy
 
 
 def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold):
@@ -9,8 +11,8 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold):
     arbitrage_opportunities = []
 
     # strategy 1 - buy from ticker2 and sell in ticker1
-    ticker1_bids = ticker1['depth']['buy']
-    ticker2_offers = ticker2['depth']['sell']
+    ticker1_bids = deepcopy(ticker1)['depth']['buy']
+    ticker2_offers = deepcopy(ticker2)['depth']['sell']
     result1 = get_price_and_quantity_for_arbitrage(bids_data=ticker1_bids, offers_data=ticker2_offers, threshold_percentage=threshold_percentage)
 
     if result1['buy_price'] * result1['quantity'] >= buy_threshold:
@@ -34,8 +36,8 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold):
                                                                     created_at=datetime.now()))
 
     # strategy 2 - buy from ticker1 and sell in ticker2
-    ticker2_bids = ticker2['depth']['buy']
-    ticker1_offers = ticker1['depth']['sell']
+    ticker2_bids = deepcopy(ticker2)['depth']['buy']
+    ticker1_offers = deepcopy(ticker1)['depth']['sell']
     result2 = get_price_and_quantity_for_arbitrage(bids_data=ticker2_bids, offers_data=ticker1_offers, threshold_percentage=threshold_percentage)
 
     if result2['buy_price'] * result2['quantity'] >= buy_threshold:
@@ -108,81 +110,15 @@ def save_arbitrage_opportunities(arbitrage_opportunities):
     add_all(arbitrage_opportunities)
 
 
-def test_check_arbitrage():
-    ticker1 = {
-            'instrument_token': 2452737,
-            'mode': 'full',
-            'last_price': 1885.55,
-            'tradable': True,
-            'exchange_timestamp': datetime(2024, 4, 12, 11, 41, 54),
-            'depth': {
-                'buy': [{
-                    'price': 1886.45,
-                    'quantity': 1486
-                }, {
-                    'price': 1886.25,
-                    'quantity': 1
-                }, {
-                    'price': 1886.15,
-                    'quantity': 45
-                }, {
-                    'price': 1886.1,
-                    'quantity': 9
-                }],
-                'sell': [{
-                    'price': 1886.8,
-                    'quantity': 30
-                }, {
-                    'price': 1886.85,
-                    'quantity': 30
-                }, {
-                    'price': 1886.9,
-                    'quantity': 10
-                }, {
-                    'price': 1886.95,
-                    'quantity': 50
-                }, {
-                    'price': 1887,
-                    'quantity': 451
-                }]
-            }
-        }
+def get_instrument_token_map_for_arbitrage():
+    instruments = ArbitrageInstruments.get_instruments_by_check_for_opportunity(True)
+    token_to_instrument_map = {}
+    for instrument in instruments:
+        instrument1 = deepcopy(instrument)
+        instrument1.equivalent_token = instrument.instrument_token2
+        token_to_instrument_map[instrument.instrument_token1] = instrument1
 
-    ticker2 = {
-        'instrument_token': 138918404,
-        'mode': 'full',
-        'last_price': 1885,
-        'tradable': True,
-        'exchange_timestamp': datetime(2024, 4, 12, 11, 41, 54),
-        'depth': {
-            'buy': [{
-                'price': 1882.85,
-                'quantity': 35
-            }, {
-                'price': 1882.8,
-                'quantity': 27
-            }, {
-                'price': 1882.55,
-                'quantity': 36
-            }, {
-                'price': 1882.3,
-                'quantity': 16
-            }, {
-                'price': 1882.05,
-                'quantity': 16
-            }],
-            'sell': [{
-                'price': 1884.5,
-                'quantity': 10
-            }, {
-                'price': 1884.55,
-                'quantity': 12
-            }, {
-                'price': 1884.9,
-                'quantity': 7
-            }]
-        }
-    }
-    arbitrage_opportunities = check_arbitrage(ticker1, ticker2, 0, 1)
-    print(arbitrage_opportunities)
-    return arbitrage_opportunities
+        instrument2 = deepcopy(instrument)
+        instrument2.equivalent_token = instrument.instrument_token1
+        token_to_instrument_map[instrument.instrument_token2] = instrument2
+    return token_to_instrument_map

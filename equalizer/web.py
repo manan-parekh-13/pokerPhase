@@ -7,6 +7,7 @@ from flask import Flask, jsonify, request, abort
 
 from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
 from service.threaded_ticker import init_kite_web_socket, update_web_socket
+from service.arbitrage_service import get_instrument_token_map_for_arbitrage
 
 from mysql_config import add_all
 from Models import instrument
@@ -71,7 +72,9 @@ def start_up_equalizer():
     if not kite.enc_token:
         abort(500, "Unable to login")
 
-    kws = init_kite_web_socket(kite, True, 3)
+    token_map = get_instrument_token_map_for_arbitrage()
+
+    kws = init_kite_web_socket(kite, True, 3, token_map)
 
     # Infinite loop on the main thread.
     # You have to use the pre-defined callbacks to manage subscriptions.

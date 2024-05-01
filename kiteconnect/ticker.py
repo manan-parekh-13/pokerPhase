@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 class KiteTickerClientProtocol(WebSocketClientProtocol):
     """Kite ticker autobahn WebSocket protocol."""
 
-    PING_INTERVAL = 2.5
+    PING_INTERVAL = 1
     KEEPALIVE_INTERVAL = 5
 
     _next_ping = None
@@ -402,7 +402,7 @@ class KiteTicker(object):
 
     def __init__(self, enc_token, debug=False, root=None,
                  reconnect=True, reconnect_max_tries=RECONNECT_MAX_TRIES, reconnect_max_delay=RECONNECT_MAX_DELAY,
-                 connect_timeout=CONNECT_TIMEOUT):
+                 connect_timeout=CONNECT_TIMEOUT, token_map={}, latest_tick_map={}):
         """
         Initialise websocket client instance.
 
@@ -466,6 +466,12 @@ class KiteTicker(object):
 
         # List of current subscribed tokens
         self.subscribed_tokens = {}
+
+        # Dict of instrument_token to arbitrage_instrument
+        self.token_map = token_map
+
+        # Dict of instrument_token to latest_tick
+        self.latest_tick_map = latest_tick_map
 
     def _create_connection(self, url, **kwargs):
         """Create a WebSocket client connection."""
@@ -717,7 +723,7 @@ class KiteTicker(object):
     def _parse_binary(self, bin):
         """Parse binary data to a (list of) ticks structure."""
         packets = self._split_packets(bin)  # split data to individual ticks packet
-        data = []
+        data = {}
 
         for packet in packets:
             instrument_token = self._unpack_int(packet, 0, 4)
@@ -736,12 +742,13 @@ class KiteTicker(object):
 
             # LTP packets
             if len(packet) == 8:
-                data.append({
+                d = {
                     "tradable": tradable,
                     "mode": self.MODE_LTP,
                     "instrument_token": instrument_token,
                     "last_price": self._unpack_int(packet, 4, 8) / divisor
-                })
+                }
+                data[instrument_token] = d
             # Indices quote and full mode
             elif len(packet) == 28 or len(packet) == 32:
                 mode = self.MODE_QUOTE if len(packet) == 28 else self.MODE_FULL
@@ -773,7 +780,7 @@ class KiteTicker(object):
 
                     d["exchange_timestamp"] = timestamp
 
-                data.append(d)
+                data[d['instrument_token']] = d
             # Quote and full mode
             elif len(packet) == 44 or len(packet) == 184:
                 mode = self.MODE_QUOTE if len(packet) == 44 else self.MODE_FULL
@@ -835,7 +842,7 @@ class KiteTicker(object):
 
                     d["depth"] = depth
 
-                data.append(d)
+                data[d['instrument_token']] = d
 
         return data
 
