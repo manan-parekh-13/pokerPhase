@@ -402,7 +402,7 @@ class KiteTicker(object):
 
     def __init__(self, enc_token, debug=False, root=None,
                  reconnect=True, reconnect_max_tries=RECONNECT_MAX_TRIES, reconnect_max_delay=RECONNECT_MAX_DELAY,
-                 connect_timeout=CONNECT_TIMEOUT, token_map={}, latest_tick_map={}):
+                 connect_timeout=CONNECT_TIMEOUT, token_map={}, latest_tick_map={}, ws_id=None):
         """
         Initialise websocket client instance.
 
@@ -472,6 +472,8 @@ class KiteTicker(object):
 
         # Dict of instrument_token to latest_tick
         self.latest_tick_map = latest_tick_map
+
+        self.ws_id = ws_id
 
     def _create_connection(self, url, **kwargs):
         """Create a WebSocket client connection."""
@@ -841,6 +843,7 @@ class KiteTicker(object):
                         })
 
                     d["depth"] = depth
+                    d['ticker_received_time'] = datetime.now()
 
                 data[d['instrument_token']] = d
 

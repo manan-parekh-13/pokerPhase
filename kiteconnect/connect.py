@@ -182,7 +182,9 @@ class KiteConnect(object):
                  disable_ssl=False,
                  user_id=None,
                  password=None,
-                 request_id=None):
+                 request_id=None,
+                 max_tokens_per_socket=None,
+                 web_sockets=None):
         """
         Initialise a new Kite Connect client instance.
 
@@ -218,6 +220,10 @@ class KiteConnect(object):
         self.root = root or self._default_root_uri
         self.timeout = timeout or self._default_timeout
 
+        self.max_tokens_per_socket = max_tokens_per_socket
+
+        self.web_sockets = web_sockets
+
         # Create requests session by default
         # Same session to be used by pool connections
         self.reqsession = requests.Session()
@@ -251,6 +257,8 @@ class KiteConnect(object):
 
         if response.status_code == 200:
             meta_obj = json.loads(response.text)
+            if not meta_obj:
+                return None
             meta_obj["timestamp"] = convert_str_to_datetime(meta_obj["timestamp"])
             print("Response content:", meta_obj)
             return meta_obj
@@ -263,6 +271,8 @@ class KiteConnect(object):
 
         while attempts < max_attempts:
             otp_meta = self.get_latest_otp_from_mail()
+            if not otp_meta:
+                continue
             otp = otp_meta["otp"]
             timestamp = truncate_microseconds(otp_meta["timestamp"])
 
@@ -282,6 +292,12 @@ class KiteConnect(object):
         """Set the `request_id` received after a creating a login request."""
         self.request_id = request_id
         session["request_id"] = request_id
+
+    @staticmethod
+    def set_web_sockets_in_session(self, web_sockets):
+        """Set the `web_sockets` created after equalizer startup."""
+        self.web_sockets = web_sockets
+        session["web_sockets"] = web_sockets
 
     def generate_request_id(self):
         """

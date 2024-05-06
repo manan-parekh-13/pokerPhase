@@ -1,4 +1,4 @@
-from Models.arbitrageOpportunity import init_arbitrage_opportunities
+from Models.arbitrage_opportunity import init_arbitrage_opportunities
 from Models.arbitrage_instruments import ArbitrageInstruments
 from mysql_config import add_all
 

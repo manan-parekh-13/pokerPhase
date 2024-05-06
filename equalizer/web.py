@@ -30,6 +30,7 @@ status_template = """
     <div>App is live on port - <b>{port}</b>.</div>
     <div>Request Id - <b>{request_id}</b>.</div>
     <div>Enc token - <b>{enc_token}</b>.</div>
+    <div>Web Sockets - <b>{web_sockets}</b>.</div>
     """
 
 
@@ -39,7 +40,8 @@ def status():
     return status_template.format(
         port=PORT,
         request_id=kite.request_id,
-        enc_token=kite.enc_token
+        enc_token=kite.enc_token,
+        web_sockets=kite.web_sockets,
     )
 
 
@@ -74,14 +76,30 @@ def start_up_equalizer():
 
     token_map = get_instrument_token_map_for_arbitrage()
 
-    kws = init_kite_web_socket(kite, True, 3, token_map)
+    start_index = 0
+    max_tokens_per_socket = kite.max_tokens_per_socket
+    web_socket_meta = []
 
-    # Infinite loop on the main thread.
-    # You have to use the pre-defined callbacks to manage subscriptions.
-    kws.connect(threaded=True)
+    sorted_token_list = sorted(token_map.items())
+    while start_index < len(sorted_token_list):
+        end_index = min(start_index + max_tokens_per_socket, len(sorted_token_list) - 1)
+        sub_token_map = dict(sorted_token_list[start_index:end_index])
+        ws_id = int(start_index / max_tokens_per_socket)
+        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id)
+        # Infinite loop on the main thread.
+        # You have to use the pre-defined callbacks to manage subscriptions.
+        kws.connect(threaded=True)
+        web_socket_meta.append({
+            "ws_id": ws_id,
+            "count": end_index - start_index + 1,
+            "tokens": list(sub_token_map.keys()),
+        })
+        start_index += max_tokens_per_socket
+
+    kite.set_web_sockets_in_session(kite, web_socket_meta)
+    logging.info("This is main thread. Will look out for any updates in websocket every 5 seconds.")
     # Block main thread
-    logging.info("This is main thread. Will change websocket mode every 5 seconds.")
-    update_web_socket(kws)
+    update_web_socket()
     return "kind of worked"
 
 

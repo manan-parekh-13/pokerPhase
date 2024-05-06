@@ -4,7 +4,7 @@ from flask import session, abort
 from datetime import datetime
 
 
-def get_kite_client(root=None, debug=False):
+def get_kite_client(root=None, debug=False, max_tokens_per_socket=500):
     """Returns a kite client object
     """
     user_id = get_sensitive_parameter('USER_ID')
@@ -15,11 +15,14 @@ def get_kite_client(root=None, debug=False):
     if not password:
         abort(500, "Invalid password.")
 
-    kite = KiteConnect(debug=debug, root=root, user_id=user_id, password=password)
+    kite = KiteConnect(debug=debug, root=root, user_id=user_id, password=password,
+                       max_tokens_per_socket=max_tokens_per_socket)
     if "enc_token" in session:
         kite.set_enc_token_in_session(kite, session["enc_token"])
     if "request_id" in session:
         kite.set_request_id_in_session(kite, session["request_id"])
+    if "web_sockets" in session:
+        kite.set_web_sockets_in_session(kite, session["web_sockets"])
     return kite
 
 

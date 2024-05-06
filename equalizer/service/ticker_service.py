@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
-from Models.tickerData import TickerData
-from Models.depthData import DepthData
+from Models.ticker_data import TickerData
+from Models.depth_data import DepthData
 from mysql_config import add_all, add
 
 
@@ -56,7 +56,7 @@ def is_ticker_valid(ticker):
         return False
 
     time_difference = datetime.now() - ticker['exchange_timestamp']
-    allowed_time_difference = timedelta(seconds=2)
+    allowed_time_difference = timedelta(seconds=5)
     if time_difference > allowed_time_difference:
         return False
 
