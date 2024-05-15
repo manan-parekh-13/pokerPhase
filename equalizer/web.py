@@ -92,7 +92,8 @@ def start_up_equalizer():
         web_socket_meta.append({
             "ws_id": ws_id,
             "count": end_index - start_index + 1,
-            "tokens": list(sub_token_map.keys()),
+            "start_index": start_index,
+            "end_index": end_index,
         })
         start_index += max_tokens_per_socket
 

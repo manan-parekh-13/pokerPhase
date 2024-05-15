@@ -14,6 +14,8 @@ def save_ticker_data(ticks):
         saved_tick = add(processed_tick)
 
         processed_depths = processed_tick_and_depth[1]
+        if not processed_depths:
+            continue
         for depth in processed_depths:
             depth.ticker_id = saved_tick.id
 
@@ -56,7 +58,7 @@ def is_ticker_valid(ticker):
         return False
 
     time_difference = datetime.now() - ticker['exchange_timestamp']
-    allowed_time_difference = timedelta(seconds=5)
+    allowed_time_difference = timedelta(seconds=2)
     if time_difference > allowed_time_difference:
         return False
 

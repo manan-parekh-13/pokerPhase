@@ -23,6 +23,7 @@ class ArbitrageInstruments(Base):
     check_for_opportunity = Column(Boolean, nullable=False)
     threshold_percentage = Column(Float)
     buy_threshold = Column(Float)
+    max_buy_value = Column(Float)
 
     @classmethod
     def get_instruments_by_check_for_opportunity(cls, check_for_opportunity):

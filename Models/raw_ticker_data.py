@@ -1,6 +1,8 @@
-from sqlalchemy import Column, String, Integer, Float, Boolean, DateTime, JSON
+from sqlalchemy import Column, Integer, DECIMAL, Boolean, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
+from type_decorators.unix_timestamp_seconds import UnixTimestampSeconds
+from type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
 
 Base = declarative_base()
 
@@ -9,23 +11,13 @@ class RawTickerData(Base):
     __tablename__ = 'raw_ticker_data'
 
     id = Column(Integer, primary_key=True)
-    exchange_timestamp = Column(DateTime)
+    exchange_timestamp = Column(UnixTimestampSeconds)
     instrument_token = Column(Integer)
     tradable = Column(Boolean)
-    mode = Column(String(255))
-    last_price = Column(Float)
+    last_price = Column(DECIMAL(8, 2))
     last_traded_quantity = Column(Integer)
-    average_traded_price = Column(Float)
-    volume_traded = Column(Integer)
-    total_buy_quantity = Column(Integer)
-    total_sell_quantity = Column(Integer)
-    ohlc = Column(JSON)
-    change = Column(Float)
-    last_trade_time = Column(DateTime)
-    ticker_received_time = Column(DateTime)
-    oi = Column(Integer)
-    oi_day_high = Column(Integer)
-    oi_day_low = Column(Integer)
+    last_trade_time = Column(UnixTimestampSeconds)
+    ticker_received_time = Column(UnixTimestampMicroseconds)
     depth = Column(JSON)
 
 

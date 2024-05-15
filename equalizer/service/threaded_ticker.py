@@ -11,7 +11,6 @@
 # in your main thread while running KiteTicker in separate thread.
 ###############################################################################
 
-import time
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
@@ -19,7 +18,7 @@ from datetime import datetime
 from Models.raw_ticker_data import RawTickerData
 from equalizer.service.ticker_service import is_ticker_valid
 from equalizer.service.arbitrage_service import check_arbitrage, save_arbitrage_opportunities
-from mysql_config import add_all
+from mysql_config import add_all, add
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -31,7 +30,7 @@ def on_ticks(ws, ticks):
         logging.info("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks.keys()), len(tokens)))
 
         start_time = datetime.now()
-        has_opportunity = False
+        num_of_opportunity = 0
         raw_tickers = []
 
         for instrument_token in list(ticks.keys()):
@@ -39,18 +38,22 @@ def on_ticks(ws, ticks):
             instrument = ws.token_map.get(instrument_token)
             equivalent_token = instrument.equivalent_token
             latest_tick_for_equivalent = ws.latest_tick_map.get(equivalent_token)
-
-            if is_ticker_valid(latest_tick_for_equivalent) and is_ticker_valid(latest_tick_for_instrument):
-                opportunities = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-                                                instrument.threshold_percentage, instrument.buy_threshold)
-                has_opportunity = True
-                raw_tickers.append(RawTickerData(**latest_tick_for_instrument))
-                save_arbitrage_opportunities(opportunities)
             ws.latest_tick_map[instrument_token] = latest_tick_for_instrument
 
+            if is_ticker_valid(latest_tick_for_equivalent) and is_ticker_valid(latest_tick_for_instrument):
+                opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
+                                              instrument.threshold_percentage, instrument.buy_threshold,
+                                              instrument.max_buy_value)
+                if not opportunity:
+                    continue
+                num_of_opportunity += 1
+                add(opportunity)
+                raw_tickers.append(RawTickerData(**latest_tick_for_instrument))
+                raw_tickers.append(RawTickerData(**latest_tick_for_equivalent))
+
         add_all(raw_tickers)
-        logging.info("websocket.{}.Elapsed time: {}, had opportunity: {}".format(ws.ws_id, datetime.now() - start_time,
-                                                                                 has_opportunity))
+        logging.info("websocket.{}.Elapsed time: {}, had {} opportunities".format(ws.ws_id, datetime.now() - start_time,
+                                                                                  num_of_opportunity))
 
 
 # Callback for successful connection.

@@ -793,22 +793,22 @@ class KiteTicker(object):
                     "instrument_token": instrument_token,
                     "last_price": self._unpack_int(packet, 4, 8) / divisor,
                     "last_traded_quantity": self._unpack_int(packet, 8, 12),
-                    "average_traded_price": self._unpack_int(packet, 12, 16) / divisor,
-                    "volume_traded": self._unpack_int(packet, 16, 20),
-                    "total_buy_quantity": self._unpack_int(packet, 20, 24),
-                    "total_sell_quantity": self._unpack_int(packet, 24, 28),
-                    "ohlc": {
-                        "open": self._unpack_int(packet, 28, 32) / divisor,
-                        "high": self._unpack_int(packet, 32, 36) / divisor,
-                        "low": self._unpack_int(packet, 36, 40) / divisor,
-                        "close": self._unpack_int(packet, 40, 44) / divisor
-                    }
+                    # "average_traded_price": self._unpack_int(packet, 12, 16) / divisor,
+                    # "volume_traded": self._unpack_int(packet, 16, 20),
+                    # "total_buy_quantity": self._unpack_int(packet, 20, 24),
+                    # "total_sell_quantity": self._unpack_int(packet, 24, 28),
+                    # "ohlc": {
+                    #     "open": self._unpack_int(packet, 28, 32) / divisor,
+                    #     "high": self._unpack_int(packet, 32, 36) / divisor,
+                    #     "low": self._unpack_int(packet, 36, 40) / divisor,
+                    #     "close": self._unpack_int(packet, 40, 44) / divisor
+                    # }
                 }
 
                 # Compute the change price using close price and last price
-                d["change"] = 0
-                if (d["ohlc"]["close"] != 0):
-                    d["change"] = (d["last_price"] - d["ohlc"]["close"]) * 100 / d["ohlc"]["close"]
+                # d["change"] = 0
+                # if (d["ohlc"]["close"] != 0):
+                #     d["change"] = (d["last_price"] - d["ohlc"]["close"]) * 100 / d["ohlc"]["close"]
 
                 # Parse full mode
                 if len(packet) == 184:
@@ -823,9 +823,9 @@ class KiteTicker(object):
                         timestamp = None
 
                     d["last_trade_time"] = last_trade_time
-                    d["oi"] = self._unpack_int(packet, 48, 52)
-                    d["oi_day_high"] = self._unpack_int(packet, 52, 56)
-                    d["oi_day_low"] = self._unpack_int(packet, 56, 60)
+                    # d["oi"] = self._unpack_int(packet, 48, 52)
+                    # d["oi_day_high"] = self._unpack_int(packet, 52, 56)
+                    # d["oi_day_low"] = self._unpack_int(packet, 56, 60)
                     d["exchange_timestamp"] = timestamp
 
                     # Market depth entries.
