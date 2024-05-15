@@ -17,7 +17,7 @@ from urllib.parse import quote
 from datetime import datetime
 from Models.raw_ticker_data import RawTickerData
 from equalizer.service.ticker_service import is_ticker_valid
-from equalizer.service.arbitrage_service import check_arbitrage, save_arbitrage_opportunities
+from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 
 logging.basicConfig(level=logging.DEBUG)
@@ -29,7 +29,7 @@ def on_ticks(ws, ticks):
         tokens = list(ws.token_map.keys())
         logging.info("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks.keys()), len(tokens)))
 
-        start_time = datetime.now()
+        start_time = datetime.now().time()
         num_of_opportunity = 0
         raw_tickers = []
 
@@ -52,8 +52,13 @@ def on_ticks(ws, ticks):
                 raw_tickers.append(RawTickerData(**latest_tick_for_equivalent))
 
         add_all(raw_tickers)
-        logging.info("websocket.{}.Elapsed time: {}, had {} opportunities".format(ws.ws_id, datetime.now() - start_time,
-                                                                                  num_of_opportunity))
+        # kill the web socket in case time is past end_time
+        if datetime.now().time() > ws.end_time:
+            logging.info("### Closing websocket connection")
+            ws._close(code=3001, reason="Time up")
+            ws.stop_retry()
+        logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
+                     .format(ws.ws_id, datetime.now().time() - start_time, num_of_opportunity))
 
 
 # Callback for successful connection.
@@ -85,9 +90,9 @@ def on_noreconnect(ws):
     logging.info("websocket.{}.Reconnect failed.".format(ws.ws_id))
 
 
-def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id):
+def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, end_time):
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id)
+                     token_map=token_map, ws_id=ws_id, end_time=end_time)
 
     # Assign the callbacks.
     kws.on_ticks = on_ticks

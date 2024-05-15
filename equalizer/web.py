@@ -80,12 +80,14 @@ def start_up_equalizer():
     max_tokens_per_socket = kite.max_tokens_per_socket
     web_socket_meta = []
 
+    market_end_time = datetime.time(hour=15, minute=30)
+
     sorted_token_list = sorted(token_map.items())
     while start_index < len(sorted_token_list):
         end_index = min(start_index + max_tokens_per_socket, len(sorted_token_list) - 1)
         sub_token_map = dict(sorted_token_list[start_index:end_index])
         ws_id = int(start_index / max_tokens_per_socket)
-        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id)
+        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, market_end_time)
         # Infinite loop on the main thread.
         # You have to use the pre-defined callbacks to manage subscriptions.
         kws.connect(threaded=True)
