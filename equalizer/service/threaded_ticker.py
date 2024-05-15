@@ -14,11 +14,13 @@
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
-from datetime import datetime
+from datetime import datetime, timedelta
 from Models.raw_ticker_data import RawTickerData
 from equalizer.service.ticker_service import is_ticker_valid
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
+from flask import session
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -54,11 +56,17 @@ def on_ticks(ws, ticks):
         add_all(raw_tickers)
         # kill the web socket in case time is past end_time
         if datetime.now().time() > ws.end_time:
-            logging.info("### Closing websocket connection")
+            logging.info("### Closing websocket connection with id {}".format(ws.ws_id))
             ws._close(code=3001, reason="Time up")
             ws.stop_retry()
+
+        end_time = datetime.now().time()
+        time_difference = (timedelta(hours=end_time.hour, minutes=end_time.minute, seconds=end_time.second,
+                                    microseconds=end_time.microsecond) -
+                           timedelta(hours=start_time.hour, minutes=start_time.minute, seconds=start_time.second,
+                                     microseconds=start_time.microsecond))
         logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
-                     .format(ws.ws_id, datetime.now().time() - start_time, num_of_opportunity))
+                     .format(ws.ws_id, time_difference, num_of_opportunity))
 
 
 # Callback for successful connection.
@@ -104,15 +112,30 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
     return kws
 
 
-def update_web_socket():
-    # count = 0
-    # while True:
-    #     count += 1
-    #     if count == 4:
-    #         if kws.is_connected():
-    #             logging.info("### Closing websocket connection")
-    #             kws._close(code=3001, reason="Terminal Count Achieved")
-    #             kws.stop_retry()
-    #             break
-    #     time.sleep(5)
+def execute_change(socket_id, socket_info, change):
+    # Implement your logic to execute the change here
+    logging.info(f"Change detected for socket ID {socket_id}: {change}")
+
+
+def update_web_socket(ws_id_to_socket_map):
+    while True:
+        num_of_disconnected_sockets = 0
+        for socket_id, kws in ws_id_to_socket_map.items():
+            # with session.lock:
+            if not kws.is_connected():
+                logging.info("Socket {} disconnected".format(socket_id))
+                num_of_disconnected_sockets += 1
+                continue
+            if 'socket_changes' not in session:
+                logging.info("No change detected")
+                continue
+            if socket_id in session.socket_changes:
+                change = session.socket_changes.pop(socket_id)
+            if change is None:
+                logging.info("No change detected")
+            execute_change(socket_id, kws, change)
+        if num_of_disconnected_sockets == len(ws_id_to_socket_map):
+            logging.info("All sockets disconnected")
+            break
+        time.sleep(60)
     return None

@@ -20,7 +20,6 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
         sell_price = result1['sell_price']
         buy_price = result1['buy_price']
         quantity = result1['quantity']
-        profit_percent = (sell_price - buy_price) * 100 / buy_price
         # In case strategy 1 has opportunities, no need to try strategy 2
         return init_arbitrage_opportunities(buy_source=ticker2['instrument_token'],
                                             sell_source=ticker1['instrument_token'],
@@ -48,7 +47,6 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
         sell_price = result2['sell_price']
         buy_price = result2['buy_price']
         quantity = result2['quantity']
-        profit_percent = (sell_price - buy_price) * 100 / buy_price
         return init_arbitrage_opportunities(buy_source=ticker1['instrument_token'],
                                             sell_source=ticker2['instrument_token'],
                                             quantity=quantity,
