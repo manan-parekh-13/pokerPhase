@@ -1,8 +1,8 @@
 from sqlalchemy import Column, DECIMAL, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
-from type_decorators.unix_timestamp_seconds import UnixTimestampSeconds
-from type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
+from Models.type_decorators.unix_timestamp_seconds import UnixTimestampSeconds
+from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
 
 Base = declarative_base()
 
