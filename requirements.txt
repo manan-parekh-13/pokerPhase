@@ -12,3 +12,4 @@ pytz~=2024.1
 SQLAlchemy~=2.0.29
 pyOpenSSL~=24.1.0
 mysql-connector-python~=8.4.0
+python-dotenv~=1.0.1

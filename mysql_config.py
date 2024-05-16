@@ -1,7 +1,12 @@
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
+from environment.loader import load_environment
 from kiteconnect.utils import get_sensitive_parameter
+
+# Load the environment configuration
+environment = os.getenv('FLASK_ENV')
+load_environment(environment)
 
 mysql_user_name = get_sensitive_parameter("MYSQL_USER_NAME")
 mysql_password = get_sensitive_parameter("MYSQL_PASSWORD")
