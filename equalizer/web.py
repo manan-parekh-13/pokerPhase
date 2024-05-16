@@ -108,7 +108,7 @@ def start_up_equalizer():
 
 @app.route("/holdings.json", methods=['GET'])
 def holdings():
-    kite = get_kite_client()
+    kite = get_kite_client(debug=True)
     return jsonify(holdings=kite.holdings())
 
 
