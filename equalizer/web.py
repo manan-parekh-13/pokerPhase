@@ -100,7 +100,7 @@ def start_up_equalizer():
         start_index += max_tokens_per_socket
 
     kite.set_web_sockets_in_session(kite, web_socket_meta)
-    logging.info("This is main thread. Will look out for any updates in websocket every 5 seconds.")
+    logging.info("This is main thread. Will look out for any updates in websocket every 60 seconds.")
     # Block main thread
     update_web_socket(ws_id_to_socket_map)
     return "kind of worked"
@@ -108,7 +108,7 @@ def start_up_equalizer():
 
 @app.route("/holdings.json", methods=['GET'])
 def holdings():
-    kite = get_kite_client(debug=True)
+    kite = get_kite_client()
     return jsonify(holdings=kite.holdings())
 
 
