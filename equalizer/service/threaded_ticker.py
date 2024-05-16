@@ -10,12 +10,12 @@
 # the main thread will be your web server and you can access WebSocket object
 # in your main thread while running KiteTicker in separate thread.
 ###############################################################################
-
+import json
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime, timedelta
-from Models.raw_ticker_data import RawTickerData
+from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
@@ -50,8 +50,26 @@ def on_ticks(ws, ticks):
                     continue
                 num_of_opportunity += 1
                 add(opportunity)
-                raw_tickers.append(RawTickerData(**latest_tick_for_instrument))
-                raw_tickers.append(RawTickerData(**latest_tick_for_equivalent))
+
+                raw_tickers.append(init_raw_ticker_data(
+                    exchange_timestamp=latest_tick_for_instrument['exchange_timestamp'],
+                    instrument_token=latest_tick_for_instrument['instrument_token'],
+                    tradable=latest_tick_for_instrument['tradable'],
+                    last_price=latest_tick_for_instrument['last_price'],
+                    last_traded_quantity=latest_tick_for_instrument['last_traded_quantity'],
+                    last_trade_time=latest_tick_for_instrument['last_trade_time'],
+                    ticker_received_time=latest_tick_for_instrument['ticker_received_time'],
+                    depth=latest_tick_for_instrument['depth']))
+
+                raw_tickers.append(init_raw_ticker_data(
+                    exchange_timestamp=latest_tick_for_equivalent['exchange_timestamp'],
+                    instrument_token=latest_tick_for_equivalent['instrument_token'],
+                    tradable=latest_tick_for_equivalent['tradable'],
+                    last_price=latest_tick_for_equivalent['last_price'],
+                    last_traded_quantity=latest_tick_for_equivalent['last_traded_quantity'],
+                    last_trade_time=latest_tick_for_equivalent['last_trade_time'],
+                    ticker_received_time=latest_tick_for_equivalent['ticker_received_time'],
+                    depth=latest_tick_for_equivalent['depth']))
 
         add_all(raw_tickers)
         # kill the web socket in case time is past end_time
@@ -118,6 +136,9 @@ def execute_change(socket_id, socket_info, change):
 
 
 def update_web_socket(ws_id_to_socket_map):
+    # let the web sockets try connection
+    # wait before checking if connected
+    time.sleep(60)
     while True:
         num_of_disconnected_sockets = 0
         for socket_id, kws in ws_id_to_socket_map.items():

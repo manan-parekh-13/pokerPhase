@@ -7,6 +7,21 @@ from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicr
 Base = declarative_base()
 
 
+def init_raw_ticker_data(exchange_timestamp, instrument_token, tradable,
+                         last_price, last_traded_quantity, last_trade_time,
+                         ticker_received_time, depth):
+    return RawTickerData(
+        exchange_timestamp=exchange_timestamp,
+        instrument_token=instrument_token,
+        tradable=tradable,
+        last_price=last_price,
+        last_traded_quantity=last_traded_quantity,
+        last_trade_time=last_trade_time,
+        ticker_received_time=ticker_received_time,
+        depth=depth
+    )
+
+
 class RawTickerData(Base):
     __tablename__ = 'raw_ticker_data'
 

@@ -15,7 +15,7 @@ class UnixTimestampMicroseconds(TypeDecorator):
     def process_result_value(self, value, dialect):
         """Convert a Unix timestamp with microsecond accuracy to a datetime object."""
         if value is not None:
-            seconds = value // 1e6
-            microseconds = value % 1e6
+            seconds = int(value / 1e6)
+            microseconds = int(value % 1e6)
             return datetime.fromtimestamp(seconds).replace(microsecond=microseconds)
         return None
