@@ -13,6 +13,7 @@
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
+from kiteconnect.utils import set_timezone_in_datetime
 from datetime import datetime, timedelta
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid
@@ -30,7 +31,7 @@ def on_ticks(ws, ticks):
         tokens = list(ws.token_map.keys())
         logging.info("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks.keys()), len(tokens)))
 
-        start_time = datetime.now().time()
+        process_start_time = datetime.now().time()
         num_of_opportunity = 0
         raw_tickers = []
 
@@ -71,25 +72,27 @@ def on_ticks(ws, ticks):
                     depth=latest_tick_for_equivalent['depth']))
 
         add_all(raw_tickers)
+        current_time = set_timezone_in_datetime(datetime.now()).time()
         logging.info("ws end time {}".format(ws.end_time))
         logging.info("ws start time {}".format(ws.start_time))
-        logging.info("current time {}".format(datetime.now().time()))
+        logging.info("current time {}".format(current_time))
+
         # kill the web socket in case time is past end_time
-        if datetime.now().time() > ws.end_time:
+        if current_time > ws.end_time:
             logging.info("### Closing websocket connection with id {}. Time is up".format(ws.ws_id))
             ws._close(code=3001, reason="Time up")
             ws.stop_retry()
         # kill the web socket in case time is not yet started
-        if datetime.now().time() < ws.start_time:
-            logging.info("### Closing websocket connection with id {}. Time is not yet started".format(ws.ws_id))
-            ws._close(code=3001, reason="Time is not yet started")
+        if current_time < ws.start_time:
+            logging.info("### Closing websocket connection with id {}. Time has not yet started".format(ws.ws_id))
+            ws._close(code=3001, reason="Time has not yet started")
             ws.stop_retry()
 
-        end_time = datetime.now().time()
-        time_difference = (timedelta(hours=end_time.hour, minutes=end_time.minute, seconds=end_time.second,
-                                    microseconds=end_time.microsecond) -
-                           timedelta(hours=start_time.hour, minutes=start_time.minute, seconds=start_time.second,
-                                     microseconds=start_time.microsecond))
+        process_end_time = datetime.now().time()
+        time_difference = (timedelta(hours=process_end_time.hour, minutes=process_end_time.minute, seconds=process_end_time.second,
+                                    microseconds=process_end_time.microsecond) -
+                           timedelta(hours=process_start_time.hour, minutes=process_start_time.minute, seconds=process_start_time.second,
+                                     microseconds=process_start_time.microsecond))
         logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
                      .format(ws.ws_id, time_difference, num_of_opportunity))
 
