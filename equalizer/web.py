@@ -7,7 +7,7 @@ from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
 from service.socket_service import init_kite_web_socket, update_web_socket
 from service.arbitrage_service import get_instrument_token_map_for_arbitrage
-
+from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
 
@@ -16,6 +16,10 @@ logging.basicConfig(level=logging.DEBUG)
 # Base settings
 PORT = 5010
 HOST = "127.0.0.1"
+
+# Load the environment configuration
+environment = os.getenv('FLASK_ENV')
+load_environment(environment)
 
 # App
 app = Flask(__name__)
