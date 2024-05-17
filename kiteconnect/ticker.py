@@ -20,6 +20,7 @@ from twisted.python import log as twisted_log
 from twisted.internet.protocol import ReconnectingClientFactory
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory, connectWS
+from kiteconnect.login import set_timezone_in_datetime
 
 from .__version__ import __version__, __title__
 
@@ -847,7 +848,7 @@ class KiteTicker(object):
                         })
 
                     d["depth"] = depth
-                    d['ticker_received_time'] = datetime.now()
+                    d['ticker_received_time'] = set_timezone_in_datetime(datetime.now())
 
                 data[d['instrument_token']] = d
 

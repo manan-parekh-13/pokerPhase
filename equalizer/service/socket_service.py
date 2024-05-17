@@ -73,9 +73,6 @@ def on_ticks(ws, ticks):
 
         add_all(raw_tickers)
         current_time = set_timezone_in_datetime(datetime.now()).time()
-        logging.info("ws end time {}".format(ws.end_time))
-        logging.info("ws start time {}".format(ws.start_time))
-        logging.info("current time {}".format(current_time))
 
         # kill the web socket in case time is past end_time
         if current_time > ws.end_time:

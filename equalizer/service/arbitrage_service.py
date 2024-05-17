@@ -1,7 +1,7 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities
 from Models.arbitrage_instruments import ArbitrageInstruments
 from mysql_config import add_all
-
+from kiteconnect.login import set_timezone_in_datetime
 from datetime import datetime
 from copy import deepcopy
 
@@ -30,7 +30,7 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
                                                 'exchange_timestamp'],
                                             sell_source_ticker_time=ticker1[
                                                 'exchange_timestamp'],
-                                            created_at=datetime.now())
+                                            created_at=set_timezone_in_datetime(datetime.now()))
 
     # In case strategy 2's highest sell price > the lowest buy price, no need to try strategy 2
     if ticker2['depth']['sell'][0]['price'] < ticker1['depth']['buy'][0]['price']:
@@ -56,7 +56,7 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
                                                 'exchange_timestamp'],
                                             sell_source_ticker_time=ticker2[
                                                 'exchange_timestamp'],
-                                            created_at=datetime.now())
+                                            created_at=set_timezone_in_datetime(datetime.now()))
 
     return None
 
