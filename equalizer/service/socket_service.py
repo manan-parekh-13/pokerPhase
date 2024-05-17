@@ -71,6 +71,9 @@ def on_ticks(ws, ticks):
                     depth=latest_tick_for_equivalent['depth']))
 
         add_all(raw_tickers)
+        logging.info("ws end time {}".format(ws.end_time))
+        logging.info("ws start time {}".format(ws.start_time))
+        logging.info("current time {}".format(datetime.now().time()))
         # kill the web socket in case time is past end_time
         if datetime.now().time() > ws.end_time:
             logging.info("### Closing websocket connection with id {}. Time is up".format(ws.ws_id))
