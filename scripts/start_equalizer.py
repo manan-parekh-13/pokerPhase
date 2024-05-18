@@ -30,9 +30,7 @@ def log_to_file(log_file, message):
 
 
 def main():
-    subprocess.run(['cd', 'pokerPhase'])
-
-    subprocess.run(['source', '/home/ec2-user/pokerPhase/myenv/bin/activate'])
+    subprocess.run('cd pokerPhase && source /home/ec2-user/pokerPhase/myenv/bin/activate', shell=True, check=True)
 
     # Step 1: Git pull
     git_pull = subprocess.run(['git', 'pull', 'origin', 'master'], capture_output=True, text=True)
