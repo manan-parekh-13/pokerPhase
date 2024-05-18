@@ -3,6 +3,7 @@ import time
 import requests
 import json
 from datetime import datetime
+import os
 
 
 def send_slack_message(message):
@@ -16,7 +17,10 @@ def send_slack_message(message):
 
 def get_log_file_path():
     current_date = datetime.now().strftime("%Y-%m-%d")
-    return f"equalizer_{current_date}.log"
+    log_dir = 'logs'
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    return f"{log_dir}/equalizer_{current_date}.log"
 
 
 def log_to_file(log_file, message):
