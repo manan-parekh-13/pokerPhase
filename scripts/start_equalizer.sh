@@ -24,7 +24,7 @@ source "$VENV_DIR/bin/activate" || { send_slack_message "Failed to activate virt
 git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
 
 # Start Flask server using gunicorn and log output
-nohup gunicorn -b 0.0.0.0:5000 web:app >> "$LOG_FILE" 2>&1 &
+nohup gunicorn -b 0.0.0.0:5000 equalizer.web:app >> "$LOG_FILE" 2>&1 &
 sleep 5
 
 # Hit login endpoint and send response headers via Slack
