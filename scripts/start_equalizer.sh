@@ -23,8 +23,8 @@ source "$VENV_DIR/bin/activate" || { send_slack_message "Failed to activate virt
 # Pull latest code from Git
 git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
 
-# Start Flask server using gunicorn and log output
-nohup gunicorn -b 0.0.0.0:5000 equalizer.web:app >> "$LOG_FILE" 2>&1 &
+# Start Flask server using flask and log output
+nohup flask run --host=0.0.0.0 --port=5000 >> "$LOG_FILE" 2>&1 &
 sleep 5
 
 # Hit login endpoint and send response headers via Slack
