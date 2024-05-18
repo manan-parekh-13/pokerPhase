@@ -4,11 +4,8 @@
 APP_DIR="/pokerPhase"
 VENV_DIR="/home/ec2-user/pokerPhase/myenv"
 SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
-LOG_DIR="/logs"
+LOG_DIR="logs"
 LOG_FILE="$LOG_DIR/equalizer_$(date +'%Y-%m-%d').log"
-
-# Create logs directory if it doesn't exist
-mkdir -p "$LOG_DIR"
 
 # Functions
 send_slack_message() {
