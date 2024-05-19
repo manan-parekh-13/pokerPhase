@@ -87,7 +87,7 @@ def start_up_equalizer():
     max_tokens_per_socket = kite.max_tokens_per_socket
     web_socket_meta = []
 
-    market_start_time = datetime.time(9, 30, 0)
+    market_start_time = datetime.time(9, 15, 0)
     market_end_time = datetime.time(15, 30, 0)
 
     sorted_token_list = sorted(token_map.items())
