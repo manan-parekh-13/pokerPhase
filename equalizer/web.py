@@ -1,8 +1,9 @@
 import os
 import logging
 import datetime
+import time
 
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, session
 
 from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
 from service.socket_service import init_kite_web_socket, update_web_socket
@@ -10,6 +11,7 @@ from service.arbitrage_service import get_instrument_token_map_for_arbitrage
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
+from kiteconnect.utils import send_slack_message
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -23,7 +25,7 @@ load_environment(environment)
 
 # App
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+app.secret_key = 'hello'
 
 # Templates
 status_template = """
@@ -72,7 +74,12 @@ def start_up_equalizer():
         kite = login(enc_token)
 
     if not kite.enc_token:
+        send_slack_message("Unable to login")
         abort(500, "Unable to login")
+
+    send_slack_message("Successfully logged in!")
+    send_slack_message("enc_token: {}".format(kite.enc_token))
+    send_slack_message("session_id: {}".format(session.get('session_id')))
 
     token_map = get_instrument_token_map_for_arbitrage()
 
@@ -106,6 +113,8 @@ def start_up_equalizer():
 
     kite.set_web_sockets_in_session(kite, web_socket_meta)
     logging.info("This is main thread. Will look out for any updates in websocket every 60 seconds.")
+    # let the web sockets try connection, wait before updating them
+    time.sleep(60)
     # Block main thread
     update_web_socket(ws_id_to_socket_map)
     return "kind of worked"

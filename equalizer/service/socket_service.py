@@ -21,6 +21,7 @@ from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from flask import session
 import time
+from kiteconnect.utils import send_slack_message
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -143,9 +144,7 @@ def execute_change(socket_id, socket_info, change):
 
 
 def update_web_socket(ws_id_to_socket_map):
-    # let the web sockets try connection
-    # wait before checking if connected
-    time.sleep(60)
+    count = 0
     while True:
         num_of_disconnected_sockets = 0
         for socket_id, kws in ws_id_to_socket_map.items():
@@ -162,8 +161,15 @@ def update_web_socket(ws_id_to_socket_map):
             if change is None:
                 logging.info("No change detected")
             execute_change(socket_id, kws, change)
+
         if num_of_disconnected_sockets == len(ws_id_to_socket_map):
             logging.info("All sockets disconnected")
+            send_slack_message("All sockets disconnected")
             break
+
+        if count % 60 == 0:
+            send_slack_message("Equalizer up and running")
+        count += 1
+
         time.sleep(60)
     return None

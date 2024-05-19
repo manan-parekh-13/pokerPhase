@@ -1,6 +1,8 @@
 import os
 import datetime
 import pytz
+import requests
+import json
 
 
 def get_sensitive_parameter(parameter_name):
@@ -34,3 +36,15 @@ def set_timezone_in_datetime(timestamp, time_zone='Asia/Kolkata'):
 
 def truncate_microseconds(timestamp):
     return timestamp.replace(microsecond=0)
+
+
+def send_slack_message(message):
+    if get_sensitive_parameter('FLASK_ENV') == 'local':
+        return
+
+    webhook_url = 'https://hooks.slack.com/services/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'
+    data = {'text': message}
+    headers = {'Content-Type': 'application/json'}
+    response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
+    if response.status_code != 200:
+        print(f"Failed to send Slack message: {response.text}")
