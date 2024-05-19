@@ -49,11 +49,14 @@ def main():
     # Step 4: Wait for Flask server to start
     time.sleep(5)
 
-    # Step 5: Hit equalizer startup curl
-    log_to_file(log_file, "Hitting equalizer startup curl")
-    print("Hitting equalizer startup curl")
-    equalizer_startup_response = subprocess.run(['curl', 'equalizer_startup_url'], capture_output=True, text=True)
-    session_id = equalizer_startup_response.headers.get('session_id')
+    # Step 5: Hit the login curl
+    log_to_file(log_file, "Hitting login curl")
+    print("Hitting login curl")
+    login_response = requests.get('http://localhost:5000/login/otp')
+    log_to_file(log_file, login_response.text)
+    print(login_response.text)
+
+    session_id = login_response.headers.get('session_id')
 
     if not session_id:
         # Error handling: No session ID received
@@ -69,16 +72,23 @@ def main():
         log_file.close()  # Close log file
         return
 
-    # Step 6: Hit the status curl with session ID
+    send_slack_message(session_id)
+    request_headers = {'Cookie': f'session_id={session_id}'}
+
+    # Step 6: Hit equalizer startup curl
+    log_to_file(log_file, "Hitting equalizer startup curl")
+    print("Hitting equalizer startup curl")
+    subprocess.Popen(['curl', 'http://localhost:5000/equalizer/startup', '-H', json.dumps(request_headers)],
+                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    # Step 7: Hit the status curl with session ID
     log_to_file(log_file, "Hitting the status curl")
     print("Hitting the status curl")
-    status_curl_headers = {'Cookie': f'session_id={session_id}'}
-    status_curl = subprocess.run(['curl', 'status_curl_url', '-H', json.dumps(status_curl_headers)], capture_output=True, text=True)
-    status_response = status_curl.stdout
+    status_response = requests.get('http://localhost:5000/status', headers=request_headers)
 
-    log_to_file(log_file, log_to_file)
-    print(status_response)
-    send_slack_message(status_response)
+    log_to_file(log_file, status_response.text)
+    print(status_response.text)
+    send_slack_message(status_response.text)
 
 
 if __name__ == "__main__":
