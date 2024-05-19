@@ -52,11 +52,12 @@ def main():
     # Step 5: Hit the login curl
     log_to_file(log_file, "Hitting login curl")
     print("Hitting login curl")
-    login_response = requests.get('http://localhost:5000/login/otp')
+    login_response = requests.post('http://localhost:5000/login/otp')
     log_to_file(log_file, login_response.text)
     print(login_response.text)
 
-    session_id = login_response.headers.get('session_id')
+    session_id_cookie = login_response.headers.get('Set-Cookie')
+    session_id = session_id_cookie.split('session=')[1].split(';')[0]
 
     if not session_id:
         # Error handling: No session ID received
@@ -72,13 +73,15 @@ def main():
         log_file.close()  # Close log file
         return
 
+    print(session_id)
+    log_to_file(log_file, session_id)
     send_slack_message(session_id)
-    request_headers = {'Cookie': f'session_id={session_id}'}
+    request_headers = {'Cookie': f'session={session_id}'}
 
     # Step 6: Hit equalizer startup curl
     log_to_file(log_file, "Hitting equalizer startup curl")
     print("Hitting equalizer startup curl")
-    subprocess.Popen(['curl', 'http://localhost:5000/equalizer/startup', '-H', json.dumps(request_headers)],
+    subprocess.Popen(['curl', '--request', 'POST', 'http://localhost:5000/equalizer/startup', '-H', json.dumps(request_headers)],
                      stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     # Step 7: Hit the status curl with session ID
