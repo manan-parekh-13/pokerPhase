@@ -32,7 +32,7 @@ def on_ticks(ws, ticks):
         tokens = list(ws.token_map.keys())
         logging.info("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks.keys()), len(tokens)))
 
-        process_start_time = datetime.now().time()
+        process_start_time = datetime.now()
         num_of_opportunity = 0
         raw_tickers = []
 
@@ -71,28 +71,10 @@ def on_ticks(ws, ticks):
                     last_trade_time=latest_tick_for_equivalent['last_trade_time'],
                     ticker_received_time=latest_tick_for_equivalent['ticker_received_time'],
                     depth=latest_tick_for_equivalent['depth']))
-
         add_all(raw_tickers)
-        current_time = set_timezone_in_datetime(datetime.now()).time()
 
-        # kill the web socket in case time is past end_time
-        if current_time > ws.end_time:
-            logging.info("### Closing websocket connection with id {}. Time is up".format(ws.ws_id))
-            ws._close(code=3001, reason="Time up")
-            ws.stop_retry()
-        # kill the web socket in case time is not yet started
-        if current_time < ws.start_time:
-            logging.info("### Closing websocket connection with id {}. Time has not yet started".format(ws.ws_id))
-            ws._close(code=3001, reason="Time has not yet started")
-            ws.stop_retry()
-
-        process_end_time = datetime.now().time()
-        time_difference = (timedelta(hours=process_end_time.hour, minutes=process_end_time.minute, seconds=process_end_time.second,
-                                    microseconds=process_end_time.microsecond) -
-                           timedelta(hours=process_start_time.hour, minutes=process_start_time.minute, seconds=process_start_time.second,
-                                     microseconds=process_start_time.microsecond))
         logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
-                     .format(ws.ws_id, time_difference, num_of_opportunity))
+                     .format(ws.ws_id, datetime.now() - process_start_time, num_of_opportunity))
 
 
 # Callback for successful connection.
@@ -124,9 +106,9 @@ def on_noreconnect(ws):
     logging.info("websocket.{}.Reconnect failed.".format(ws.ws_id))
 
 
-def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, end_time, start_time):
+def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id):
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id, end_time=end_time, start_time=start_time)
+                     token_map=token_map, ws_id=ws_id)
 
     # Assign the callbacks.
     kws.on_ticks = on_ticks
@@ -138,38 +120,11 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
     return kws
 
 
-def execute_change(socket_id, socket_info, change):
-    # Implement your logic to execute the change here
-    logging.info(f"Change detected for socket ID {socket_id}: {change}")
-
-
-def update_web_socket(ws_id_to_socket_map):
+def send_web_socket_updates():
     count = 0
     while True:
-        num_of_disconnected_sockets = 0
-        for socket_id, kws in ws_id_to_socket_map.items():
-            # with session.lock:
-            if not kws.is_connected():
-                logging.info("Socket {} disconnected".format(socket_id))
-                num_of_disconnected_sockets += 1
-                continue
-            if 'socket_changes' not in session:
-                logging.info("No change detected")
-                continue
-            if socket_id in session.socket_changes:
-                change = session.socket_changes.pop(socket_id)
-            if change is None:
-                logging.info("No change detected")
-            execute_change(socket_id, kws, change)
-
-        if num_of_disconnected_sockets == len(ws_id_to_socket_map):
-            logging.info("All sockets disconnected")
-            send_slack_message("All sockets disconnected")
-            break
-
         if count % 60 == 0:
             send_slack_message("Equalizer up and running")
         count += 1
-
         time.sleep(60)
     return None

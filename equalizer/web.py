@@ -6,7 +6,7 @@ import time
 from flask import Flask, jsonify, request, abort, session
 
 from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
-from service.socket_service import init_kite_web_socket, update_web_socket
+from service.socket_service import init_kite_web_socket, send_web_socket_updates
 from service.arbitrage_service import get_instrument_token_map_for_arbitrage
 from environment.loader import load_environment
 from mysql_config import add_all
@@ -87,22 +87,16 @@ def start_up_equalizer():
     max_tokens_per_socket = kite.max_tokens_per_socket
     web_socket_meta = []
 
-    market_start_time = datetime.time(9, 15, 0)
-    market_end_time = datetime.time(15, 30, 0)
-
     sorted_token_list = sorted(token_map.items())
-
-    ws_id_to_socket_map = {}
 
     while start_index < len(sorted_token_list):
         end_index = min(start_index + max_tokens_per_socket, len(sorted_token_list) - 1)
         sub_token_map = dict(sorted_token_list[start_index:end_index])
         ws_id = int(start_index / max_tokens_per_socket)
-        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, market_end_time, market_start_time)
+        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id)
         # Infinite loop on the main thread.
         # You have to use the pre-defined callbacks to manage subscriptions.
         kws.connect(threaded=True)
-        ws_id_to_socket_map[ws_id] = kws
         web_socket_meta.append({
             "ws_id": ws_id,
             "count": end_index - start_index + 1,
@@ -116,7 +110,7 @@ def start_up_equalizer():
     # let the web sockets try connection, wait before updating them
     time.sleep(60)
     # Block main thread
-    update_web_socket(ws_id_to_socket_map)
+    send_web_socket_updates()
     return "kind of worked"
 
 
