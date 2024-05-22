@@ -1,7 +1,6 @@
 from sqlalchemy import Column, DECIMAL, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
-from Models.type_decorators.unix_timestamp_seconds import UnixTimestampSeconds
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
 
 Base = declarative_base()
@@ -32,9 +31,9 @@ class ArbitrageOpportunity(Base):
     buy_price = Column(DECIMAL(8, 2))
     sell_price = Column(DECIMAL(8, 2))
     quantity = Column(Integer)
-    buy_source_ticker_time = Column(UnixTimestampSeconds, nullable=False)
-    sell_source_ticker_time = Column(UnixTimestampSeconds, nullable=False)
-    created_at = Column(UnixTimestampMicroseconds, nullable=False)
+    buy_source_ticker_time = Column(UnixTimestampMicroseconds)
+    sell_source_ticker_time = Column(UnixTimestampMicroseconds)
+    created_at = Column(UnixTimestampMicroseconds)
 
 
 Base.metadata.create_all(engine, checkfirst=True)

@@ -27,9 +27,9 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
                                             buy_price=buy_price,
                                             sell_price=sell_price,
                                             buy_source_ticker_time=ticker2[
-                                                'exchange_timestamp'],
+                                                'ticker_received_time'],
                                             sell_source_ticker_time=ticker1[
-                                                'exchange_timestamp'],
+                                                'ticker_received_time'],
                                             created_at=set_timezone_in_datetime(datetime.now()))
 
     # In case strategy 2's highest sell price > the lowest buy price, no need to try strategy 2
@@ -53,9 +53,9 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
                                             buy_price=buy_price,
                                             sell_price=sell_price,
                                             buy_source_ticker_time=ticker1[
-                                                'exchange_timestamp'],
+                                                'ticker_received_time'],
                                             sell_source_ticker_time=ticker2[
-                                                'exchange_timestamp'],
+                                                'ticker_received_time'],
                                             created_at=set_timezone_in_datetime(datetime.now()))
 
     return None
