@@ -13,13 +13,11 @@
 import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
-from kiteconnect.utils import set_timezone_in_datetime
-from datetime import datetime, timedelta
+from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
-from flask import session
 import time
 from kiteconnect.utils import send_slack_message
 

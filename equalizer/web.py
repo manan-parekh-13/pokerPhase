@@ -1,9 +1,7 @@
 import os
 import logging
-import datetime
-import time
 
-from flask import Flask, jsonify, request, abort, session
+from flask import Flask, jsonify, request, abort
 
 from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
@@ -79,7 +77,6 @@ def start_up_equalizer():
 
     send_slack_message("Successfully logged in!")
     send_slack_message("enc_token: {}".format(kite.enc_token))
-    send_slack_message("session_id: {}".format(session.get('session_id')))
 
     token_map = get_instrument_token_map_for_arbitrage()
 
@@ -107,8 +104,6 @@ def start_up_equalizer():
 
     kite.set_web_sockets_in_session(kite, web_socket_meta)
     logging.info("This is main thread. Will look out for any updates in websocket every 60 seconds.")
-    # let the web sockets try connection, wait before updating them
-    time.sleep(60)
     # Block main thread
     send_web_socket_updates()
     return "kind of worked"
