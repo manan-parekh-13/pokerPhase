@@ -182,9 +182,7 @@ class KiteConnect(object):
                  disable_ssl=False,
                  user_id=None,
                  password=None,
-                 request_id=None,
-                 max_tokens_per_socket=None,
-                 web_sockets=None):
+                 request_id=None):
         """
         Initialise a new Kite Connect client instance.
 
@@ -219,10 +217,6 @@ class KiteConnect(object):
 
         self.root = root or self._default_root_uri
         self.timeout = timeout or self._default_timeout
-
-        self.max_tokens_per_socket = max_tokens_per_socket
-
-        self.web_sockets = web_sockets
 
         # Create requests session by default
         # Same session to be used by pool connections
@@ -292,12 +286,6 @@ class KiteConnect(object):
         """Set the `request_id` received after a creating a login request."""
         self.request_id = request_id
         session["request_id"] = request_id
-
-    @staticmethod
-    def set_web_sockets_in_session(self, web_sockets):
-        """Set the `web_sockets` created after equalizer startup."""
-        self.web_sockets = web_sockets
-        session["web_sockets"] = web_sockets
 
     def generate_request_id(self):
         """

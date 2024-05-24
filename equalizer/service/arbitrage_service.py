@@ -117,15 +117,23 @@ def save_arbitrage_opportunities(arbitrage_opportunities):
     add_all(arbitrage_opportunities)
 
 
-def get_instrument_token_map_for_arbitrage():
-    instruments = ArbitrageInstruments.get_instruments_by_check_for_opportunity(True)
-    token_to_instrument_map = {}
+def get_ws_id_to_token_to_instrument_map():
+    instruments = ArbitrageInstruments.get_instruments_with_non_null_ws_id()
+    ws_id_to_token_to_instrument_map = {}
+
     for instrument in instruments:
         instrument1 = deepcopy(instrument)
         instrument1.equivalent_token = instrument.instrument_token2
-        token_to_instrument_map[instrument.instrument_token1] = instrument1
+
+        if instrument1.ws_id not in ws_id_to_token_to_instrument_map:
+            ws_id_to_token_to_instrument_map[instrument1.ws_id] = {}
+        ws_id_to_token_to_instrument_map[instrument1.ws_id][instrument1.instrument_token1] = instrument1
 
         instrument2 = deepcopy(instrument)
         instrument2.equivalent_token = instrument.instrument_token1
-        token_to_instrument_map[instrument.instrument_token2] = instrument2
-    return token_to_instrument_map
+
+        if instrument2.ws_id not in ws_id_to_token_to_instrument_map:
+            ws_id_to_token_to_instrument_map[instrument2.ws_id] = {}
+        ws_id_to_token_to_instrument_map[instrument2.ws_id][instrument2.instrument_token2] = instrument2
+
+    return ws_id_to_token_to_instrument_map

@@ -3,9 +3,9 @@ import logging
 
 from flask import Flask, jsonify, request, abort
 
-from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a, login
+from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
-from service.arbitrage_service import get_instrument_token_map_for_arbitrage
+from service.arbitrage_service import get_ws_id_to_token_to_instrument_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
@@ -68,8 +68,7 @@ def login_via_enc_token():
 def start_up_equalizer():
     kite = get_kite_client()
     if not kite.enc_token:
-        enc_token = request.form.get('enc_token')
-        kite = login(enc_token)
+        kite = login_via_two_f_a()
 
     if not kite.enc_token:
         send_slack_message("Unable to login")
@@ -78,32 +77,16 @@ def start_up_equalizer():
     send_slack_message("Successfully logged in!")
     send_slack_message("enc_token: {}".format(kite.enc_token))
 
-    token_map = get_instrument_token_map_for_arbitrage()
+    ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
 
-    start_index = 0
-    max_tokens_per_socket = kite.max_tokens_per_socket
-    web_socket_meta = []
-
-    sorted_token_list = sorted(token_map.items())
-
-    while start_index < len(sorted_token_list):
-        end_index = min(start_index + max_tokens_per_socket, len(sorted_token_list) - 1)
-        sub_token_map = dict(sorted_token_list[start_index:end_index])
-        ws_id = int(start_index / max_tokens_per_socket)
+    for ws_id in ws_id_to_token_to_instrument_map.keys():
+        sub_token_map = ws_id_to_token_to_instrument_map[ws_id]
         kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id)
         # Infinite loop on the main thread.
         # You have to use the pre-defined callbacks to manage subscriptions.
         kws.connect(threaded=True)
-        web_socket_meta.append({
-            "ws_id": ws_id,
-            "count": end_index - start_index + 1,
-            "start_index": start_index,
-            "end_index": end_index,
-        })
-        start_index += max_tokens_per_socket
 
-    kite.set_web_sockets_in_session(kite, web_socket_meta)
-    logging.info("This is main thread. Will look out for any updates in websocket every 60 seconds.")
+    logging.info("This is main thread. Will send status updates in websocket every 1 hour.")
     # Block main thread
     send_web_socket_updates()
     return "kind of worked"

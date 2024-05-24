@@ -20,14 +20,14 @@ class ArbitrageInstruments(Base):
     exchange_token2 = Column(Integer, nullable=False)
     instrument_token1 = Column(Integer, nullable=False)
     instrument_token2 = Column(Integer, nullable=False)
-    check_for_opportunity = Column(Boolean, nullable=False)
     threshold_percentage = Column(Float)
     buy_threshold = Column(Float)
     max_buy_value = Column(Float)
+    ws_id = Column(Integer)
 
     @classmethod
-    def get_instruments_by_check_for_opportunity(cls, check_for_opportunity):
-        return session.query(cls).filter(cls.check_for_opportunity == check_for_opportunity).all()
+    def get_instruments_with_non_null_ws_id(cls):
+        return session.query(cls).filter(cls.ws_id.isnot(None)).all()
 
 
 Base.metadata.create_all(engine, checkfirst=True)
