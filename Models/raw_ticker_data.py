@@ -9,7 +9,7 @@ Base = declarative_base()
 
 def init_raw_ticker_data(exchange_timestamp, instrument_token, tradable,
                          last_price, last_traded_quantity, last_trade_time,
-                         ticker_received_time, depth):
+                         ticker_received_time, depth, ws_id):
     return RawTickerData(
         exchange_timestamp=exchange_timestamp,
         instrument_token=instrument_token,
@@ -18,7 +18,8 @@ def init_raw_ticker_data(exchange_timestamp, instrument_token, tradable,
         last_traded_quantity=last_traded_quantity,
         last_trade_time=last_trade_time,
         ticker_received_time=ticker_received_time,
-        depth=depth
+        depth=depth,
+        ws_id=ws_id
     )
 
 
@@ -34,6 +35,7 @@ class RawTickerData(Base):
     last_trade_time = Column(UnixTimestampSeconds)
     ticker_received_time = Column(UnixTimestampMicroseconds)
     depth = Column(JSON)
+    ws_id = Column(Integer)
 
 
 Base.metadata.create_all(engine, checkfirst=True)

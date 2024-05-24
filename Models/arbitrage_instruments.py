@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, Float
+from sqlalchemy import Column, String, Integer, Float
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine, session
 

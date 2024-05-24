@@ -8,7 +8,7 @@ Base = declarative_base()
 
 def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
                                  sell_price, quantity, buy_source_ticker_time,
-                                 sell_source_ticker_time, created_at):
+                                 sell_source_ticker_time, created_at, ws_id):
     # Create a new row for the ArbitrageOpportunity table
     return ArbitrageOpportunity(
         buy_source=buy_source,
@@ -18,7 +18,8 @@ def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
         quantity=quantity,
         buy_source_ticker_time=buy_source_ticker_time,
         sell_source_ticker_time=sell_source_ticker_time,
-        created_at=created_at
+        created_at=created_at,
+        ws_id=ws_id
     )
 
 
@@ -34,6 +35,7 @@ class ArbitrageOpportunity(Base):
     buy_source_ticker_time = Column(UnixTimestampMicroseconds)
     sell_source_ticker_time = Column(UnixTimestampMicroseconds)
     created_at = Column(UnixTimestampMicroseconds)
+    ws_id = Column(Integer)
 
 
 Base.metadata.create_all(engine, checkfirst=True)

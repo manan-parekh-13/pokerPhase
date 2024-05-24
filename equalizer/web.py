@@ -6,6 +6,7 @@ from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token_and_return_client, get_kite_client, login_via_two_f_a
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
 from service.arbitrage_service import get_ws_id_to_token_to_instrument_map
+from service.socket_service import get_ws_id_to_web_socket_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
@@ -78,10 +79,12 @@ def start_up_equalizer():
     send_slack_message("enc_token: {}".format(kite.enc_token))
 
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
+    ws_id_to_web_socket_map = get_ws_id_to_web_socket_map()
 
     for ws_id in ws_id_to_token_to_instrument_map.keys():
         sub_token_map = ws_id_to_token_to_instrument_map[ws_id]
-        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id)
+        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id,
+                                   ws_id_to_web_socket_map[ws_id].mode, ws_id_to_web_socket_map[ws_id].try_ordering)
         # Infinite loop on the main thread.
         # You have to use the pre-defined callbacks to manage subscriptions.
         kws.connect(threaded=True)

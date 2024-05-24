@@ -16,6 +16,7 @@ from urllib.parse import quote
 from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid
+from Models.web_socket import WebSocket
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 import time
@@ -44,7 +45,7 @@ def on_ticks(ws, ticks):
             if is_ticker_valid(latest_tick_for_equivalent) and is_ticker_valid(latest_tick_for_instrument):
                 opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
                                               instrument.threshold_percentage, instrument.buy_threshold,
-                                              instrument.max_buy_value)
+                                              instrument.max_buy_value, ws.ws_id)
                 if not opportunity:
                     continue
                 num_of_opportunity += 1
@@ -58,7 +59,8 @@ def on_ticks(ws, ticks):
                     last_traded_quantity=latest_tick_for_instrument['last_traded_quantity'],
                     last_trade_time=latest_tick_for_instrument['last_trade_time'],
                     ticker_received_time=latest_tick_for_instrument['ticker_received_time'],
-                    depth=latest_tick_for_instrument['depth']))
+                    depth=latest_tick_for_instrument['depth'],
+                    ws_id=ws.ws_id))
 
                 raw_tickers.append(init_raw_ticker_data(
                     exchange_timestamp=latest_tick_for_equivalent['exchange_timestamp'],
@@ -68,7 +70,8 @@ def on_ticks(ws, ticks):
                     last_traded_quantity=latest_tick_for_equivalent['last_traded_quantity'],
                     last_trade_time=latest_tick_for_equivalent['last_trade_time'],
                     ticker_received_time=latest_tick_for_equivalent['ticker_received_time'],
-                    depth=latest_tick_for_equivalent['depth']))
+                    depth=latest_tick_for_equivalent['depth'],
+                    ws_id=ws.ws_id))
         add_all(raw_tickers)
 
         logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
@@ -80,8 +83,8 @@ def on_connect(ws, response):
     logging.info("websocket.{}.Successfully connected. Response: {}".format(ws.ws_id, response))
     tokens = list(ws.token_map.keys())
     ws.subscribe(tokens)
-    ws.set_mode(ws.MODE_FULL, tokens)
-    logging.info("websocket.{}.Subscribe to tokens in {} mode: {}".format(ws.ws_id, ws.MODE_FULL, tokens))
+    ws.set_mode(ws.mode, tokens)
+    logging.info("websocket.{}.Subscribe to tokens in {} mode: {}".format(ws.ws_id, ws.mode, tokens))
 
 
 # Callback when current connection is closed.
@@ -104,9 +107,13 @@ def on_noreconnect(ws):
     logging.info("websocket.{}.Reconnect failed.".format(ws.ws_id))
 
 
-def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id):
+def on_order_update(ws, data):
+    logging.debug("websocket.{}.Order update : {}".format(ws.ws_id, data))
+
+
+def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering):
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id)
+                     token_map=token_map, ws_id=ws_id, mode=mode)
 
     # Assign the callbacks.
     kws.on_ticks = on_ticks
@@ -115,6 +122,7 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
     kws.on_connect = on_connect
     kws.on_reconnect = on_reconnect
     kws.on_noreconnect = on_noreconnect
+    kws.on_order_update = on_order_update if try_ordering else None
     return kws
 
 
@@ -126,3 +134,13 @@ def send_web_socket_updates():
         count += 1
         time.sleep(60)
     return None
+
+
+def get_ws_id_to_web_socket_map():
+    web_sockets = WebSocket.get_all_web_sockets()
+
+    ws_id_to_socket_map = {}
+    for web_socket in web_sockets:
+        ws_id_to_socket_map[web_socket.ws_id] = web_socket
+
+    return ws_id_to_socket_map
