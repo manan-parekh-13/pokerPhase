@@ -70,27 +70,8 @@ def on_ticks(ws, ticks):
 
             add(opportunity)
 
-            raw_tickers.append(init_raw_ticker_data(
-                exchange_timestamp=latest_tick_for_instrument['exchange_timestamp'],
-                instrument_token=latest_tick_for_instrument['instrument_token'],
-                tradable=latest_tick_for_instrument['tradable'],
-                last_price=latest_tick_for_instrument['last_price'],
-                last_traded_quantity=latest_tick_for_instrument['last_traded_quantity'],
-                last_trade_time=latest_tick_for_instrument['last_trade_time'],
-                ticker_received_time=latest_tick_for_instrument['ticker_received_time'],
-                depth=latest_tick_for_instrument['depth'],
-                ws_id=ws.ws_id))
-
-            raw_tickers.append(init_raw_ticker_data(
-                exchange_timestamp=latest_tick_for_equivalent['exchange_timestamp'],
-                instrument_token=latest_tick_for_equivalent['instrument_token'],
-                tradable=latest_tick_for_equivalent['tradable'],
-                last_price=latest_tick_for_equivalent['last_price'],
-                last_traded_quantity=latest_tick_for_equivalent['last_traded_quantity'],
-                last_trade_time=latest_tick_for_equivalent['last_trade_time'],
-                ticker_received_time=latest_tick_for_equivalent['ticker_received_time'],
-                depth=latest_tick_for_equivalent['depth'],
-                ws_id=ws.ws_id))
+            raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
+            raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
 
         add_all(raw_tickers)
 

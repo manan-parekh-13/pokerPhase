@@ -8,9 +8,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def realise_arbitrage_opportunity(opportunity):
-    if not opportunity:
-        return None
-
     try:
         kite_client = get_kite_client_from_cache()
 

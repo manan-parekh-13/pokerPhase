@@ -26,7 +26,7 @@ HOST = "127.0.0.1"
 environment = os.getenv('FLASK_ENV')
 load_environment(environment)
 
-global_cache={}
+global_cache = {}
 
 # App
 app = Flask(__name__)
