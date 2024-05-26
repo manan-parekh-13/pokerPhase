@@ -31,7 +31,6 @@ status_template = """
     <div>App is live on port - <b>{port}</b>.</div>
     <div>Request Id - <b>{request_id}</b>.</div>
     <div>Enc token - <b>{enc_token}</b>.</div>
-    <div>Web Sockets - <b>{web_sockets}</b>.</div>
     """
 
 
@@ -42,7 +41,6 @@ def status():
         port=PORT,
         request_id=kite.request_id,
         enc_token=kite.enc_token,
-        web_sockets=kite.web_sockets,
     )
 
 
