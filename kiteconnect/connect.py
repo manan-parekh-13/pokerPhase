@@ -17,12 +17,11 @@ import datetime
 import requests
 import warnings
 import time
+import threading
 
 from .__version__ import __version__, __title__
 from kiteconnect.utils import get_sensitive_parameter, convert_str_to_datetime, truncate_microseconds
 import kiteconnect.exceptions as ex
-
-from flask import session
 
 log = logging.getLogger(__name__)
 
@@ -116,8 +115,8 @@ class KiteConnect(object):
         "api.token.invalidate": "/session/token",
         "api.token.renew": "/session/refresh_token",
         "user.profile": "/user/profile",
-        "user.margins": "/user/margins",
-        "user.margins.segment": "/user/margins/{segment}",
+        "user.margins": "/oms/user/margins",
+        "user.margins.segment": "/oms/user/margins/{segment}",
 
         "orders": "/orders",
         "trades": "/trades",
@@ -181,7 +180,9 @@ class KiteConnect(object):
                  disable_ssl=False,
                  user_id=None,
                  password=None,
-                 request_id=None):
+                 request_id=None,
+                 available_margin=0,
+                 available_holdings=None):
         """
         Initialise a new Kite Connect client instance.
 
@@ -217,6 +218,12 @@ class KiteConnect(object):
         self.root = root or self._default_root_uri
         self.timeout = timeout or self._default_timeout
 
+        self.lock = threading.Lock()
+
+        self.available_margin = available_margin
+
+        self.available_holdings = available_holdings
+
         # Create requests session by default
         # Same session to be used by pool connections
         self.reqsession = requests.Session()
@@ -227,14 +234,12 @@ class KiteConnect(object):
         # disable requests SSL warning
         requests.packages.urllib3.disable_warnings()
 
-    def expire_current_session(self):
-        self.set_enc_token_in_session(self, None)
+    def expire_current_enc_token(self):
+        self.set_enc_token(self, None)
 
-    @staticmethod
-    def set_enc_token_in_session(self, enc_token):
+    def set_enc_token(self, enc_token):
         """Set the `enc_token` received after a successful authentication."""
         self.enc_token = enc_token
-        session["enc_token"] = enc_token
 
     @staticmethod
     def get_latest_otp_from_mail():
@@ -280,11 +285,22 @@ class KiteConnect(object):
 
         return None
 
-    @staticmethod
-    def set_request_id_in_session(self, request_id):
+    def get_available_margin(self):
+        with self.lock:
+            return self.available_margin
+
+    def get_available_holdings(self):
+        with self.lock:
+            return self.available_holdings
+
+    def set_available_margin_and_holdings(self, new_margins, new_holdings):
+        with self.lock:
+            self.available_margin = new_margins
+            self.available_holdings = new_holdings
+
+    def set_request_id(self, request_id):
         """Set the `request_id` received after a creating a login request."""
         self.request_id = request_id
-        session["request_id"] = request_id
 
     def generate_request_id(self):
         """
@@ -295,9 +311,7 @@ class KiteConnect(object):
             "password": self.password,
         })
         if "request_id" in resp:
-            self.set_request_id_in_session(self, resp["request_id"])
-            return self.request_id
-        return None
+            self.set_request_id(resp["request_id"])
 
     def generate_otp_for_login_request(self):
         self._post("generate.otp", url_args={"user_id": self.user_id}, params={
@@ -306,16 +320,12 @@ class KiteConnect(object):
         })
 
     def verify_otp_for_request_id(self, otp):
-        resp = self._post("verify.otp", params={
+        self._post("verify.otp", params={
             "user_id": self.user_id,
             "request_id": self.request_id,
             "twofa_value": otp,
             "twofa_type": "sms"
         })
-        return resp
-
-    def generate_session_via_enc_token(self, enc_token):
-        self.set_enc_token_in_session(self, enc_token)
 
     def margins(self, segment=None):
         """Get account balance and cash margin details for a particular segment.
@@ -935,7 +945,7 @@ class KiteConnect(object):
             if data.get("status") == "error" or data.get("error_type"):
                 # Call session hook if its registered and TokenException is raised
                 if r.status_code == 403 and data["error_type"] == "TokenException":
-                    self.expire_current_session()
+                    self.expire_current_enc_token()
 
                 # native Kite errors
                 exp = getattr(ex, data.get("error_type"), ex.GeneralException)
@@ -945,7 +955,7 @@ class KiteConnect(object):
             if r.cookies and not self.enc_token:
                 enctoken = r.cookies.get("enctoken")
                 if enctoken:
-                    self.set_enc_token_in_session(self, enctoken)
+                    self.set_enc_token(self, enctoken)
 
             return data["data"]
         elif "csv" in r.headers["content-type"]:

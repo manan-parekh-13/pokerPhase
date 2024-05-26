@@ -3,6 +3,9 @@ import datetime
 import pytz
 import requests
 import json
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def get_sensitive_parameter(parameter_name):
@@ -39,6 +42,8 @@ def truncate_microseconds(timestamp):
 
 
 def send_slack_message(message):
+    logging.info(json.dumps(message))
+
     if get_sensitive_parameter('FLASK_ENV') == 'local':
         return
 
@@ -47,4 +52,4 @@ def send_slack_message(message):
     headers = {'Content-Type': 'application/json'}
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
     if response.status_code != 200:
-        print(f"Failed to send Slack message: {response.text}")
+        logging.error(f"Failed to send Slack message: {response.text}")

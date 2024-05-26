@@ -15,12 +15,14 @@ from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
-from equalizer.service.ticker_service import is_ticker_valid
+from ticker_service import is_ticker_valid
+from order_service import realise_arbitrage_opportunity
 from Models.web_socket import WebSocket
-from equalizer.service.arbitrage_service import check_arbitrage
+from arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 import time
 from kiteconnect.utils import send_slack_message
+from kiteconnect.login import get_kite_client_from_cache
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -42,36 +44,54 @@ def on_ticks(ws, ticks):
             latest_tick_for_equivalent = ws.latest_tick_map.get(equivalent_token)
             ws.latest_tick_map[instrument_token] = latest_tick_for_instrument
 
-            if is_ticker_valid(latest_tick_for_equivalent) and is_ticker_valid(latest_tick_for_instrument):
-                opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-                                              instrument.threshold_percentage, instrument.buy_threshold,
-                                              instrument.max_buy_value, ws.ws_id)
-                if not opportunity:
-                    continue
-                num_of_opportunity += 1
-                add(opportunity)
+            if not is_ticker_valid(latest_tick_for_equivalent) or not is_ticker_valid(latest_tick_for_instrument):
+                continue
 
-                raw_tickers.append(init_raw_ticker_data(
-                    exchange_timestamp=latest_tick_for_instrument['exchange_timestamp'],
-                    instrument_token=latest_tick_for_instrument['instrument_token'],
-                    tradable=latest_tick_for_instrument['tradable'],
-                    last_price=latest_tick_for_instrument['last_price'],
-                    last_traded_quantity=latest_tick_for_instrument['last_traded_quantity'],
-                    last_trade_time=latest_tick_for_instrument['last_trade_time'],
-                    ticker_received_time=latest_tick_for_instrument['ticker_received_time'],
-                    depth=latest_tick_for_instrument['depth'],
-                    ws_id=ws.ws_id))
+            if ws.try_ordering:
+                kite_client = get_kite_client_from_cache()
+                available_holdings_for_instrument = kite_client.available_holdings[instrument_token]
+                available_margin = kite_client.available_margin
+                max_buy_quantity = min(available_holdings_for_instrument,
+                                       available_margin / latest_tick_for_instrument['last_price'])
+            else:
+                max_buy_quantity = instrument.max_buy_value / latest_tick_for_instrument['last_price'] \
+                    if latest_tick_for_instrument['last_price'] > 0 else 0
 
-                raw_tickers.append(init_raw_ticker_data(
-                    exchange_timestamp=latest_tick_for_equivalent['exchange_timestamp'],
-                    instrument_token=latest_tick_for_equivalent['instrument_token'],
-                    tradable=latest_tick_for_equivalent['tradable'],
-                    last_price=latest_tick_for_equivalent['last_price'],
-                    last_traded_quantity=latest_tick_for_equivalent['last_traded_quantity'],
-                    last_trade_time=latest_tick_for_equivalent['last_trade_time'],
-                    ticker_received_time=latest_tick_for_equivalent['ticker_received_time'],
-                    depth=latest_tick_for_equivalent['depth'],
-                    ws_id=ws.ws_id))
+            opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
+                                          instrument.threshold_percentage, instrument.buy_threshold,
+                                          max_buy_quantity, ws.ws_id)
+            if not opportunity:
+                continue
+
+            num_of_opportunity += 1
+
+            if ws.try_ordering:
+                opportunity = realise_arbitrage_opportunity(opportunity)
+
+            add(opportunity)
+
+            raw_tickers.append(init_raw_ticker_data(
+                exchange_timestamp=latest_tick_for_instrument['exchange_timestamp'],
+                instrument_token=latest_tick_for_instrument['instrument_token'],
+                tradable=latest_tick_for_instrument['tradable'],
+                last_price=latest_tick_for_instrument['last_price'],
+                last_traded_quantity=latest_tick_for_instrument['last_traded_quantity'],
+                last_trade_time=latest_tick_for_instrument['last_trade_time'],
+                ticker_received_time=latest_tick_for_instrument['ticker_received_time'],
+                depth=latest_tick_for_instrument['depth'],
+                ws_id=ws.ws_id))
+
+            raw_tickers.append(init_raw_ticker_data(
+                exchange_timestamp=latest_tick_for_equivalent['exchange_timestamp'],
+                instrument_token=latest_tick_for_equivalent['instrument_token'],
+                tradable=latest_tick_for_equivalent['tradable'],
+                last_price=latest_tick_for_equivalent['last_price'],
+                last_traded_quantity=latest_tick_for_equivalent['last_traded_quantity'],
+                last_trade_time=latest_tick_for_equivalent['last_trade_time'],
+                ticker_received_time=latest_tick_for_equivalent['ticker_received_time'],
+                depth=latest_tick_for_equivalent['depth'],
+                ws_id=ws.ws_id))
+
         add_all(raw_tickers)
 
         logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
@@ -113,7 +133,7 @@ def on_order_update(ws, data):
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering):
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id, mode=mode)
+                     token_map=token_map, ws_id=ws_id, mode=mode, try_ordering=try_ordering)
 
     # Assign the callbacks.
     kws.on_ticks = on_ticks

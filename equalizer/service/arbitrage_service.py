@@ -6,9 +6,7 @@ from datetime import datetime
 from copy import deepcopy
 
 
-def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_buy_value, ws_id):
-    max_buy_quantity = max_buy_value / ticker1['last_price'] if ticker1['last_price'] > 0 else 0
-
+def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_buy_quantity, ws_id):
     # strategy 1 - buy from ticker2 and sell in ticker1
     ticker1_bids = deepcopy(ticker1)['depth']['buy']
     ticker2_offers = deepcopy(ticker2)['depth']['sell']

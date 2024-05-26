@@ -1,7 +1,8 @@
 from kiteconnect.utils import get_sensitive_parameter, set_timezone_in_datetime
 from kiteconnect import KiteConnect
-from flask import session, abort
+from flask import abort
 from datetime import datetime
+from equalizer.web import global_cache
 
 
 def get_kite_client(root=None, debug=False):
@@ -15,24 +16,27 @@ def get_kite_client(root=None, debug=False):
     if not password:
         abort(500, "Invalid password.")
 
-    kite = KiteConnect(debug=debug, root=root, user_id=user_id, password=password)
-    if "enc_token" in session:
-        kite.set_enc_token_in_session(kite, session["enc_token"])
-    if "request_id" in session:
-        kite.set_request_id_in_session(kite, session["request_id"])
+    return KiteConnect(debug=debug, root=root, user_id=user_id, password=password)
+
+
+def get_kite_client_from_cache():
+    if "kite_client" in global_cache:
+        return global_cache.get("kite_client")
+    kite = get_kite_client()
+    global_cache['kite_client'] = kite
     return kite
 
 
 def login_via_enc_token_and_return_client(enc_token):
-    kite = get_kite_client()
-    kite.set_enc_token_in_session(kite, enc_token)
+    kite = get_kite_client_from_cache()
+    kite.set_enc_token(enc_token)
     return kite
 
 
 def login_via_two_f_a():
-    kite = get_kite_client()
+    kite = get_kite_client_from_cache()
     # delete existing value of enc_token if any
-    kite.expire_current_session()
+    kite.expire_current_enc_token()
     kite.generate_request_id()
     if not kite.request_id:
         abort(500, "Couldn't generate request for login")
