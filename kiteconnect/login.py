@@ -30,8 +30,9 @@ def login_via_enc_token_and_return_client(enc_token):
 
 
 def login_via_two_f_a():
-    kite = get_kite_client("https://kite.zerodha.com")
-
+    kite = get_kite_client()
+    # delete existing value of enc_token if any
+    kite.expire_current_session()
     kite.generate_request_id()
     if not kite.request_id:
         abort(500, "Couldn't generate request for login")

@@ -36,8 +36,7 @@ class KiteConnect(object):
 
     # Default root API endpoint. It's possible to
     # override this by passing the `root` parameter during initialisation.
-    _default_root_uri = "https://api.kite.trade"
-    _default_login_uri = "https://kite.zerodha.com"
+    _default_root_uri = "https://kite.zerodha.com"
     _default_timeout = 7  # In seconds
 
     # Kite connect header version
@@ -130,8 +129,8 @@ class KiteConnect(object):
         "order.trades": "/orders/{order_id}/trades",
 
         "portfolio.positions": "/portfolio/positions",
-        "portfolio.holdings": "/portfolio/holdings",
-        "portfolio.holdings.auction": "/portfolio/holdings/auctions",
+        "portfolio.holdings": "/oms/portfolio/holdings",
+        "portfolio.holdings.auction": "/oms/portfolio/holdings/auctions",
         "portfolio.positions.convert": "/portfolio/positions",
 
         # MF api endpoints
@@ -264,6 +263,7 @@ class KiteConnect(object):
         given_timestamp = truncate_microseconds(given_timestamp)
 
         while attempts < max_attempts:
+            attempts += 1
             otp_meta = self.get_latest_otp_from_mail()
             if not otp_meta:
                 continue
@@ -273,7 +273,6 @@ class KiteConnect(object):
             if timestamp >= given_timestamp:
                 return otp
 
-            attempts += 1
             if attempts < max_attempts:
                 print(
                     f"Latest OTP timestamp ({timestamp}) is not later than the given timestamp ({given_timestamp}). Retrying in {wait_time} seconds...")
