@@ -17,7 +17,9 @@ from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
 from ticker_service import is_ticker_valid
 from order_service import realise_arbitrage_opportunity
+from charges_service import calc_transac_charges
 from Models.web_socket import WebSocket
+from Models.arbitrage_opportunity import ArbitrageOpportunity
 from arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 import time
@@ -34,8 +36,8 @@ def on_ticks(ws, ticks):
         logging.info("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks.keys()), len(tokens)))
 
         process_start_time = datetime.now()
-        num_of_opportunity = 0
         raw_tickers = []
+        kite_client = get_kite_client_from_cache()
 
         for instrument_token in list(ticks.keys()):
             latest_tick_for_instrument = ticks.get(instrument_token)
@@ -47,23 +49,21 @@ def on_ticks(ws, ticks):
             if not is_ticker_valid(latest_tick_for_equivalent) or not is_ticker_valid(latest_tick_for_instrument):
                 continue
 
-            if ws.try_ordering:
-                kite_client = get_kite_client_from_cache()
-                available_holdings_for_instrument = kite_client.available_holdings[instrument_token]
-                available_margin = kite_client.available_margin
-                max_buy_quantity = min(available_holdings_for_instrument,
-                                       available_margin / latest_tick_for_instrument['last_price'])
-            else:
-                max_buy_quantity = instrument.max_buy_value / latest_tick_for_instrument['last_price'] \
-                    if latest_tick_for_instrument['last_price'] > 0 else 0
+            ltp = latest_tick_for_instrument['last_price']
+
+            margin_and_holdings = kite_client.get_available_margin_and_holdings()
+            available_holdings_for_instrument = margin_and_holdings['available_holdings'][instrument_token] or 0
+            available_margin = margin_and_holdings['available_margin'] or 0
+            max_buy_quantity = min(available_holdings_for_instrument, available_margin / ltp)
+
+            if max_buy_quantity == 0:
+                continue
 
             opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-                                          instrument.threshold_percentage, instrument.buy_threshold,
+                                          ltp, instrument.min_profit_percent, instrument.product_type,
                                           max_buy_quantity, ws.ws_id)
             if not opportunity:
                 continue
-
-            num_of_opportunity += 1
 
             if ws.try_ordering:
                 opportunity = realise_arbitrage_opportunity(opportunity)
@@ -74,9 +74,7 @@ def on_ticks(ws, ticks):
             raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
 
         add_all(raw_tickers)
-
-        logging.info("websocket.{}.Elapsed time: {}, had {} opportunities"
-                     .format(ws.ws_id, datetime.now() - process_start_time, num_of_opportunity))
+        logging.info("websocket.{}.Elapsed time: {}.".format(ws.ws_id, datetime.now() - process_start_time))
 
 
 # Callback for successful connection.
@@ -110,6 +108,31 @@ def on_noreconnect(ws):
 
 def on_order_update(ws, data):
     logging.debug("websocket.{}.Order update : {}".format(ws.ws_id, data))
+    if 'order_id' not in data:
+        return
+
+    kite_client = get_kite_client_from_cache()
+
+    # update available margins and holdings
+    if data['status'] == ArbitrageOpportunity.COMPLETE or data['status'] == ArbitrageOpportunity.CANCELLED:
+        if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
+            kite_client.remove_used_margin(used_margin=calc_transac_charges(
+                order_value=data['filled_quantity'] * data['average_price'],
+                product_type=data['product'],
+                transaction_type=data['transaction_type']))
+        else:
+            kite_client.remove_used_margins_and_holdings(instrument_token=data['instrument_token'],
+                                                         used_holdings=data['filled_quantity'],
+                                                         used_margin=calc_transac_charges(
+                order_value=data['filled_quantity'] * data['average_price'],
+                product_type=data['product'],
+                transaction_type=data['transaction_type']))
+
+    # should we update status or just leave it for the post? - let the data decide!
+    if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
+        ArbitrageOpportunity.update_buy_status_by_buy_order_id(data['order_id'], data['status'])
+    else:
+        ArbitrageOpportunity.update_sell_status_by_sell_order_id(data['order_id'], data['status'])
 
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering):

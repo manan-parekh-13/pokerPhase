@@ -1,29 +1,32 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities
 from Models.arbitrage_instruments import ArbitrageInstruments
 from mysql_config import add_all
+from charges_service import get_min_percentage_reqd_for_min_profit
+from ticker_service import reduce_quantity_from_topmost_depth
 from kiteconnect.login import set_timezone_in_datetime
 from datetime import datetime
 from copy import deepcopy
 
 
-def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_buy_quantity, ws_id):
+def check_arbitrage(ticker1, ticker2, ltp, min_profit_percent, product_type, max_buy_quantity, ws_id):
     # strategy 1 - buy from ticker2 and sell in ticker1
     ticker1_bids = deepcopy(ticker1)['depth']['buy']
     ticker2_offers = deepcopy(ticker2)['depth']['sell']
-    result1 = get_price_and_quantity_for_arbitrage(bids_data=ticker1_bids, offers_data=ticker2_offers,
-                                                   threshold_percentage=threshold_percentage,
-                                                   max_buy_quantity=max_buy_quantity)
 
-    if result1['buy_price'] * result1['quantity'] >= buy_threshold:
-        sell_price = result1['sell_price']
-        buy_price = result1['buy_price']
-        quantity = result1['quantity']
+    result1 = get_price_and_quantity_for_arbitrage(bids_data=ticker1_bids,
+                                                   offers_data=ticker2_offers,
+                                                   min_prof_coef=min_profit_percent / 100,
+                                                   max_buy_quantity=max_buy_quantity,
+                                                   ltp=ltp,
+                                                   product_type=product_type)
+
+    if result1['quantity'] > 0:
         # In case strategy 1 has opportunities, no need to try strategy 2
         return init_arbitrage_opportunities(buy_source=ticker2['instrument_token'],
                                             sell_source=ticker1['instrument_token'],
-                                            quantity=quantity,
-                                            buy_price=buy_price,
-                                            sell_price=sell_price,
+                                            quantity=result1['quantity'],
+                                            buy_price=result1['buy_price'],
+                                            sell_price=result1['sell_price'],
                                             buy_source_ticker_time=ticker2[
                                                 'ticker_received_time'],
                                             sell_source_ticker_time=ticker1[
@@ -38,19 +41,19 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
     # strategy 2 - buy from ticker1 and sell in ticker2
     ticker2_bids = deepcopy(ticker2)['depth']['buy']
     ticker1_offers = deepcopy(ticker1)['depth']['sell']
-    result2 = get_price_and_quantity_for_arbitrage(bids_data=ticker2_bids, offers_data=ticker1_offers,
-                                                   threshold_percentage=threshold_percentage,
-                                                   max_buy_quantity=max_buy_quantity)
+    result2 = get_price_and_quantity_for_arbitrage(bids_data=ticker2_bids,
+                                                   offers_data=ticker1_offers,
+                                                   min_prof_coef=min_profit_percent / 100,
+                                                   max_buy_quantity=max_buy_quantity,
+                                                   ltp=ltp,
+                                                   product_type=product_type)
 
-    if result2['buy_price'] * result2['quantity'] >= buy_threshold:
-        sell_price = result2['sell_price']
-        buy_price = result2['buy_price']
-        quantity = result2['quantity']
+    if result2['quantity'] > 0:
         return init_arbitrage_opportunities(buy_source=ticker1['instrument_token'],
                                             sell_source=ticker2['instrument_token'],
-                                            quantity=quantity,
-                                            buy_price=buy_price,
-                                            sell_price=sell_price,
+                                            quantity=result2['quantity'],
+                                            buy_price=result2['buy_price'],
+                                            sell_price=result2['sell_price'],
                                             buy_source_ticker_time=ticker1[
                                                 'ticker_received_time'],
                                             sell_source_ticker_time=ticker2[
@@ -61,10 +64,7 @@ def check_arbitrage(ticker1, ticker2, threshold_percentage, buy_threshold, max_b
     return None
 
 
-def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_percentage, max_buy_quantity):
-    if not bids_data or not offers_data:
-        return None
-
+def get_price_and_quantity_for_arbitrage(bids_data, offers_data, min_prof_coef, max_buy_quantity, ltp, product_type):
     buy_price = 0
     sell_price = 0
     quantity = 0
@@ -73,36 +73,28 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_perce
         lowest_buy = offers_data[0]
         highest_sell = bids_data[0]
 
-        spread = highest_sell['price'] - lowest_buy['price']
-        spread_percentage = spread * 100 / lowest_buy['price'] if lowest_buy['price'] > 0 else 0
-
-        if spread_percentage < threshold_percentage:
-            break
+        temp_quantity = min(quantity + min(lowest_buy['quantity'], highest_sell['quantity']), max_buy_quantity)
+        if temp_quantity == 0:
+            break;
 
         buy_price = lowest_buy['price']
         sell_price = highest_sell['price']
 
-        if lowest_buy['quantity'] > highest_sell['quantity']:
-            quantity += highest_sell['quantity']
-            if quantity > max_buy_quantity:
-                quantity = max_buy_quantity
-                break
-            offers_data[0]['quantity'] = lowest_buy['quantity'] - highest_sell['quantity']
-            bids_data.pop(0)
-        elif lowest_buy['quantity'] < highest_sell['quantity']:
-            quantity += lowest_buy['quantity']
-            if quantity > max_buy_quantity:
-                quantity = max_buy_quantity
-                break
-            bids_data[0]['quantity'] = highest_sell['quantity'] - lowest_buy['quantity']
-            offers_data.pop(0)
-        else:
-            quantity += lowest_buy['quantity']
-            if quantity > max_buy_quantity:
-                quantity = max_buy_quantity
-                break
-            bids_data.pop(0)
-            offers_data.pop(0)
+        threshold_spread_coef = get_min_percentage_reqd_for_min_profit(max_buy_value=temp_quantity * ltp,
+                                                                       min_profit_coef=min_prof_coef,
+                                                                       product_type=product_type)
+
+        spread_coef = sell_price - buy_price / buy_price if buy_price > 0 else 0
+
+        if spread_coef < threshold_spread_coef:
+            break
+
+        quantity = temp_quantity
+        if quantity == max_buy_quantity:
+            break;
+
+        reduce_quantity_from_topmost_depth(offers_data, quantity)
+        reduce_quantity_from_topmost_depth(bids_data, quantity)
 
         if len(bids_data) == 0 or len(offers_data) == 0:
             break

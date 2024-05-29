@@ -285,9 +285,9 @@ class KiteConnect(object):
 
         return None
 
-    def get_available_margin(self):
+    def get_available_margin_and_holdings(self):
         with self.lock:
-            return self.available_margin
+            return { 'available_margin': self.available_margin, 'available_holdings': self.available_holdings }
 
     def get_available_holdings(self):
         with self.lock:
@@ -297,6 +297,15 @@ class KiteConnect(object):
         with self.lock:
             self.available_margin = new_margins
             self.available_holdings = new_holdings
+
+    def remove_used_margin(self, used_margin):
+        with self.lock:
+            self.available_margin = self.available_margin - used_margin
+
+    def remove_used_margins_and_holdings(self, used_margin, instrument_token, used_holdings):
+        with self.lock:
+            self.available_margin = self.available_margin - used_margin
+            self.available_holdings[instrument_token] = self.available_holdings[instrument_token] - used_holdings
 
     def set_request_id(self, request_id):
         """Set the `request_id` received after a creating a login request."""

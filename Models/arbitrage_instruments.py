@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Float
+from sqlalchemy import Column, String, Integer, DECIMAL
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine, session
 
@@ -20,9 +20,8 @@ class ArbitrageInstruments(Base):
     exchange_token2 = Column(Integer, nullable=False)
     instrument_token1 = Column(Integer, nullable=False)
     instrument_token2 = Column(Integer, nullable=False)
-    threshold_percentage = Column(Float)
-    buy_threshold = Column(Float)
-    max_buy_value = Column(Float)
+    min_profit_percent = Column(DECIMAL(8, 2))
+    product_type = Column(String(10))
     ws_id = Column(Integer)
 
     @classmethod
