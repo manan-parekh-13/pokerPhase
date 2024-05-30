@@ -1,5 +1,5 @@
 from Models.holdings import Holdings
-from equalizer.web import global_cache
+from kiteconnect.login import global_cache
 
 
 def get_holdings_available_for_arbitrage_in_map():

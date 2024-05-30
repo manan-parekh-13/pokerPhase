@@ -1,8 +1,8 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities
 from Models.arbitrage_instruments import ArbitrageInstruments
 from mysql_config import add_all
-from charges_service import get_min_percentage_reqd_for_min_profit
-from ticker_service import reduce_quantity_from_topmost_depth
+from equalizer.service.charges_service import get_min_percentage_reqd_for_min_profit
+from equalizer.service.ticker_service import reduce_quantity_from_topmost_depth
 from kiteconnect.login import set_timezone_in_datetime
 from datetime import datetime
 from copy import deepcopy
@@ -73,14 +73,10 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, min_prof_coef, 
         lowest_buy = offers_data[0]
         highest_sell = bids_data[0]
 
-        temp_quantity = min(quantity + min(lowest_buy['quantity'], highest_sell['quantity']), max_buy_quantity)
-        if temp_quantity == 0:
-            break;
-
         buy_price = lowest_buy['price']
         sell_price = highest_sell['price']
 
-        threshold_spread_coef = get_min_percentage_reqd_for_min_profit(max_buy_value=temp_quantity * ltp,
+        threshold_spread_coef = get_min_percentage_reqd_for_min_profit(max_buy_value=max_buy_quantity * ltp,
                                                                        min_profit_coef=min_prof_coef,
                                                                        product_type=product_type)
 
@@ -89,15 +85,23 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, min_prof_coef, 
         if spread_coef < threshold_spread_coef:
             break
 
-        quantity = temp_quantity
-        if quantity == max_buy_quantity:
+        add_quantity = min(lowest_buy['quantity'], highest_sell['quantity'])
+        quantity = min(quantity + add_quantity, max_buy_quantity)
+        if quantity == max_buy_quantity or quantity == 0:
             break;
 
-        reduce_quantity_from_topmost_depth(offers_data, quantity)
-        reduce_quantity_from_topmost_depth(bids_data, quantity)
+        reduce_quantity_from_topmost_depth(offers_data, add_quantity)
+        reduce_quantity_from_topmost_depth(bids_data, add_quantity)
 
         if len(bids_data) == 0 or len(offers_data) == 0:
             break
+
+    if quantity != max_buy_quantity:
+        threshold_spread_coef = get_min_percentage_reqd_for_min_profit(max_buy_value=quantity * ltp,
+                                                                       min_profit_coef=min_prof_coef,
+                                                                       product_type=product_type)
+        spread_coef = sell_price - buy_price / buy_price
+        quantity = quantity if spread_coef > threshold_spread_coef else 0
 
     return {'buy_price': buy_price, 'sell_price': sell_price, 'quantity': quantity}
 

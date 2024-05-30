@@ -2,7 +2,8 @@ from kiteconnect.utils import get_sensitive_parameter, set_timezone_in_datetime
 from kiteconnect import KiteConnect
 from flask import abort
 from datetime import datetime
-from equalizer.web import global_cache
+
+global_cache = {}
 
 
 def get_kite_client(root=None, debug=False):

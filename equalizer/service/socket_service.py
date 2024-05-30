@@ -15,12 +15,12 @@ from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
-from ticker_service import is_ticker_valid
-from order_service import realise_arbitrage_opportunity
-from charges_service import calc_transac_charges
+from equalizer.service.ticker_service import is_ticker_valid
+from equalizer.service.order_service import realise_arbitrage_opportunity
+from equalizer.service.charges_service import calc_transac_charges
 from Models.web_socket import WebSocket
 from Models.arbitrage_opportunity import ArbitrageOpportunity
-from arbitrage_service import check_arbitrage
+from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 import time
 from kiteconnect.utils import send_slack_message

@@ -1,5 +1,4 @@
-from kiteconnect.login import get_kite_client_from_cache
-from equalizer.web import global_cache
+from kiteconnect.login import get_kite_client_from_cache, global_cache
 from Models.arbitrage_opportunity import ArbitrageOpportunity
 import logging
 from kiteconnect.utils import send_slack_message

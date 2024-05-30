@@ -4,10 +4,10 @@ import json
 
 from flask import Flask, jsonify, request, abort
 
-from kiteconnect.login import login_via_enc_token_and_return_client, login_via_two_f_a, get_kite_client_from_cache
-from service.socket_service import init_kite_web_socket, send_web_socket_updates
+from kiteconnect.login import (login_via_enc_token_and_return_client, login_via_two_f_a, get_kite_client_from_cache,
+                               global_cache)
+from service.socket_service import init_kite_web_socket, send_web_socket_updates, get_ws_id_to_web_socket_map
 from service.arbitrage_service import get_ws_id_to_token_to_instrument_map
-from service.socket_service import get_ws_id_to_web_socket_map
 from service.instrument_service import get_token_to_arbitrage_instrument_map
 from environment.loader import load_environment
 from mysql_config import add_all
@@ -26,7 +26,6 @@ HOST = "127.0.0.1"
 environment = os.getenv('FLASK_ENV')
 load_environment(environment)
 
-global_cache = {}
 
 # App
 app = Flask(__name__)

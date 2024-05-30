@@ -235,7 +235,7 @@ class KiteConnect(object):
         requests.packages.urllib3.disable_warnings()
 
     def expire_current_enc_token(self):
-        self.set_enc_token(self, None)
+        self.set_enc_token(None)
 
     def set_enc_token(self, enc_token):
         """Set the `enc_token` received after a successful authentication."""
@@ -964,7 +964,7 @@ class KiteConnect(object):
             if r.cookies and not self.enc_token:
                 enctoken = r.cookies.get("enctoken")
                 if enctoken:
-                    self.set_enc_token(self, enctoken)
+                    self.set_enc_token(enctoken)
 
             return data["data"]
         elif "csv" in r.headers["content-type"]:
