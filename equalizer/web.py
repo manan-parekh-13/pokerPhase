@@ -86,12 +86,13 @@ def start_up_equalizer():
     global_cache['instrument_map'] = token_to_arbitrage_instrument_map
 
     # get and set available margin and holdings in global cache
-    usable_margin = request.form.get('usable_margin')
+    usable_margin = 0 if not request.form.get('usable_margin') else int(request.form.get('usable_margin'))
+
     available_holdings_map = get_holdings_available_for_arbitrage_in_map()
     kite.set_available_margin_and_holdings(new_margins=usable_margin, new_holdings=available_holdings_map)
 
-    send_slack_message("Available margin: ".format(usable_margin))
-    send_slack_message("Available holdings: ".format(available_holdings_map))
+    send_slack_message("Available margin: {}".format(usable_margin))
+    send_slack_message("Available holdings: {}".format(available_holdings_map))
 
     # prepare web socket wise token map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
@@ -151,6 +152,21 @@ def instruments():
     instrument_model_list = instrument.convert_all(instrument_records)
     add_all(instrument_model_list)
     return jsonify(instrument_records)
+
+
+# @app.route("/dummy_order.json", methods=['POST'])
+# def try_dummy_order():
+#     kite_client = get_kite_client_from_cache()
+#     return kite_client.place_order(
+#         variety=kite_client.VARIETY_REGULAR,
+#         product=kite_client.PRODUCT_CNC,
+#         order_type=kite_client.ORDER_TYPE_MARKET,
+#         validity=kite_client.VALIDITY_IOC,
+#         exchange=kite_client.EXCHANGE_NSE,
+#         tradingsymbol='TECHM',
+#         transaction_type=kite_client.TRANSACTION_TYPE_BUY,
+#         quantity=1
+#     )
 
 
 if __name__ == "__main__":

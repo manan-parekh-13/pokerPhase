@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine, session
 from sqlalchemy.sql import update
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
+from kiteconnect.login import get_kite_client_from_cache
 
 Base = declarative_base()
 
@@ -11,6 +12,7 @@ def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
                                  sell_price, quantity, buy_source_ticker_time,
                                  sell_source_ticker_time, created_at, ws_id):
     # Create a new row for the ArbitrageOpportunity table
+    kite_client = get_kite_client_from_cache()
     return ArbitrageOpportunity(
         buy_source=buy_source,
         sell_source=sell_source,
@@ -23,22 +25,13 @@ def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
         ws_id=ws_id,
         buy_order_id=None,
         sell_order_id=None,
-        buy_status=ArbitrageOpportunity.GENERATED,
-        sell_status=ArbitrageOpportunity.GENERATED
+        buy_status=kite_client.GENERATED,
+        sell_status=kite_client.GENERATED
     )
 
 
 class ArbitrageOpportunity(Base):
     __tablename__ = 'arbitrage_opportunities'
-
-    # Opportunity status throughout its lifecycle.
-    GENERATED = "GENERATED"
-    FAILED = "FAILED"
-    TRIED = "TRIED"
-    # Order status (subset of opportunity status lifecycle)
-    REJECTED = "REJECTED" # STATUS_REJECTED
-    CANCELLED = "CANCELLED" # STATUS_CANCELLED
-    COMPLETE = "COMPLETE" # STATUS_COMPLETE
 
     id = Column(Integer, primary_key=True)
     buy_source = Column(Integer)

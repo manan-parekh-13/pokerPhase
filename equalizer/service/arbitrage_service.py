@@ -80,7 +80,7 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, min_prof_coef, 
                                                                        min_profit_coef=min_prof_coef,
                                                                        product_type=product_type)
 
-        spread_coef = sell_price - buy_price / buy_price if buy_price > 0 else 0
+        spread_coef = (sell_price - buy_price) / buy_price if buy_price > 0 else 0
 
         if spread_coef < threshold_spread_coef:
             break
@@ -96,7 +96,7 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, min_prof_coef, 
         if len(bids_data) == 0 or len(offers_data) == 0:
             break
 
-    if quantity != max_buy_quantity:
+    if quantity > 0 and quantity != max_buy_quantity:
         threshold_spread_coef = get_min_percentage_reqd_for_min_profit(max_buy_value=quantity * ltp,
                                                                        min_profit_coef=min_prof_coef,
                                                                        product_type=product_type)

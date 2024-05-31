@@ -7,6 +7,9 @@ import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
+AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+
 
 def get_sensitive_parameter(parameter_name):
     if os.getenv(parameter_name):
@@ -45,9 +48,10 @@ def send_slack_message(message):
     logging.info(json.dumps(message))
 
     if get_sensitive_parameter('FLASK_ENV') == 'local':
-        return
+        webhook_url = LOCAL_WEBHOOK_URL
+    else:
+        webhook_url = AWS_WEBHOOK_URL
 
-    webhook_url = 'https://hooks.slack.com/services/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'
     data = {'text': message}
     headers = {'Content-Type': 'application/json'}
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)

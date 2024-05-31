@@ -52,9 +52,13 @@ def on_ticks(ws, ticks):
             ltp = latest_tick_for_instrument['last_price']
 
             margin_and_holdings = kite_client.get_available_margin_and_holdings()
-            available_holdings_for_instrument = margin_and_holdings['available_holdings'][instrument_token] or 0
+            available_holdings_for_instrument = margin_and_holdings['available_holdings'].get(instrument_token) or 0
             available_margin = margin_and_holdings['available_margin'] or 0
-            max_buy_quantity = min(available_holdings_for_instrument, available_margin / ltp)
+
+            if ws.try_ordering:
+                max_buy_quantity = min(available_holdings_for_instrument, available_margin / ltp)
+            else:
+                max_buy_quantity = available_margin / ltp
 
             if max_buy_quantity == 0:
                 continue
@@ -66,7 +70,7 @@ def on_ticks(ws, ticks):
                 continue
 
             if ws.try_ordering:
-                opportunity = realise_arbitrage_opportunity(opportunity)
+                opportunity = realise_arbitrage_opportunity(opportunity, instrument.product_type)
 
             add(opportunity)
 
@@ -114,7 +118,7 @@ def on_order_update(ws, data):
     kite_client = get_kite_client_from_cache()
 
     # update available margins and holdings
-    if data['status'] == ArbitrageOpportunity.COMPLETE or data['status'] == ArbitrageOpportunity.CANCELLED:
+    if data['status'] == kite_client.COMPLETE or data['status'] == kite_client.CANCELLED:
         if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
             kite_client.remove_used_margin(used_margin=calc_transac_charges(
                 order_value=data['filled_quantity'] * data['average_price'],

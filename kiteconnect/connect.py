@@ -88,9 +88,14 @@ class KiteConnect(object):
     MARGIN_COMMODITY = "commodity"
 
     # Status constants
-    STATUS_COMPLETE = "COMPLETE"
-    STATUS_REJECTED = "REJECTED"
-    STATUS_CANCELLED = "CANCELLED"
+    # Opportunity status throughout its lifecycle.
+    GENERATED = "GENERATED"
+    FAILED = "FAILED"
+    TRIED = "TRIED"
+    # Order status (subset of opportunity status lifecycle)
+    REJECTED = "REJECTED"  # STATUS_REJECTED
+    CANCELLED = "CANCELLED"  # STATUS_CANCELLED
+    COMPLETE = "COMPLETE"  # STATUS_COMPLETE
 
     # GTT order type
     GTT_TYPE_OCO = "two-leg"
@@ -122,7 +127,7 @@ class KiteConnect(object):
         "trades": "/trades",
 
         "order.info": "/orders/{order_id}",
-        "order.place": "/orders/{variety}",
+        "order.place": "/oms/orders/{variety}",
         "order.modify": "/orders/{variety}/{order_id}",
         "order.cancel": "/orders/{variety}/{order_id}",
         "order.trades": "/orders/{order_id}/trades",
