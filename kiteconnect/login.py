@@ -1,4 +1,4 @@
-from kiteconnect.utils import get_sensitive_parameter, set_timezone_in_datetime
+from kiteconnect.utils import get_env_variable, set_timezone_in_datetime
 from kiteconnect import KiteConnect
 from flask import abort
 from datetime import datetime
@@ -9,11 +9,11 @@ global_cache = {}
 def get_kite_client(root=None, debug=False):
     """Returns a kite client object
     """
-    user_id = get_sensitive_parameter('USER_ID')
+    user_id = get_env_variable('USER_ID')
     if not user_id:
         abort(500, "Invalid user_id.")
 
-    password = get_sensitive_parameter('PASSWORD')
+    password = get_env_variable('PASSWORD')
     if not password:
         abort(500, "Invalid password.")
 
@@ -28,7 +28,7 @@ def get_kite_client_from_cache():
     return kite
 
 
-def login_via_enc_token_and_return_client(enc_token):
+def login_via_enc_token(enc_token):
     kite = get_kite_client_from_cache()
     kite.set_enc_token(enc_token)
     return kite

@@ -3,7 +3,7 @@ from kiteconnect.login import global_cache
 
 
 def get_holdings_available_for_arbitrage_in_map():
-    instrument_token_map = global_cache['instrument_map']
+    instrument_token_map = global_cache['token_to_equivalent_map']
 
     available_holdings = Holdings.get_holdings_available_for_arbitrage()
     if not available_holdings:

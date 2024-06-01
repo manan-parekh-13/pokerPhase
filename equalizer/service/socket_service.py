@@ -23,7 +23,7 @@ from Models.order_info import init_order_info_from_order_update
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 import time
-from kiteconnect.utils import log_and_notify
+from kiteconnect.utils import log_and_notify, get_env_variable
 from kiteconnect.login import get_kite_client_from_cache
 
 logging.basicConfig(level=logging.DEBUG)
@@ -31,54 +31,54 @@ logging.basicConfig(level=logging.DEBUG)
 
 # Callback for tick reception.
 def on_ticks(ws, ticks):
-    if len(ticks.keys()) > 0:
-        tokens = list(ws.token_map.keys())
-        logging.info("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks.keys()), len(tokens)))
+    if not ticks:
+        return
+    logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
 
-        process_start_time = datetime.now()
-        raw_tickers = []
-        kite_client = get_kite_client_from_cache()
+    process_start_time = datetime.now()
+    raw_tickers = []
+    kite_client = get_kite_client_from_cache()
 
-        for instrument_token in list(ticks.keys()):
-            latest_tick_for_instrument = ticks.get(instrument_token)
-            instrument = ws.token_map.get(instrument_token)
-            equivalent_token = instrument.equivalent_token
-            latest_tick_for_equivalent = ws.latest_tick_map.get(equivalent_token)
-            ws.latest_tick_map[instrument_token] = latest_tick_for_instrument
+    for instrument_token, latest_tick_for_instrument in ticks.items():
+        # update latest tick map
+        ws.latest_tick_map[instrument_token] = latest_tick_for_instrument
 
-            if not is_ticker_valid(latest_tick_for_equivalent) or not is_ticker_valid(latest_tick_for_instrument):
-                continue
+        latest_tick_for_equivalent = get_equivalent_tick_from_token(ws, instrument_token)
 
-            ltp = latest_tick_for_instrument['last_price']
+        if not is_ticker_valid(latest_tick_for_equivalent) or not is_ticker_valid(latest_tick_for_instrument):
+            continue
 
+        ltp = latest_tick_for_instrument['last_price']
+
+        if ws.try_ordering:
             margin_and_holdings = kite_client.get_available_margin_and_holdings_for_instrument(instrument_token)
             available_holdings = margin_and_holdings['available_holdings']
             available_margin = margin_and_holdings['available_margin']
+            max_buy_quantity = min(available_holdings, available_margin / ltp)
+        else:
+            max_buy_quantity = get_env_variable('DEFAULT_MARGIN_FOR_CHECKING') / ltp
 
-            if ws.try_ordering:
-                max_buy_quantity = min(available_holdings, available_margin / ltp)
-            else:
-                max_buy_quantity = available_margin / ltp
+        if max_buy_quantity == 0:
+            continue
 
-            if max_buy_quantity == 0:
-                continue
+        instrument = get_instrument_from_token(ws, instrument_token)
 
-            opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-                                          ltp, instrument.min_profit_percent, instrument.product_type,
-                                          max_buy_quantity, ws.ws_id)
-            if not opportunity:
-                continue
+        opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
+                                      instrument.threshold_spread_coef, instrument.min_profit_percent,
+                                      instrument.product_type, max_buy_quantity, ws.ws_id)
+        if not opportunity:
+            continue
 
-            if ws.try_ordering:
-                opportunity = realise_arbitrage_opportunity(opportunity, instrument.product_type)
+        if ws.try_ordering:
+            opportunity = realise_arbitrage_opportunity(opportunity, instrument.product_type)
 
-            add(opportunity)
+        add(opportunity)
 
-            raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
-            raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
+        raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
+        raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
 
-        add_all(raw_tickers)
-        logging.info("websocket.{}.Elapsed time: {}.".format(ws.ws_id, datetime.now() - process_start_time))
+    add_all(raw_tickers)
+    logging.info("websocket.{}.Elapsed time: {}.".format(ws.ws_id, datetime.now() - process_start_time))
 
 
 # Callback for successful connection.
@@ -169,6 +169,7 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
 
 def send_web_socket_updates():
     count = 0
+    # Block main thread
     while True:
         if count % 60 == 0:
             log_and_notify("Equalizer up and running")
@@ -185,3 +186,13 @@ def get_ws_id_to_web_socket_map():
         ws_id_to_socket_map[web_socket.ws_id] = web_socket
 
     return ws_id_to_socket_map
+
+
+def get_instrument_from_token(ws, instrument_token):
+    return ws.token_map.get(instrument_token)
+
+
+def get_equivalent_tick_from_token(ws, instrument_token):
+    instrument = get_instrument_from_token(ws, instrument_token)
+    equivalent_token = instrument.equivalent_token
+    return ws.latest_tick_map.get(equivalent_token)

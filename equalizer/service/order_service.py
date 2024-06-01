@@ -33,7 +33,7 @@ def realise_arbitrage_opportunity(opportunity, product_type):
 
 def place_order_for_opportunity_by_transaction_type(opportunity, transaction_type, product_type):
     kite_client = get_kite_client_from_cache()
-    instrument_token_map = global_cache['instrument_map']
+    instrument_token_map = global_cache['token_to_equivalent_map']
 
     if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
         instrument = instrument_token_map.get(opportunity.buy_source)

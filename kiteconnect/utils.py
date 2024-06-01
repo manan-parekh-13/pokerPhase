@@ -11,13 +11,8 @@ AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/T073W50N3K8/B073N7GCHL7/wGcT
 LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 
 
-def get_sensitive_parameter(parameter_name):
-    if os.getenv(parameter_name):
-        return os.getenv(parameter_name)
-    # Use Google Cloud Secret Manager for GCP deployment
-    else:
-        # Fetch parameter from Secret Manager
-        return None
+def get_env_variable(parameter_name):
+    return os.getenv(parameter_name)
 
 
 def convert_str_to_datetime(timestamp_str):
@@ -47,7 +42,7 @@ def truncate_microseconds(timestamp):
 def log_and_notify(message):
     logging.info(json.dumps(message))
 
-    if get_sensitive_parameter('FLASK_ENV') == 'local':
+    if get_env_variable('FLASK_ENV') == 'local':
         webhook_url = LOCAL_WEBHOOK_URL
     else:
         webhook_url = AWS_WEBHOOK_URL

@@ -20,7 +20,7 @@ import time
 import threading
 
 from .__version__ import __version__, __title__
-from kiteconnect.utils import get_sensitive_parameter, convert_str_to_datetime, truncate_microseconds
+from kiteconnect.utils import get_env_variable, convert_str_to_datetime, truncate_microseconds
 import kiteconnect.exceptions as ex
 
 log = logging.getLogger(__name__)
@@ -251,8 +251,8 @@ class KiteConnect(object):
 
     @staticmethod
     def get_latest_otp_from_mail():
-        gmail_api_key = get_sensitive_parameter('GMAIL_API_KEY')
-        gmail_api_path = get_sensitive_parameter('GMAIL_API_PATH')
+        gmail_api_key = get_env_variable('GMAIL_API_KEY')
+        gmail_api_path = get_env_variable('GMAIL_API_PATH')
 
         params = {
             "label": "zerodha-otp",
