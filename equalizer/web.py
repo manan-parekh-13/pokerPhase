@@ -130,21 +130,6 @@ def instruments():
     add_all(instrument_model_list)
     return jsonify(instrument_records)
 
-# open with caution
-# @app.route("/dummy_order.json", methods=['POST'])
-# def try_dummy_order():
-#     kite_client = get_kite_client_from_cache()
-#     return kite_client.place_order(
-#         variety=kite_client.VARIETY_REGULAR,
-#         product=kite_client.PRODUCT_CNC,
-#         order_type=kite_client.ORDER_TYPE_MARKET,
-#         validity=kite_client.VALIDITY_IOC,
-#         exchange=kite_client.EXCHANGE_NSE,
-#         tradingsymbol='TECHM',
-#         transaction_type=kite_client.TRANSACTION_TYPE_BUY,
-#         quantity=1
-#     )
-
 
 if __name__ == "__main__":
     logging.info("Starting server: http://{host}:{port}".format(host=HOST, port=PORT))

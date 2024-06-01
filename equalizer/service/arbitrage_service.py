@@ -62,7 +62,6 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_sprea
 
         buy_price = lowest_buy['price']
         sell_price = highest_sell['price']
-
         spread_coef = (sell_price - buy_price) / buy_price if buy_price > 0 else 0
 
         if spread_coef < threshold_spread_coef:

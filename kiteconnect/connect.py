@@ -127,55 +127,55 @@ class KiteConnect(object):
 
 
         # -------------------------------------------------- UNTESTED -------------------------------------------
-        "api.token": "/session/token",
-        "api.token.invalidate": "/session/token",
-        "api.token.renew": "/session/refresh_token",
-        "user.profile": "/user/profile",
-
-        "trades": "/trades",
-
-        "order.modify": "/orders/{variety}/{order_id}",
-        "order.cancel": "/orders/{variety}/{order_id}",
-        "order.trades": "/orders/{order_id}/trades",
-
-        "portfolio.positions": "/portfolio/positions",
-        "portfolio.positions.convert": "/portfolio/positions",
-
-        # MF api endpoints
-        "mf.orders": "/mf/orders",
-        "mf.order.info": "/mf/orders/{order_id}",
-        "mf.order.place": "/mf/orders",
-        "mf.order.cancel": "/mf/orders/{order_id}",
-
-        "mf.sips": "/mf/sips",
-        "mf.sip.info": "/mf/sips/{sip_id}",
-        "mf.sip.place": "/mf/sips",
-        "mf.sip.modify": "/mf/sips/{sip_id}",
-        "mf.sip.cancel": "/mf/sips/{sip_id}",
-
-        "mf.holdings": "/mf/holdings",
-        "mf.instruments": "/mf/instruments",
-
-        "market.instruments": "/instruments/{exchange}",
-        "market.margins": "/margins/{segment}",
-        "market.historical": "/instruments/historical/{instrument_token}/{interval}",
-        "market.trigger_range": "/instruments/trigger_range/{transaction_type}",
-
-        "market.quote": "/quote",
-        "market.quote.ohlc": "/quote/ohlc",
-        "market.quote.ltp": "/quote/ltp",
-
-        # GTT endpoints
-        "gtt": "/gtt/triggers",
-        "gtt.place": "/gtt/triggers",
-        "gtt.info": "/gtt/triggers/{trigger_id}",
-        "gtt.modify": "/gtt/triggers/{trigger_id}",
-        "gtt.delete": "/gtt/triggers/{trigger_id}",
-
-        # Margin computation endpoints
-        "order.margins": "/margins/orders",
-        "order.margins.basket": "/margins/basket",
-        "order.contract_note": "/charges/orders",
+        # "api.token": "/session/token",
+        # "api.token.invalidate": "/session/token",
+        # "api.token.renew": "/session/refresh_token",
+        # "user.profile": "/user/profile",
+        #
+        # "trades": "/trades",
+        #
+        # "order.modify": "/orders/{variety}/{order_id}",
+        # "order.cancel": "/orders/{variety}/{order_id}",
+        # "order.trades": "/orders/{order_id}/trades",
+        #
+        # "portfolio.positions": "/portfolio/positions",
+        # "portfolio.positions.convert": "/portfolio/positions",
+        #
+        # # MF api endpoints
+        # "mf.orders": "/mf/orders",
+        # "mf.order.info": "/mf/orders/{order_id}",
+        # "mf.order.place": "/mf/orders",
+        # "mf.order.cancel": "/mf/orders/{order_id}",
+        #
+        # "mf.sips": "/mf/sips",
+        # "mf.sip.info": "/mf/sips/{sip_id}",
+        # "mf.sip.place": "/mf/sips",
+        # "mf.sip.modify": "/mf/sips/{sip_id}",
+        # "mf.sip.cancel": "/mf/sips/{sip_id}",
+        #
+        # "mf.holdings": "/mf/holdings",
+        # "mf.instruments": "/mf/instruments",
+        #
+        # "market.instruments": "/instruments/{exchange}",
+        # "market.margins": "/margins/{segment}",
+        # "market.historical": "/instruments/historical/{instrument_token}/{interval}",
+        # "market.trigger_range": "/instruments/trigger_range/{transaction_type}",
+        #
+        # "market.quote": "/quote",
+        # "market.quote.ohlc": "/quote/ohlc",
+        # "market.quote.ltp": "/quote/ltp",
+        #
+        # # GTT endpoints
+        # "gtt": "/gtt/triggers",
+        # "gtt.place": "/gtt/triggers",
+        # "gtt.info": "/gtt/triggers/{trigger_id}",
+        # "gtt.modify": "/gtt/triggers/{trigger_id}",
+        # "gtt.delete": "/gtt/triggers/{trigger_id}",
+        #
+        # # Margin computation endpoints
+        # "order.margins": "/margins/orders",
+        # "order.margins.basket": "/margins/basket",
+        # "order.contract_note": "/charges/orders",
     }
 
     def __init__(self,
