@@ -1,7 +1,6 @@
 from kiteconnect.login import get_kite_client_from_cache, global_cache
-from Models.arbitrage_opportunity import ArbitrageOpportunity
 import logging
-from kiteconnect.utils import send_slack_message
+from kiteconnect.utils import log_and_notify
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -28,10 +27,7 @@ def realise_arbitrage_opportunity(opportunity, product_type):
                                                                            product_type)
 
     opportunity.buy_order_id = buy_order_id
-    opportunity.buy_status = kite_client.TRIED if buy_order_id else kite_client.FAILED
     opportunity.sell_order_id = sell_order_id
-    opportunity.sell_status = kite_client.TRIED if buy_order_id else kite_client.FAILED
-
     return opportunity
 
 
@@ -57,10 +53,10 @@ def place_order_for_opportunity_by_transaction_type(opportunity, transaction_typ
             quantity=opportunity.quantity,
             price=price
         )
-        send_slack_message("Order alert for: {}, {} {} at price: {}"
-                           .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
+        log_and_notify("Order placed for: {}, {} {} at price: {}"
+                       .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
         return order_id
     except Exception as e:
-        send_slack_message("Error while ordering: {}".format(e))
+        log_and_notify("Error while ordering: {}".format(e))
         return None
 

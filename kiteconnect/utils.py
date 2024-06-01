@@ -44,7 +44,7 @@ def truncate_microseconds(timestamp):
     return timestamp.replace(microsecond=0)
 
 
-def send_slack_message(message):
+def log_and_notify(message):
     logging.info(json.dumps(message))
 
     if get_sensitive_parameter('FLASK_ENV') == 'local':

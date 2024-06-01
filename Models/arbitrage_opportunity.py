@@ -1,7 +1,6 @@
-from sqlalchemy import Column, DECIMAL, Integer, String, Index
+from sqlalchemy import Column, DECIMAL, Integer, Index
 from sqlalchemy.ext.declarative import declarative_base
-from mysql_config import engine, session
-from sqlalchemy.sql import update
+from mysql_config import engine
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
 from kiteconnect.login import get_kite_client_from_cache
 
@@ -25,8 +24,6 @@ def init_arbitrage_opportunities(buy_source, sell_source, buy_price,
         ws_id=ws_id,
         buy_order_id=None,
         sell_order_id=None,
-        buy_status=kite_client.GENERATED,
-        sell_status=kite_client.GENERATED
     )
 
 
@@ -45,23 +42,11 @@ class ArbitrageOpportunity(Base):
     ws_id = Column(Integer)
     buy_order_id = Column(Integer)
     sell_order_id = Column(Integer)
-    buy_status = Column(String(20))
-    sell_status = Column(String(20))
 
     __table_args__ = (
         Index('index_buy_order_id', 'buy_order_id'),
         Index('index_sell_order_id', 'sell_order_id'),
     )
-
-    @classmethod
-    def update_buy_status_by_buy_order_id(cls, buy_order_id, new_status):
-        update_stmt = update(cls).where(cls.buy_order_id == buy_order_id).values(buy_status=new_status)
-        session.execute(update_stmt)
-
-    @classmethod
-    def update_sell_status_by_sell_order_id(cls, sell_order_id, new_status):
-        update_stmt = update(cls).where(cls.sell_order_id == sell_order_id).values(sell_status=new_status)
-        session.execute(update_stmt)
 
 
 Base.metadata.create_all(engine, checkfirst=True)

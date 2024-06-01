@@ -87,11 +87,6 @@ class KiteConnect(object):
     MARGIN_EQUITY = "equity"
     MARGIN_COMMODITY = "commodity"
 
-    # Status constants
-    # Opportunity status throughout its lifecycle.
-    GENERATED = "GENERATED"
-    FAILED = "FAILED"
-    TRIED = "TRIED"
     # Order status (subset of opportunity status lifecycle)
     REJECTED = "REJECTED"  # STATUS_REJECTED
     CANCELLED = "CANCELLED"  # STATUS_CANCELLED
@@ -112,29 +107,38 @@ class KiteConnect(object):
 
     # URIs to various calls
     _routes = {
+        # ------------------------------------- TESTED -----------------------------------------------------------
         "login.requestId": "/api/login",
         "generate.otp": "/oms/trusted/kitefront/user/{user_id}/twofa/generate_otp",
         "verify.otp": "/api/twofa",
-        
+
+        "user.margins": "/oms/user/margins",
+        "user.margins.segment": "/oms/user/margins/{segment}",
+
+        "orders": "/oms/orders",
+        "order.info": "/oms/orders/{order_id}",
+        "order.place": "/oms/orders/{variety}",
+
+        "portfolio.holdings": "/oms/portfolio/holdings",
+        "portfolio.holdings.auction": "/oms/portfolio/holdings/auctions",
+
+        "market.instruments.all": "/instruments",
+
+
+
+        # -------------------------------------------------- UNTESTED -------------------------------------------
         "api.token": "/session/token",
         "api.token.invalidate": "/session/token",
         "api.token.renew": "/session/refresh_token",
         "user.profile": "/user/profile",
-        "user.margins": "/oms/user/margins",
-        "user.margins.segment": "/oms/user/margins/{segment}",
 
-        "orders": "/orders",
         "trades": "/trades",
 
-        "order.info": "/orders/{order_id}",
-        "order.place": "/oms/orders/{variety}",
         "order.modify": "/orders/{variety}/{order_id}",
         "order.cancel": "/orders/{variety}/{order_id}",
         "order.trades": "/orders/{order_id}/trades",
 
         "portfolio.positions": "/portfolio/positions",
-        "portfolio.holdings": "/oms/portfolio/holdings",
-        "portfolio.holdings.auction": "/oms/portfolio/holdings/auctions",
         "portfolio.positions.convert": "/portfolio/positions",
 
         # MF api endpoints
@@ -152,7 +156,6 @@ class KiteConnect(object):
         "mf.holdings": "/mf/holdings",
         "mf.instruments": "/mf/instruments",
 
-        "market.instruments.all": "/instruments",
         "market.instruments": "/instruments/{exchange}",
         "market.margins": "/margins/{segment}",
         "market.historical": "/instruments/historical/{instrument_token}/{interval}",
@@ -290,13 +293,10 @@ class KiteConnect(object):
 
         return None
 
-    def get_available_margin_and_holdings(self):
+    def get_available_margin_and_holdings_for_instrument(self, instrument_token):
         with self.lock:
-            return { 'available_margin': self.available_margin, 'available_holdings': self.available_holdings }
-
-    def get_available_holdings(self):
-        with self.lock:
-            return self.available_holdings
+            return {'available_margin': self.available_margin or 0,
+                    'available_holdings': self.available_holdings.get(instrument_token) or 0}
 
     def set_available_margin_and_holdings(self, new_margins, new_holdings):
         with self.lock:
