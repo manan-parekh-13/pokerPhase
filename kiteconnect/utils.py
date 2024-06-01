@@ -8,7 +8,7 @@ import logging
 logging.basicConfig(level=logging.DEBUG)
 
 AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
-LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 
 
 def get_env_variable(parameter_name):
@@ -42,10 +42,7 @@ def truncate_microseconds(timestamp):
 def log_and_notify(message):
     logging.info(json.dumps(message))
 
-    if get_env_variable('FLASK_ENV') == 'local':
-        webhook_url = LOCAL_WEBHOOK_URL
-    else:
-        webhook_url = AWS_WEBHOOK_URL
+    webhook_url = get_env_variable('SLACK_UPDATE_CHANNEL_WEBHOOK')
 
     data = {'text': message}
     headers = {'Content-Type': 'application/json'}
