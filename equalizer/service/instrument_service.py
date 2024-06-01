@@ -35,7 +35,7 @@ def get_ws_id_to_token_to_instrument_map():
 
     for instrument in instruments:
         # save threshold spread coefficient for further use
-        threshold_spread_coef = get_threshold_spread_coef_for_reqd_profit(buy_value=default_buy_value,
+        threshold_spread_coef = get_threshold_spread_coef_for_reqd_profit(buy_value=int(default_buy_value),
                                                                           profit_percent=instrument.min_profit_percent,
                                                                           product_type=instrument.product_type)
         instrument.threshold_spread_coef = threshold_spread_coef

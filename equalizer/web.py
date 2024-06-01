@@ -1,4 +1,3 @@
-import os
 import logging
 import json
 
@@ -42,7 +41,7 @@ def login_via_otp():
 
 
 @app.route("/login/enc_token", methods=['POST'])
-def login_via_enc_token():
+def login_with_enc_token():
     enc_token = request.form.get('enc_token')
     kite = login_via_enc_token(enc_token)
     if not kite.enc_token:
@@ -63,6 +62,9 @@ def start_up_equalizer():
 
     log_and_notify("Successfully logged in!, enc_token: {}".format(kite.enc_token))
 
+    # cache instrument token to its equivalent details for further use
+    global_cache['token_to_equivalent_map'] = get_instrument_token_to_equivalent_map()
+
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
     usable_margin = 0 if not request.form.get('usable_margin') else int(request.form.get('usable_margin'))
     global_cache['initial_margin'] = usable_margin
@@ -70,9 +72,6 @@ def start_up_equalizer():
     kite.set_available_margin_and_holdings(new_margins=usable_margin, new_holdings=available_holdings_map)
 
     log_and_notify("Available margin: {} and holdings: {}".format(usable_margin, available_holdings_map))
-
-    # cache instrument token to its equivalent details for further use
-    global_cache['token_to_equivalent_map'] = get_instrument_token_to_equivalent_map()
 
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
