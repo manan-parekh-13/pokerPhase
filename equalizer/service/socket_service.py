@@ -22,9 +22,11 @@ from Models.web_socket import WebSocket
 from Models.order_info import init_order_info_from_order_update
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
+from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
 import time
-from kiteconnect.utils import log_and_notify, get_env_variable
+from kiteconnect.utils import log_and_notify, get_env_variable, get_latest_aggregate_data_for_ws_id_from_global_cache
 from kiteconnect.login import get_kite_client_from_cache
+from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -35,7 +37,6 @@ def on_ticks(ws, ticks):
         return
     logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
 
-    process_start_time = datetime.now()
     raw_tickers = []
     kite_client = get_kite_client_from_cache()
 
@@ -78,7 +79,22 @@ def on_ticks(ws, ticks):
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
 
     add_all(raw_tickers)
-    logging.info("websocket.{}.Elapsed time: {}.".format(ws.ws_id, datetime.now() - process_start_time))
+
+
+def analyze_data_on_ticks(ws, ticks):
+    if not ticks:
+        return
+    logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
+
+    latest_aggregate_data = get_latest_aggregate_data_for_ws_id_from_global_cache(ws.ws_id) or {}
+    for instrument_token, latest_tick_for_instrument in ticks.items():
+        if instrument_token in latest_aggregate_data:
+            prev_ticker_for_instrument = latest_aggregate_data.get('instrument_token')
+            latest_aggregate_data[instrument_token] = get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument)
+        else:
+            latest_aggregate_data[instrument_token] = {
+                'ticker_time': datetime.now().timestamp()
+            }
 
 
 # Callback for successful connection.
@@ -148,16 +164,17 @@ def on_order_update(ws, data):
 
     # save order info - todo @manan can be removed once we crack the zerodha's console
     init_order_info_from_order_update(data, update_received_time)
-
     log_and_notify(order_updates)
 
 
-def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering):
+def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering,
+                         check_for_opportunity):
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id, mode=mode, try_ordering=try_ordering)
+                     token_map=token_map, ws_id=ws_id, mode=mode, try_ordering=try_ordering,
+                     check_for_opportunity=check_for_opportunity)
 
     # Assign the callbacks.
-    kws.on_ticks = on_ticks
+    kws.on_ticks = on_ticks if check_for_opportunity or try_ordering else analyze_data_on_ticks
     kws.on_close = on_close
     kws.on_error = on_error
     kws.on_connect = on_connect
@@ -173,6 +190,7 @@ def send_web_socket_updates():
     while True:
         if count % 60 == 0:
             log_and_notify("Equalizer up and running")
+            save_latest_aggregate_data_from_cache()
         count += 1
         time.sleep(60)
     return None

@@ -11,6 +11,7 @@ class WebSocket(Base):
     ws_id = Column(Integer, primary_key=True, unique=True, autoincrement=False)
     mode = Column(String(10))
     try_ordering = Column(Boolean)
+    check_for_opportunity = Column(Boolean)
 
     @classmethod
     def get_all_web_sockets(cls):

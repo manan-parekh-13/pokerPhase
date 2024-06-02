@@ -92,7 +92,7 @@ def start_up_equalizer():
             continue
 
         kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id,
-                                   web_socket.mode, web_socket.try_ordering)
+                                   web_socket.mode, web_socket.try_ordering, web_socket.check_for_opportunity)
         kws.connect(threaded=True)
 
     # This is main thread. Will send status of each websocket every hour

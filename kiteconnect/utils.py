@@ -4,6 +4,7 @@ import pytz
 import requests
 import json
 import logging
+from kiteconnect.login import global_cache
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -49,3 +50,11 @@ def log_and_notify(message):
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
     if response.status_code != 200:
         logging.error(f"Failed to send Slack message: {response.text}")
+
+
+def get_latest_aggregate_data_for_ws_id_from_global_cache(ws_id):
+    return global_cache['aggregate_data'][ws_id] if 'aggregate_data' in global_cache else None
+
+
+def get_latest_aggregate_data_from_global_cache():
+    return global_cache['aggregate_data']

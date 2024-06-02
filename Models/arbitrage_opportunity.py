@@ -21,6 +21,8 @@ def init_arbitrage_opportunities_from_strat_res_and_tickers(buy_ticker, sell_tic
         ws_id=ws_id,
         buy_order_id=None,
         sell_order_id=None,
+        buy_ordered_at=None,
+        sell_ordered_at=None
     )
 
 
@@ -39,6 +41,8 @@ class ArbitrageOpportunity(Base):
     ws_id = Column(Integer)
     buy_order_id = Column(Integer)
     sell_order_id = Column(Integer)
+    buy_ordered_at = Column(UnixTimestampMicroseconds)
+    sell_ordered_at = Column(UnixTimestampMicroseconds)
 
     __table_args__ = (
         Index('index_buy_order_id', 'buy_order_id'),
