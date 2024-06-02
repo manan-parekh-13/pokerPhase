@@ -35,6 +35,8 @@ def get_ws_id_to_token_to_instrument_map():
 
     for instrument in instruments:
         # save threshold spread coefficient for further use
+        # todo @manan - can't use initial margin alone, need to consider holdings of instrument too!!
+        # todo @manan - use last price in holdings to calc buy_value as min(init margin, init holdings)
         threshold_spread_coef = get_threshold_spread_coef_for_reqd_profit(buy_value=int(default_buy_value),
                                                                           profit_percent=instrument.min_profit_percent,
                                                                           product_type=instrument.product_type)
