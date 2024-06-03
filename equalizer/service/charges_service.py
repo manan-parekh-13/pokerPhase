@@ -23,7 +23,8 @@ def calc_transac_charges(order_value, product_type, transaction_type):
 
 def get_threshold_spread_coef_for_reqd_profit(buy_value, profit_percent, product_type):
     kite_client = get_kite_client_from_cache()
-    profit_coef = profit_percent / 100
+    profit_coef = Decimal(profit_percent) / 100
+    buy_value = Decimal(buy_value)
     if product_type == kite_client.PRODUCT_CNC:
         return ((Decimal(15.93) + Decimal(0.002241) * buy_value) * (Decimal(1) + profit_coef)) / buy_value + profit_coef
     if product_type == kite_client.PRODUCT_MIS and buy_value > 66000.0:

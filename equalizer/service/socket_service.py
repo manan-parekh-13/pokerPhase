@@ -56,7 +56,7 @@ def on_ticks(ws, ticks):
             available_margin = margin_and_holdings['available_margin']
             max_buy_quantity = min(available_holdings, available_margin / ltp)
         else:
-            max_buy_quantity = get_env_variable('DEFAULT_MARGIN_FOR_CHECKING') / ltp
+            max_buy_quantity = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')) / ltp
 
         if max_buy_quantity == 0:
             continue
@@ -112,44 +112,47 @@ def on_noreconnect(ws):
 
 def on_order_update(ws, data):
     logging.info("websocket.{}.Order update : {}".format(ws.ws_id, data))
-    update_received_time = datetime.now()
 
-    kite_client = get_kite_client_from_cache()
-    initial_value = kite_client.get_available_margin_and_holdings_for_instrument(data['instrument_token'])
+    data['received_time'] = datetime.now()
+    log_and_notify("Order update: {}".format(data))
 
-    order_updates = {
-        'instrument': data['tradingsymbol'],
-        'received_time': update_received_time,
-        'initial_margin': initial_value['available_margin'],
-        'initial_holdings': initial_value['available_holdings'],
-        'price': data['average_price'],
-        'quantity': data['filled_quantity'],
-        'type': '{} : {} : {}'.format(data['transaction_type'], data['product'], data['exchange'])
-    }
-
-    # update available margins and holdings
-    if data['status'] == kite_client.COMPLETE or data['status'] == kite_client.CANCELLED:
-        if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
-            kite_client.remove_used_margin(used_margin=calc_transac_charges(
-                order_value=data['filled_quantity'] * data['average_price'],
-                product_type=data['product'],
-                transaction_type=data['transaction_type']))
-        else:
-            kite_client.remove_used_margins_and_holdings(instrument_token=data['instrument_token'],
-                                                         used_holdings=data['filled_quantity'],
-                                                         used_margin=calc_transac_charges(
-                order_value=data['filled_quantity'] * data['average_price'],
-                product_type=data['product'],
-                transaction_type=data['transaction_type']))
-
-    final_value = kite_client.get_available_margin_and_holdings_for_instrument(data['instrument_token'])
-    order_updates['final_margin'] = final_value['available_margin']
-    order_updates['final_holdings'] = final_value['available_holdings']
-
-    # save order info - todo @manan can be removed once we crack the zerodha's console
-    init_order_info_from_order_update(data, update_received_time)
-
-    log_and_notify(order_updates)
+    # update_received_time = datetime.now()
+    #
+    # initial_value = kite_client.get_available_margin_and_holdings_for_instrument(data['instrument_token'])
+    #
+    # order_updates = {
+    #     'instrument': data['tradingsymbol'],
+    #     'received_time': update_received_time,
+    #     'initial_margin': initial_value['available_margin'],
+    #     'initial_holdings': initial_value['available_holdings'],
+    #     'price': data['average_price'],
+    #     'quantity': data['filled_quantity'],
+    #     'type': '{} : {} : {}'.format(data['transaction_type'], data['product'], data['exchange'])
+    # }
+    #
+    # # update available margins and holdings
+    # if data['status'] == kite_client.COMPLETE or data['status'] == kite_client.CANCELLED:
+    #     if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
+    #         kite_client.remove_used_margin(used_margin=calc_transac_charges(
+    #             order_value=data['filled_quantity'] * data['average_price'],
+    #             product_type=data['product'],
+    #             transaction_type=data['transaction_type']))
+    #     else:
+    #         kite_client.remove_used_margins_and_holdings(instrument_token=data['instrument_token'],
+    #                                                      used_holdings=data['filled_quantity'],
+    #                                                      used_margin=calc_transac_charges(
+    #             order_value=data['filled_quantity'] * data['average_price'],
+    #             product_type=data['product'],
+    #             transaction_type=data['transaction_type']))
+    #
+    # final_value = kite_client.get_available_margin_and_holdings_for_instrument(data['instrument_token'])
+    # order_updates['final_margin'] = final_value['available_margin']
+    # order_updates['final_holdings'] = final_value['available_holdings']
+    #
+    # # save order info - todo @manan can be removed once we crack the zerodha's console
+    # init_order_info_from_order_update(data, update_received_time)
+    #
+    # log_and_notify(order_updates)
 
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering):
