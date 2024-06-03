@@ -3,15 +3,16 @@ import datetime
 import pytz
 import requests
 import json
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
+AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
+LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 
 
-def get_sensitive_parameter(parameter_name):
-    if os.getenv(parameter_name):
-        return os.getenv(parameter_name)
-    # Use Google Cloud Secret Manager for GCP deployment
-    else:
-        # Fetch parameter from Secret Manager
-        return None
+def get_env_variable(parameter_name):
+    return os.getenv(parameter_name)
 
 
 def convert_str_to_datetime(timestamp_str):
@@ -38,13 +39,13 @@ def truncate_microseconds(timestamp):
     return timestamp.replace(microsecond=0)
 
 
-def send_slack_message(message):
-    if get_sensitive_parameter('FLASK_ENV') == 'local':
-        return
+def log_and_notify(message):
+    logging.info(json.dumps(message))
 
-    webhook_url = 'https://hooks.slack.com/services/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'
+    webhook_url = get_env_variable('SLACK_UPDATE_CHANNEL_WEBHOOK')
+
     data = {'text': message}
     headers = {'Content-Type': 'application/json'}
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
     if response.status_code != 200:
-        print(f"Failed to send Slack message: {response.text}")
+        logging.error(f"Failed to send Slack message: {response.text}")

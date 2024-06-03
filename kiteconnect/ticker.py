@@ -14,6 +14,7 @@ import json
 import struct
 import logging
 import threading
+from decimal import Decimal
 from datetime import datetime
 from twisted.internet import reactor, ssl
 from twisted.python import log as twisted_log
@@ -403,7 +404,8 @@ class KiteTicker(object):
 
     def __init__(self, enc_token, debug=False, root=None,
                  reconnect=True, reconnect_max_tries=RECONNECT_MAX_TRIES, reconnect_max_delay=RECONNECT_MAX_DELAY,
-                 connect_timeout=CONNECT_TIMEOUT, token_map={}, latest_tick_map={}, ws_id=None):
+                 connect_timeout=CONNECT_TIMEOUT, token_map={}, latest_tick_map={}, ws_id=None, mode=MODE_FULL,
+                 try_ordering=False):
         """
         Initialise websocket client instance.
 
@@ -475,6 +477,10 @@ class KiteTicker(object):
         self.latest_tick_map = latest_tick_map
 
         self.ws_id = ws_id
+
+        self.mode = mode
+
+        self.try_ordering = try_ordering
 
     def _create_connection(self, url, **kwargs):
         """Create a WebSocket client connection."""
@@ -716,12 +722,12 @@ class KiteTicker(object):
             return
 
         # Order update callback
-        if self.on_order_update and data.get("type") == "order" and data.get("data"):
-            self.on_order_update(self, data["data"])
+        if self.on_order_update and data and data.get("type") == "order":
+            self.on_order_update(self, data)
 
         # Custom error with websocket error code 0
         if data.get("type") == "error":
-            self._on_error(self, 0, data.get("data"))
+            self._on_error(self, 0, data)
 
     def _parse_binary(self, bin):
         """Parse binary data to a (list of) ticks structure."""
@@ -805,6 +811,10 @@ class KiteTicker(object):
                     #     "close": self._unpack_int(packet, 40, 44) / divisor
                     # }
                 }
+
+                if d['last_price']:
+                    temp = Decimal(d['last_price'])
+                    d['last_price'] = temp.quantize(Decimal('0.00'))
 
                 # Compute the change price using close price and last price
                 # d["change"] = 0

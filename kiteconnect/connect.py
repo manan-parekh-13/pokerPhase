@@ -17,12 +17,11 @@ import datetime
 import requests
 import warnings
 import time
+import threading
 
 from .__version__ import __version__, __title__
-from kiteconnect.utils import get_sensitive_parameter, convert_str_to_datetime, truncate_microseconds
+from kiteconnect.utils import get_env_variable, convert_str_to_datetime, truncate_microseconds
 import kiteconnect.exceptions as ex
-
-from flask import session
 
 log = logging.getLogger(__name__)
 
@@ -88,10 +87,10 @@ class KiteConnect(object):
     MARGIN_EQUITY = "equity"
     MARGIN_COMMODITY = "commodity"
 
-    # Status constants
-    STATUS_COMPLETE = "COMPLETE"
-    STATUS_REJECTED = "REJECTED"
-    STATUS_CANCELLED = "CANCELLED"
+    # Order status (subset of opportunity status lifecycle)
+    REJECTED = "REJECTED"  # STATUS_REJECTED
+    CANCELLED = "CANCELLED"  # STATUS_CANCELLED
+    COMPLETE = "COMPLETE"  # STATUS_COMPLETE
 
     # GTT order type
     GTT_TYPE_OCO = "two-leg"
@@ -108,67 +107,75 @@ class KiteConnect(object):
 
     # URIs to various calls
     _routes = {
+        # ------------------------------------- TESTED -----------------------------------------------------------
         "login.requestId": "/api/login",
         "generate.otp": "/oms/trusted/kitefront/user/{user_id}/twofa/generate_otp",
         "verify.otp": "/api/twofa",
-        
-        "api.token": "/session/token",
-        "api.token.invalidate": "/session/token",
-        "api.token.renew": "/session/refresh_token",
-        "user.profile": "/user/profile",
-        "user.margins": "/user/margins",
-        "user.margins.segment": "/user/margins/{segment}",
 
-        "orders": "/orders",
-        "trades": "/trades",
+        "user.margins": "/oms/user/margins",
+        "user.margins.segment": "/oms/user/margins/{segment}",
 
-        "order.info": "/orders/{order_id}",
-        "order.place": "/orders/{variety}",
-        "order.modify": "/orders/{variety}/{order_id}",
-        "order.cancel": "/orders/{variety}/{order_id}",
-        "order.trades": "/orders/{order_id}/trades",
+        "orders": "/oms/orders",
+        "order.info": "/oms/orders/{order_id}",
+        "order.place": "/oms/orders/{variety}",
 
-        "portfolio.positions": "/portfolio/positions",
         "portfolio.holdings": "/oms/portfolio/holdings",
         "portfolio.holdings.auction": "/oms/portfolio/holdings/auctions",
-        "portfolio.positions.convert": "/portfolio/positions",
-
-        # MF api endpoints
-        "mf.orders": "/mf/orders",
-        "mf.order.info": "/mf/orders/{order_id}",
-        "mf.order.place": "/mf/orders",
-        "mf.order.cancel": "/mf/orders/{order_id}",
-
-        "mf.sips": "/mf/sips",
-        "mf.sip.info": "/mf/sips/{sip_id}",
-        "mf.sip.place": "/mf/sips",
-        "mf.sip.modify": "/mf/sips/{sip_id}",
-        "mf.sip.cancel": "/mf/sips/{sip_id}",
-
-        "mf.holdings": "/mf/holdings",
-        "mf.instruments": "/mf/instruments",
 
         "market.instruments.all": "/instruments",
-        "market.instruments": "/instruments/{exchange}",
-        "market.margins": "/margins/{segment}",
-        "market.historical": "/instruments/historical/{instrument_token}/{interval}",
-        "market.trigger_range": "/instruments/trigger_range/{transaction_type}",
 
-        "market.quote": "/quote",
-        "market.quote.ohlc": "/quote/ohlc",
-        "market.quote.ltp": "/quote/ltp",
 
-        # GTT endpoints
-        "gtt": "/gtt/triggers",
-        "gtt.place": "/gtt/triggers",
-        "gtt.info": "/gtt/triggers/{trigger_id}",
-        "gtt.modify": "/gtt/triggers/{trigger_id}",
-        "gtt.delete": "/gtt/triggers/{trigger_id}",
 
-        # Margin computation endpoints
-        "order.margins": "/margins/orders",
-        "order.margins.basket": "/margins/basket",
-        "order.contract_note": "/charges/orders",
+        # -------------------------------------------------- UNTESTED -------------------------------------------
+        # "api.token": "/session/token",
+        # "api.token.invalidate": "/session/token",
+        # "api.token.renew": "/session/refresh_token",
+        # "user.profile": "/user/profile",
+        #
+        # "trades": "/trades",
+        #
+        # "order.modify": "/orders/{variety}/{order_id}",
+        # "order.cancel": "/orders/{variety}/{order_id}",
+        # "order.trades": "/orders/{order_id}/trades",
+        #
+        # "portfolio.positions": "/portfolio/positions",
+        # "portfolio.positions.convert": "/portfolio/positions",
+        #
+        # # MF api endpoints
+        # "mf.orders": "/mf/orders",
+        # "mf.order.info": "/mf/orders/{order_id}",
+        # "mf.order.place": "/mf/orders",
+        # "mf.order.cancel": "/mf/orders/{order_id}",
+        #
+        # "mf.sips": "/mf/sips",
+        # "mf.sip.info": "/mf/sips/{sip_id}",
+        # "mf.sip.place": "/mf/sips",
+        # "mf.sip.modify": "/mf/sips/{sip_id}",
+        # "mf.sip.cancel": "/mf/sips/{sip_id}",
+        #
+        # "mf.holdings": "/mf/holdings",
+        # "mf.instruments": "/mf/instruments",
+        #
+        # "market.instruments": "/instruments/{exchange}",
+        # "market.margins": "/margins/{segment}",
+        # "market.historical": "/instruments/historical/{instrument_token}/{interval}",
+        # "market.trigger_range": "/instruments/trigger_range/{transaction_type}",
+        #
+        # "market.quote": "/quote",
+        # "market.quote.ohlc": "/quote/ohlc",
+        # "market.quote.ltp": "/quote/ltp",
+        #
+        # # GTT endpoints
+        # "gtt": "/gtt/triggers",
+        # "gtt.place": "/gtt/triggers",
+        # "gtt.info": "/gtt/triggers/{trigger_id}",
+        # "gtt.modify": "/gtt/triggers/{trigger_id}",
+        # "gtt.delete": "/gtt/triggers/{trigger_id}",
+        #
+        # # Margin computation endpoints
+        # "order.margins": "/margins/orders",
+        # "order.margins.basket": "/margins/basket",
+        # "order.contract_note": "/charges/orders",
     }
 
     def __init__(self,
@@ -182,8 +189,8 @@ class KiteConnect(object):
                  user_id=None,
                  password=None,
                  request_id=None,
-                 max_tokens_per_socket=None,
-                 web_sockets=None):
+                 available_margin=0,
+                 available_holdings=None):
         """
         Initialise a new Kite Connect client instance.
 
@@ -219,9 +226,11 @@ class KiteConnect(object):
         self.root = root or self._default_root_uri
         self.timeout = timeout or self._default_timeout
 
-        self.max_tokens_per_socket = max_tokens_per_socket
+        self.lock = threading.Lock()
 
-        self.web_sockets = web_sockets
+        self.available_margin = available_margin
+
+        self.available_holdings = available_holdings
 
         # Create requests session by default
         # Same session to be used by pool connections
@@ -233,19 +242,17 @@ class KiteConnect(object):
         # disable requests SSL warning
         requests.packages.urllib3.disable_warnings()
 
-    def expire_current_session(self):
-        self.set_enc_token_in_session(self, None)
+    def expire_current_enc_token(self):
+        self.set_enc_token(None)
 
-    @staticmethod
-    def set_enc_token_in_session(self, enc_token):
+    def set_enc_token(self, enc_token):
         """Set the `enc_token` received after a successful authentication."""
         self.enc_token = enc_token
-        session["enc_token"] = enc_token
 
     @staticmethod
     def get_latest_otp_from_mail():
-        gmail_api_key = get_sensitive_parameter('GMAIL_API_KEY')
-        gmail_api_path = get_sensitive_parameter('GMAIL_API_PATH')
+        gmail_api_key = get_env_variable('GMAIL_API_KEY')
+        gmail_api_path = get_env_variable('GMAIL_API_PATH')
 
         params = {
             "label": "zerodha-otp",
@@ -286,17 +293,28 @@ class KiteConnect(object):
 
         return None
 
-    @staticmethod
-    def set_request_id_in_session(self, request_id):
+    def get_available_margin_and_holdings_for_instrument(self, instrument_token):
+        with self.lock:
+            return {'available_margin': self.available_margin or 0,
+                    'available_holdings': self.available_holdings.get(instrument_token) or 0}
+
+    def set_available_margin_and_holdings(self, new_margins, new_holdings):
+        with self.lock:
+            self.available_margin = new_margins
+            self.available_holdings = new_holdings
+
+    def remove_used_margin(self, used_margin):
+        with self.lock:
+            self.available_margin = self.available_margin - used_margin
+
+    def remove_used_margins_and_holdings(self, used_margin, instrument_token, used_holdings):
+        with self.lock:
+            self.available_margin = self.available_margin - used_margin
+            self.available_holdings[instrument_token] = self.available_holdings[instrument_token] - used_holdings
+
+    def set_request_id(self, request_id):
         """Set the `request_id` received after a creating a login request."""
         self.request_id = request_id
-        session["request_id"] = request_id
-
-    @staticmethod
-    def set_web_sockets_in_session(self, web_sockets):
-        """Set the `web_sockets` created after equalizer startup."""
-        self.web_sockets = web_sockets
-        session["web_sockets"] = web_sockets
 
     def generate_request_id(self):
         """
@@ -307,9 +325,7 @@ class KiteConnect(object):
             "password": self.password,
         })
         if "request_id" in resp:
-            self.set_request_id_in_session(self, resp["request_id"])
-            return self.request_id
-        return None
+            self.set_request_id(resp["request_id"])
 
     def generate_otp_for_login_request(self):
         self._post("generate.otp", url_args={"user_id": self.user_id}, params={
@@ -318,16 +334,12 @@ class KiteConnect(object):
         })
 
     def verify_otp_for_request_id(self, otp):
-        resp = self._post("verify.otp", params={
+        self._post("verify.otp", params={
             "user_id": self.user_id,
             "request_id": self.request_id,
             "twofa_value": otp,
             "twofa_type": "sms"
         })
-        return resp
-
-    def generate_session_via_enc_token(self, enc_token):
-        self.set_enc_token_in_session(self, enc_token)
 
     def margins(self, segment=None):
         """Get account balance and cash margin details for a particular segment.
@@ -947,7 +959,7 @@ class KiteConnect(object):
             if data.get("status") == "error" or data.get("error_type"):
                 # Call session hook if its registered and TokenException is raised
                 if r.status_code == 403 and data["error_type"] == "TokenException":
-                    self.expire_current_session()
+                    self.expire_current_enc_token()
 
                 # native Kite errors
                 exp = getattr(ex, data.get("error_type"), ex.GeneralException)
@@ -957,7 +969,7 @@ class KiteConnect(object):
             if r.cookies and not self.enc_token:
                 enctoken = r.cookies.get("enctoken")
                 if enctoken:
-                    self.set_enc_token_in_session(self, enctoken)
+                    self.set_enc_token(enctoken)
 
             return data["data"]
         elif "csv" in r.headers["content-type"]:
