@@ -724,12 +724,12 @@ class KiteTicker(object):
             return
 
         # Order update callback
-        if self.on_order_update and data.get("type") == "order" and data.get("data"):
-            self.on_order_update(self, data["data"])
+        if self.on_order_update and data and data.get("type") == "order":
+            self.on_order_update(self, data)
 
         # Custom error with websocket error code 0
         if data.get("type") == "error":
-            self._on_error(self, 0, data.get("data"))
+            self._on_error(self, 0, data)
 
     def _parse_binary(self, bin):
         """Parse binary data to a (list of) ticks structure."""
