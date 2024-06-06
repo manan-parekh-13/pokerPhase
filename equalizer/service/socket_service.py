@@ -15,17 +15,18 @@ from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
-from equalizer.service.ticker_service import is_ticker_valid
+from equalizer.service.ticker_service import is_ticker_valid, is_ticker_stale
 from equalizer.service.order_service import realise_arbitrage_opportunity
-from equalizer.service.charges_service import calc_transac_charges
 from Models.web_socket import WebSocket
 from Models.order_info import init_order_info_from_order_update
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
 import time
-from kiteconnect.utils import log_and_notify, get_env_variable, get_latest_aggregate_data_for_ws_id_from_global_cache
-from kiteconnect.login import get_kite_client_from_cache
+from kiteconnect.utils import log_and_notify, get_env_variable
+from kiteconnect.global_cache import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
+                                      get_latest_tick_by_instrument_token_from_global_cache,
+                                      update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 logging.basicConfig(level=logging.DEBUG)
@@ -41,18 +42,16 @@ def on_ticks(ws, ticks):
     kite_client = get_kite_client_from_cache()
 
     for instrument_token, latest_tick_for_instrument in ticks.items():
-        # update latest tick map
-        ws.latest_tick_map[instrument_token] = latest_tick_for_instrument
-
         latest_tick_for_equivalent = get_equivalent_tick_from_token(ws, instrument_token)
 
         if not is_ticker_valid(latest_tick_for_equivalent) or not is_ticker_valid(latest_tick_for_instrument):
             continue
 
         ltp = latest_tick_for_instrument['last_price']
+        instrument = get_instrument_from_token(ws, instrument_token)
 
         if ws.try_ordering:
-            margin_and_holdings = kite_client.get_available_margin_and_holdings_for_instrument(instrument_token)
+            margin_and_holdings = kite_client.get_available_margin_and_holdings_for_trading_symbol(instrument.tradingsymbol)
             available_holdings = margin_and_holdings['available_holdings']
             available_margin = margin_and_holdings['available_margin']
             max_buy_quantity = min(available_holdings, available_margin / ltp)
@@ -62,15 +61,17 @@ def on_ticks(ws, ticks):
         if max_buy_quantity == 0:
             continue
 
-        instrument = get_instrument_from_token(ws, instrument_token)
-
         opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
                                       instrument.threshold_spread_coef, instrument.min_profit_percent,
                                       instrument.product_type, max_buy_quantity, ws.ws_id)
+
         if not opportunity:
             continue
 
-        if ws.try_ordering:
+        if is_ticker_stale(latest_tick_for_instrument) or is_ticker_stale(latest_tick_for_equivalent):
+            opportunity.is_stale = True
+
+        if ws.try_ordering and not is_order_on_hold_currently() and not opportunity.is_stale:
             opportunity = realise_arbitrage_opportunity(opportunity, instrument.product_type)
 
         add(opportunity)
@@ -85,6 +86,8 @@ def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
     logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
+
+    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
 
     latest_aggregate_data = get_latest_aggregate_data_for_ws_id_from_global_cache(ws.ws_id) or {}
     for instrument_token, latest_tick_for_instrument in ticks.items():
@@ -129,46 +132,46 @@ def on_noreconnect(ws):
 def on_order_update(ws, data):
     logging.info("websocket.{}.Order update : {}".format(ws.ws_id, data))
 
-    data['received_time'] = datetime.now()
+    update_received_time = datetime.now()
+    kite_client = get_kite_client_from_cache()
+
+    data['received_time'] = update_received_time
     log_and_notify("Order update: {}".format(data))
 
-    # update_received_time = datetime.now()
-    #
-    # initial_value = kite_client.get_available_margin_and_holdings_for_instrument(data['instrument_token'])
-    #
-    # order_updates = {
-    #     'instrument': data['tradingsymbol'],
-    #     'received_time': update_received_time,
-    #     'initial_margin': initial_value['available_margin'],
-    #     'initial_holdings': initial_value['available_holdings'],
-    #     'price': data['average_price'],
-    #     'quantity': data['filled_quantity'],
-    #     'type': '{} : {} : {}'.format(data['transaction_type'], data['product'], data['exchange'])
-    # }
-    #
-    # # update available margins and holdings
-    # if data['status'] == kite_client.COMPLETE or data['status'] == kite_client.CANCELLED:
-    #     if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
-    #         kite_client.remove_used_margin(used_margin=calc_transac_charges(
-    #             order_value=data['filled_quantity'] * data['average_price'],
-    #             product_type=data['product'],
-    #             transaction_type=data['transaction_type']))
-    #     else:
-    #         kite_client.remove_used_margins_and_holdings(instrument_token=data['instrument_token'],
-    #                                                      used_holdings=data['filled_quantity'],
-    #                                                      used_margin=calc_transac_charges(
-    #             order_value=data['filled_quantity'] * data['average_price'],
-    #             product_type=data['product'],
-    #             transaction_type=data['transaction_type']))
-    #
-    # final_value = kite_client.get_available_margin_and_holdings_for_instrument(data['instrument_token'])
-    # order_updates['final_margin'] = final_value['available_margin']
-    # order_updates['final_holdings'] = final_value['available_holdings']
-    #
-    # # save order info - todo @manan can be removed once we crack the zerodha's console
+    if data['status'] != kite_client.COMPLETE or data['status'] != kite_client.CANCELLED:
+        # wait for it
+        return
+
+    initial_value = kite_client.get_available_margin_and_holdings_for_trading_symbol(data['tradingsymbol'])
+
+    order_updates = {
+        'instrument': data['tradingsymbol'],
+        'received_time': update_received_time,
+        'initial_margin': initial_value['available_margin'],
+        'initial_holdings': initial_value['available_holdings'],
+        'price': data['average_price'],
+        'quantity': data['filled_quantity'],
+        'type': '{} : {}'.format(data['transaction_type'], data['exchange'])
+    }
+
+    # update available margins and holdings
+    latest_margins = kite_client.margins(segment=kite_client.MARGIN_EQUITY)
+
+    if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
+        kite_client.set_new_margin(new_margin=latest_margins)
+    else:
+        kite_client.set_new_margins_and_remove_used_holdings(new_margins=latest_margins,
+                                                             used_holdings=data['filled_quantity'],
+                                                             trading_symbol=data['tradingsymbol'])
+
+    final_value = kite_client.get_available_margin_and_holdings_for_instrument(data['tradingsymbol'])
+    order_updates['final_margin'] = final_value['available_margin']
+    order_updates['final_holdings'] = final_value['available_holdings']
+
+    # save order info - todo @manan can be removed once we crack the zerodha's console
     # init_order_info_from_order_update(data, update_received_time)
-    #
-    # log_and_notify(order_updates)
+
+    log_and_notify(order_updates)
 
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering,
@@ -217,4 +220,4 @@ def get_instrument_from_token(ws, instrument_token):
 def get_equivalent_tick_from_token(ws, instrument_token):
     instrument = get_instrument_from_token(ws, instrument_token)
     equivalent_token = instrument.equivalent_token
-    return ws.latest_tick_map.get(equivalent_token)
+    return get_latest_tick_by_instrument_token_from_global_cache(equivalent_token)

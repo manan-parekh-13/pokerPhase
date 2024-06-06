@@ -3,15 +3,16 @@ import json
 
 from flask import Flask, jsonify, request, abort
 
-from kiteconnect.login import login_via_enc_token, login_via_two_f_a, get_kite_client_from_cache, global_cache
+from kiteconnect.login import login_via_enc_token, login_via_two_f_a
 from kiteconnect.utils import get_env_variable
+from kiteconnect.global_cache import (init_latest_tick_data_in_global_cache,
+                                      init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache)
 from service.socket_service import init_kite_web_socket, send_web_socket_updates, get_ws_id_to_web_socket_map
 from service.instrument_service import get_ws_id_to_token_to_instrument_map
 from service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
-from Models.holdings import Holdings
 from kiteconnect.utils import log_and_notify
 from service.holding_service import get_holdings_available_for_arbitrage_in_map
 
@@ -62,12 +63,12 @@ def start_up_equalizer():
 
     log_and_notify("Successfully logged in!, enc_token: {}".format(kite.enc_token))
 
-    # cache instrument token to its equivalent details for further use
-    global_cache['token_to_equivalent_map'] = get_instrument_token_to_equivalent_map()
+    # init the global level data points
+    init_latest_tick_data_in_global_cache()
+    init_instrument_token_to_equivalent_token_map(get_instrument_token_to_equivalent_map())
 
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
     usable_margin = 0 if not request.form.get('usable_margin') else int(request.form.get('usable_margin'))
-    global_cache['initial_margin'] = usable_margin
     available_holdings_map = get_holdings_available_for_arbitrage_in_map()
     kite.set_available_margin_and_holdings(new_margins=usable_margin, new_holdings=available_holdings_map)
 
@@ -104,21 +105,35 @@ def start_up_equalizer():
 def holdings():
     kite = get_kite_client_from_cache()
     response = kite.holdings()
-    if response:
-        holding_list = []
-        for holding in response:
-            holding['arbitrage_quantity'] = None
-            holding['authorisation'] = json.dumps(holding['authorisation'])
-            holding_list.append(Holdings(**holding))
-        add_all(holding_list)
+    # if response:
+    #     holding_list = []
+    #     for holding in response:
+    #         holding['arbitrage_quantity'] = None
+    #         holding['authorisation'] = json.dumps(holding['authorisation'])
+    #         holding_list.append(Holdings(**holding))
+    #     add_all(holding_list)
+    return jsonify(response)
+
+
+@app.route("/orders.json", methods=['GET'])
+def orders():
+    kite = get_kite_client_from_cache()
+    response = kite.orders()
     return jsonify(response)
 
 
 @app.route("/margins.json", methods=['GET'])
 def margins():
     kite = get_kite_client_from_cache()
-    margin_resp = kite.margins()
+    margin_resp = kite.margins(segment=kite.MARGIN_EQUITY)
     return jsonify(margin_resp)
+
+
+@app.route("/positions.json", methods=['GET'])
+def positions():
+    kite = get_kite_client_from_cache()
+    position_resp = kite.positions()
+    return jsonify(position_resp)
 
 
 @app.route("/instruments.json", methods=['GET'])

@@ -1,6 +1,6 @@
 from Models.arbitrage_instruments import ArbitrageInstruments
 from kiteconnect.utils import get_env_variable
-from kiteconnect.login import global_cache
+from kiteconnect.global_cache import get_kite_client_from_cache
 from copy import deepcopy
 from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
 
@@ -30,8 +30,9 @@ def get_instrument_token_to_equivalent_map():
 def get_ws_id_to_token_to_instrument_map():
     instruments = ArbitrageInstruments.get_instruments_with_non_null_ws_id()
     ws_id_to_token_to_instrument_map = {}
+    kite_client = get_kite_client_from_cache()
 
-    default_buy_value = global_cache['initial_margin'] or get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')
+    default_buy_value = kite_client['available_margin'] or get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')
 
     for instrument in instruments:
         # save threshold spread coefficient for further use

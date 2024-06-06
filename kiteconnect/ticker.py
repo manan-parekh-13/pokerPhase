@@ -404,7 +404,7 @@ class KiteTicker(object):
 
     def __init__(self, enc_token, debug=False, root=None,
                  reconnect=True, reconnect_max_tries=RECONNECT_MAX_TRIES, reconnect_max_delay=RECONNECT_MAX_DELAY,
-                 connect_timeout=CONNECT_TIMEOUT, token_map={}, latest_tick_map={}, ws_id=None, mode=MODE_FULL,
+                 connect_timeout=CONNECT_TIMEOUT, token_map={}, ws_id=None, mode=MODE_FULL,
                  try_ordering=False, check_for_opportunity=True):
         """
         Initialise websocket client instance.
@@ -472,9 +472,6 @@ class KiteTicker(object):
 
         # Dict of instrument_token to arbitrage_instrument
         self.token_map = token_map
-
-        # Dict of instrument_token to latest_tick
-        self.latest_tick_map = latest_tick_map
 
         self.ws_id = ws_id
 

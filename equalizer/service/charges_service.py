@@ -1,4 +1,4 @@
-from kiteconnect.login import get_kite_client_from_cache
+from kiteconnect.global_cache import get_kite_client_from_cache
 from decimal import Decimal
 
 

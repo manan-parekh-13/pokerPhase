@@ -1,7 +1,8 @@
-from kiteconnect.login import get_kite_client_from_cache, global_cache
 import logging
 from datetime import datetime
 from kiteconnect.utils import log_and_notify
+from kiteconnect.global_cache import (setup_order_hold_for_time_in_seconds, get_kite_client_from_cache,
+                                      get_instrument_token_map_from_cache)
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -9,33 +10,24 @@ logging.basicConfig(level=logging.DEBUG)
 def realise_arbitrage_opportunity(opportunity, product_type):
     kite_client = get_kite_client_from_cache()
 
-    # create first order for the older ticker
-    if opportunity.buy_source_ticker_time >= opportunity.sell_source_ticker_time:
-        opportunity.buy_order_id = place_order_for_opportunity_by_transaction_type(
-            opportunity, kite_client.TRANSACTION_TYPE_BUY, product_type)
+    opportunity.buy_order_id = place_order_for_opportunity_by_transaction_type(
+        opportunity, kite_client.TRANSACTION_TYPE_BUY, product_type)
 
-        if opportunity.buy_order_id:
-            opportunity.buy_ordered_at = datetime.now()
-            opportunity.sell_order_id = place_order_for_opportunity_by_transaction_type(
-                opportunity, kite_client.TRANSACTION_TYPE_SELL, product_type)
-            opportunity.sell_ordered_at = datetime.now() if opportunity.sell_order_id else None
+    if not opportunity.buy_order_id:
+        return
 
-    else:
-        opportunity.sell_order_id = place_order_for_opportunity_by_transaction_type(
-            opportunity, kite_client.TRANSACTION_TYPE_SELL, product_type)
-
-        if opportunity.sell_order_id:
-            opportunity.sell_ordered_at = datetime.now()
-            opportunity.buy_order_id = place_order_for_opportunity_by_transaction_type(
-                opportunity, kite_client.TRANSACTION_TYPE_BUY, product_type)
-            opportunity.buy_ordered_at = datetime.now() if opportunity.buy_order_id else None
+    setup_order_hold_for_time_in_seconds(60)
+    opportunity.buy_ordered_at = datetime.now()
+    opportunity.sell_order_id = place_order_for_opportunity_by_transaction_type(
+        opportunity, kite_client.TRANSACTION_TYPE_SELL, product_type)
+    opportunity.sell_ordered_at = datetime.now() if opportunity.sell_order_id else None
 
     return opportunity
 
 
 def place_order_for_opportunity_by_transaction_type(opportunity, transaction_type, product_type):
     kite_client = get_kite_client_from_cache()
-    instrument_token_map = global_cache['token_to_equivalent_map']
+    instrument_token_map = get_instrument_token_map_from_cache()
 
     if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
         instrument = instrument_token_map.get(opportunity.buy_source)

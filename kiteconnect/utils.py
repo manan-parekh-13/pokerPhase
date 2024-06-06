@@ -1,10 +1,9 @@
 import os
-import datetime
+from datetime import datetime
 import pytz
 import requests
 import json
 import logging
-from kiteconnect.login import global_cache
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -18,7 +17,7 @@ def get_env_variable(parameter_name):
 
 def convert_str_to_datetime(timestamp_str):
     # Convert string to datetime object
-    timestamp_utc = datetime.datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+    timestamp_utc = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ")
 
     # Set UTC timezone
     utc_timezone = pytz.timezone('UTC')
@@ -52,9 +51,6 @@ def log_and_notify(message):
         logging.error(f"Failed to send Slack message: {response.text}")
 
 
-def get_latest_aggregate_data_for_ws_id_from_global_cache(ws_id):
-    return global_cache['aggregate_data'][ws_id] if 'aggregate_data' in global_cache else None
 
 
-def get_latest_aggregate_data_from_global_cache():
-    return global_cache['aggregate_data']
+
