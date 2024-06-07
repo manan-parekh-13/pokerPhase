@@ -404,8 +404,7 @@ class KiteTicker(object):
 
     def __init__(self, enc_token, debug=False, root=None,
                  reconnect=True, reconnect_max_tries=RECONNECT_MAX_TRIES, reconnect_max_delay=RECONNECT_MAX_DELAY,
-                 connect_timeout=CONNECT_TIMEOUT, token_map={}, ws_id=None, mode=MODE_FULL,
-                 try_ordering=False, check_for_opportunity=True):
+                 connect_timeout=CONNECT_TIMEOUT, token_map={}, ws_id=None, mode=MODE_FULL, try_ordering=False):
         """
         Initialise websocket client instance.
 
@@ -478,8 +477,6 @@ class KiteTicker(object):
         self.mode = mode
 
         self.try_ordering = try_ordering
-
-        self.check_for_opportunity = check_for_opportunity
 
     def _create_connection(self, url, **kwargs):
         """Create a WebSocket client connection."""

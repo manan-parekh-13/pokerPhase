@@ -1,5 +1,4 @@
 import logging
-import json
 
 from flask import Flask, jsonify, request, abort
 
@@ -77,23 +76,21 @@ def start_up_equalizer():
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
 
-    # get web socket meta
-    ws_id_to_web_socket_map = get_ws_id_to_web_socket_map()
-
     for ws_id in ws_id_to_token_to_instrument_map.keys():
         sub_token_map = ws_id_to_token_to_instrument_map[ws_id]
-        web_socket = ws_id_to_web_socket_map[ws_id]
+        try_ordering = True if "order" in ws_id else False
 
-        if web_socket.try_ordering and (not usable_margin or usable_margin <= 0):
+        if try_ordering and (not usable_margin or usable_margin <= 0):
             log_and_notify("Ordering not possible for ws_id {} as no margins available".format(ws_id))
             continue
 
-        if web_socket.try_ordering and (not available_holdings_map):
+        if try_ordering and (not available_holdings_map):
             log_and_notify("Ordering not possible for ws_id {} as no holdings available".format(ws_id))
             continue
 
-        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id,
-                                   web_socket.mode, web_socket.try_ordering, web_socket.check_for_opportunity)
+        is_data_ws = True if "data" in ws_id else False
+
+        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
         kws.connect(threaded=True)
 
     # This is main thread. Will send status of each websocket every hour

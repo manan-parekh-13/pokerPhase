@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DECIMAL, Boolean, JSON
+from sqlalchemy import Column, Integer, DECIMAL, Boolean, JSON, String
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
 from Models.type_decorators.unix_timestamp_seconds import UnixTimestampSeconds
@@ -33,7 +33,7 @@ class RawTickerData(Base):
     last_trade_time = Column(UnixTimestampSeconds)
     ticker_received_time = Column(UnixTimestampMicroseconds)
     depth = Column(JSON)
-    ws_id = Column(Integer)
+    ws_id = Column(String(15))
 
 
 Base.metadata.create_all(engine, checkfirst=True)

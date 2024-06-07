@@ -298,6 +298,10 @@ class KiteConnect(object):
             return {'available_margin': self.available_margin or 0,
                     'available_holdings': self.available_holdings.get(trading_symbol) or 0}
 
+    def get_available_margin(self):
+        with self.lock:
+            return self.available_margin or 0
+
     def set_available_margin_and_holdings(self, new_margins, new_holdings):
         with self.lock:
             self.available_margin = new_margins

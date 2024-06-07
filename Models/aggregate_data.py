@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DateTime, Integer, DECIMAL
+from sqlalchemy import Column, DateTime, Integer, DECIMAL, String
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
 from datetime import datetime
@@ -30,7 +30,7 @@ class AggregateData(Base):
     min_time_diff = Column(DECIMAL(9, 3))
     avg_tim_diff = Column(DECIMAL(9, 3))
     std_dev_time_diff = Column(DECIMAL(9, 3))
-    ws_id = Column(Integer)
+    ws_id = Column(String(15))
 
 
 Base.metadata.create_all(engine, checkfirst=True)

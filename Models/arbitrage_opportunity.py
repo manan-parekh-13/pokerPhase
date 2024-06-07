@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean
+from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean, String
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
@@ -39,7 +39,7 @@ class ArbitrageOpportunity(Base):
     buy_source_ticker_time = Column(UnixTimestampMicroseconds)
     sell_source_ticker_time = Column(UnixTimestampMicroseconds)
     created_at = Column(UnixTimestampMicroseconds)
-    ws_id = Column(Integer)
+    ws_id = Column(String(15))
     buy_order_id = Column(Integer)
     sell_order_id = Column(Integer)
     buy_ordered_at = Column(UnixTimestampMicroseconds)

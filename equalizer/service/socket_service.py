@@ -17,7 +17,6 @@ from datetime import datetime
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid, is_ticker_stale
 from equalizer.service.order_service import realise_arbitrage_opportunity
-from Models.web_socket import WebSocket
 from Models.order_info import init_order_info_from_order_update
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
@@ -51,7 +50,7 @@ def on_ticks(ws, ticks):
         instrument = get_instrument_from_token(ws, instrument_token)
 
         if ws.try_ordering:
-            margin_and_holdings = kite_client.get_available_margin_and_holdings_for_trading_symbol(instrument.tradingsymbol)
+            margin_and_holdings = kite_client.get_available_margin_and_holdings_for_trading_symbol(instrument.trading_symbol)
             available_holdings = margin_and_holdings['available_holdings']
             available_margin = margin_and_holdings['available_margin']
             max_buy_quantity = min(available_holdings, available_margin / ltp)
@@ -174,14 +173,12 @@ def on_order_update(ws, data):
     log_and_notify(order_updates)
 
 
-def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, mode, try_ordering,
-                         check_for_opportunity):
+def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, try_ordering, is_data_ws):
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id, mode=mode, try_ordering=try_ordering,
-                     check_for_opportunity=check_for_opportunity)
+                     token_map=token_map, ws_id=ws_id, try_ordering=try_ordering)
 
     # Assign the callbacks.
-    kws.on_ticks = on_ticks if check_for_opportunity or try_ordering else analyze_data_on_ticks
+    kws.on_ticks = analyze_data_on_ticks if is_data_ws else on_ticks
     kws.on_close = on_close
     kws.on_error = on_error
     kws.on_connect = on_connect
@@ -201,16 +198,6 @@ def send_web_socket_updates():
         count += 1
         time.sleep(60)
     return None
-
-
-def get_ws_id_to_web_socket_map():
-    web_sockets = WebSocket.get_all_web_sockets()
-
-    ws_id_to_socket_map = {}
-    for web_socket in web_sockets:
-        ws_id_to_socket_map[web_socket.ws_id] = web_socket
-
-    return ws_id_to_socket_map
 
 
 def get_instrument_from_token(ws, instrument_token):
