@@ -49,8 +49,3 @@ def log_and_notify(message):
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
     if response.status_code != 200:
         logging.error(f"Failed to send Slack message: {response.text}")
-
-
-
-
-
