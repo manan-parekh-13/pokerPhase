@@ -1,10 +1,7 @@
 from Models.holdings import Holdings
-from kiteconnect.login import global_cache
 
 
 def get_holdings_available_for_arbitrage_in_map():
-    instrument_token_map = global_cache['token_to_equivalent_map']
-
     available_holdings = Holdings.get_holdings_available_for_arbitrage()
     if not available_holdings:
         return None
@@ -15,9 +12,6 @@ def get_holdings_available_for_arbitrage_in_map():
             continue
         if holding.arbitrage_quantity > holding.realised_quantity:
             continue
-        available_holdings_map[holding.instrument_token] = holding.arbitrage_quantity
-        # set the same quantity for equivalent too
-        equivalent_token = instrument_token_map[holding.instrument_token]['equivalent_token']
-        available_holdings_map[equivalent_token] = holding.arbitrage_quantity
+        available_holdings_map[holding.tradingsymbol] = holding.arbitrage_quantity
 
     return available_holdings_map
