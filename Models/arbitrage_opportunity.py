@@ -1,4 +1,4 @@
-from sqlalchemy import Column, DECIMAL, Integer, Index
+from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean, String
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
@@ -21,6 +21,9 @@ def init_arbitrage_opportunities_from_strat_res_and_tickers(buy_ticker, sell_tic
         ws_id=ws_id,
         buy_order_id=None,
         sell_order_id=None,
+        buy_ordered_at=None,
+        sell_ordered_at=None,
+        is_stale=False
     )
 
 
@@ -36,9 +39,12 @@ class ArbitrageOpportunity(Base):
     buy_source_ticker_time = Column(UnixTimestampMicroseconds)
     sell_source_ticker_time = Column(UnixTimestampMicroseconds)
     created_at = Column(UnixTimestampMicroseconds)
-    ws_id = Column(Integer)
+    ws_id = Column(String(15))
     buy_order_id = Column(Integer)
     sell_order_id = Column(Integer)
+    buy_ordered_at = Column(UnixTimestampMicroseconds)
+    sell_ordered_at = Column(UnixTimestampMicroseconds)
+    is_stale = Column(Boolean)
 
     __table_args__ = (
         Index('index_buy_order_id', 'buy_order_id'),

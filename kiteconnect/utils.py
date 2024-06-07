@@ -1,5 +1,5 @@
 import os
-import datetime
+from datetime import datetime
 import pytz
 import requests
 import json
@@ -17,7 +17,7 @@ def get_env_variable(parameter_name):
 
 def convert_str_to_datetime(timestamp_str):
     # Convert string to datetime object
-    timestamp_utc = datetime.datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+    timestamp_utc = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ")
 
     # Set UTC timezone
     utc_timezone = pytz.timezone('UTC')

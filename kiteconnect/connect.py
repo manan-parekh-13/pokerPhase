@@ -121,6 +121,7 @@ class KiteConnect(object):
 
         "portfolio.holdings": "/oms/portfolio/holdings",
         "portfolio.holdings.auction": "/oms/portfolio/holdings/auctions",
+        "portfolio.positions": "/oms/portfolio/positions",
 
         "market.instruments.all": "/instruments",
 
@@ -138,7 +139,6 @@ class KiteConnect(object):
         # "order.cancel": "/orders/{variety}/{order_id}",
         # "order.trades": "/orders/{order_id}/trades",
         #
-        # "portfolio.positions": "/portfolio/positions",
         # "portfolio.positions.convert": "/portfolio/positions",
         #
         # # MF api endpoints
@@ -293,24 +293,28 @@ class KiteConnect(object):
 
         return None
 
-    def get_available_margin_and_holdings_for_instrument(self, instrument_token):
+    def get_available_margin_and_holdings_for_trading_symbol(self, trading_symbol):
         with self.lock:
             return {'available_margin': self.available_margin or 0,
-                    'available_holdings': self.available_holdings.get(instrument_token) or 0}
+                    'available_holdings': self.available_holdings.get(trading_symbol) or 0}
+
+    def get_available_margin(self):
+        with self.lock:
+            return self.available_margin or 0
 
     def set_available_margin_and_holdings(self, new_margins, new_holdings):
         with self.lock:
             self.available_margin = new_margins
             self.available_holdings = new_holdings
 
-    def remove_used_margin(self, used_margin):
+    def set_new_margin(self, new_margin):
         with self.lock:
-            self.available_margin = self.available_margin - used_margin
+            self.available_margin = new_margin
 
-    def remove_used_margins_and_holdings(self, used_margin, instrument_token, used_holdings):
+    def set_new_margins_and_remove_used_holdings(self, new_margins, trading_symbol, used_holdings):
         with self.lock:
-            self.available_margin = self.available_margin - used_margin
-            self.available_holdings[instrument_token] = self.available_holdings[instrument_token] - used_holdings
+            self.available_margin = new_margins
+            self.available_holdings[trading_symbol] = self.available_holdings[trading_symbol] - used_holdings
 
     def set_request_id(self, request_id):
         """Set the `request_id` received after a creating a login request."""

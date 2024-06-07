@@ -1,31 +1,7 @@
-from kiteconnect.utils import get_env_variable, set_timezone_in_datetime
-from kiteconnect import KiteConnect
+from kiteconnect.utils import set_timezone_in_datetime
+from kiteconnect.global_cache import get_kite_client_from_cache
 from flask import abort
 from datetime import datetime
-
-global_cache = {}
-
-
-def get_kite_client(root=None, debug=False):
-    """Returns a kite client object
-    """
-    user_id = get_env_variable('USER_ID')
-    if not user_id:
-        abort(500, "Invalid user_id.")
-
-    password = get_env_variable('PASSWORD')
-    if not password:
-        abort(500, "Invalid password.")
-
-    return KiteConnect(debug=debug, root=root, user_id=user_id, password=password)
-
-
-def get_kite_client_from_cache():
-    if "kite_client" in global_cache:
-        return global_cache.get("kite_client")
-    kite = get_kite_client()
-    global_cache['kite_client'] = kite
-    return kite
 
 
 def login_via_enc_token(enc_token):

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DECIMAL
+from sqlalchemy import Column, String, Integer, DECIMAL, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine, session
 
@@ -21,12 +21,12 @@ class ArbitrageInstruments(Base):
     instrument_token1 = Column(Integer, nullable=False)
     instrument_token2 = Column(Integer, nullable=False)
     min_profit_percent = Column(DECIMAL(8, 2))
-    product_type = Column(String(10))
-    ws_id = Column(Integer)
+    product_type = Column(JSON)
+    try_ordering = Column(Boolean)
 
     @classmethod
-    def get_instruments_with_non_null_ws_id(cls):
-        return session.query(cls).filter(cls.ws_id.isnot(None)).all()
+    def get_arbitrage_instruments(cls):
+        return session.query(cls).all()
 
 
 Base.metadata.create_all(engine, checkfirst=True)
