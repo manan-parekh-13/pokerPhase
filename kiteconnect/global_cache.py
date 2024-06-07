@@ -29,7 +29,7 @@ def get_kite_client_from_cache():
 
 
 def get_latest_aggregate_data_for_ws_id_from_global_cache(ws_id):
-    return global_cache['aggregate_data'][ws_id] if 'aggregate_data' in global_cache else None
+    return global_cache['aggregate_data'][ws_id] if ws_id in global_cache['aggregate_data'] else None
 
 
 def get_latest_aggregate_data_from_global_cache():
@@ -38,6 +38,10 @@ def get_latest_aggregate_data_from_global_cache():
 
 def init_latest_tick_data_in_global_cache():
     global_cache['latest_tick_data'] = {}
+
+
+def init_aggregate_data_in_global_cache():
+    global_cache['aggregate_data'] = {}
 
 
 def init_instrument_token_to_equivalent_token_map(map):

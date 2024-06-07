@@ -32,13 +32,13 @@ def get_instrument_token_to_equivalent_map():
 def get_ws_id_to_token_to_instrument_map():
     instruments = ArbitrageInstruments.get_arbitrage_instruments()
     ws_id_to_token_to_instrument_map = {}
-    current_product_and_status_index_map = {}
+    web_socket_index_map = {}
     kite_client = get_kite_client_from_cache()
 
     default_buy_value = kite_client.get_available_margin() or get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')
 
     for instrument in instruments:
-        if not instrument.product_type or isinstance(instrument.product_type, list):
+        if not instrument.product_type or not isinstance(instrument.product_type, list):
             raise ValueError("Product type not supported for instrument with id: {} and symbol: {}"
                              .format(instrument.id, instrument.trading_symbol))
 
@@ -48,6 +48,19 @@ def get_ws_id_to_token_to_instrument_map():
         instrument2 = deepcopy(instrument)
         instrument2.equivalent_token = instrument.instrument_token1
 
+        # regardless of status of instrument, we need to have data web socket for every instrument token
+        if not web_socket_index_map.get('data'):
+            web_socket_index_map['data'] = 0
+
+        data_ws_id = "data_{}".format(web_socket_index_map['data'])
+        if data_ws_id not in ws_id_to_token_to_instrument_map:
+            ws_id_to_token_to_instrument_map[data_ws_id] = {}
+        ws_id_to_token_to_instrument_map[data_ws_id][instrument1.instrument_token1] = instrument1
+        ws_id_to_token_to_instrument_map[data_ws_id][instrument2.instrument_token2] = instrument2
+
+        if len(ws_id_to_token_to_instrument_map[data_ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
+            web_socket_index_map['data'] += 1
+
         status = "order" if instrument.try_ordering else "check"
 
         for product in instrument.product_type:
@@ -55,9 +68,13 @@ def get_ws_id_to_token_to_instrument_map():
             instrument2.product_type = product
 
             product_and_status = "{}_{}".format(product, status)
-            if not current_product_and_status_index_map.get(product_and_status):
-                current_product_and_status_index_map[product_and_status] = 0
-            ws_id = "{}_{}".format(product_and_status, current_product_and_status_index_map[product_and_status])
+            if not web_socket_index_map.get(product_and_status):
+                web_socket_index_map[product_and_status] = 0
+
+            ws_id = "{}_{}".format(product_and_status, web_socket_index_map[product_and_status])
+            if ws_id not in ws_id_to_token_to_instrument_map:
+                ws_id_to_token_to_instrument_map[ws_id] = {}
+
             instrument1.ws_id = ws_id
             instrument2.ws_id = ws_id
 
@@ -67,25 +84,10 @@ def get_ws_id_to_token_to_instrument_map():
             instrument1.threshold_spread_coef = threshold_spread_coef
             instrument2.threshold_spread_coef = threshold_spread_coef
 
-            if instrument1.ws_id not in ws_id_to_token_to_instrument_map:
-                ws_id_to_token_to_instrument_map[instrument1.ws_id] = {}
-            if len(ws_id_to_token_to_instrument_map[instrument1.ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
-                current_product_and_status_index_map[product_and_status] += 1
             ws_id_to_token_to_instrument_map[instrument1.ws_id][instrument1.instrument_token1] = instrument1
-
-            if instrument2.ws_id not in ws_id_to_token_to_instrument_map:
-                ws_id_to_token_to_instrument_map[instrument2.ws_id] = {}
-            if len(ws_id_to_token_to_instrument_map[instrument2.ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
-                current_product_and_status_index_map[product_and_status] += 1
             ws_id_to_token_to_instrument_map[instrument2.ws_id][instrument2.instrument_token2] = instrument2
 
-    # for every web socket in check or order mode,
-    # we need to create a web socket with same instruments in data mode
-    for ws_id, token_to_instrument_map in ws_id_to_token_to_instrument_map.items():
-        if "order" in ws_id:
-            data_ws_id = ws_id.replace("order", "data")
-        else:
-            data_ws_id = ws_id.replace("check", "data")
-        ws_id_to_token_to_instrument_map[data_ws_id] = token_to_instrument_map
+            if len(ws_id_to_token_to_instrument_map[ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
+                web_socket_index_map[product_and_status] += 1
 
     return ws_id_to_token_to_instrument_map
