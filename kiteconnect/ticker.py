@@ -14,7 +14,6 @@ import json
 import struct
 import logging
 import threading
-from decimal import Decimal
 from datetime import datetime
 from twisted.internet import reactor, ssl
 from twisted.python import log as twisted_log
@@ -807,10 +806,6 @@ class KiteTicker(object):
                     #     "close": self._unpack_int(packet, 40, 44) / divisor
                     # }
                 }
-
-                if d['last_price']:
-                    temp = Decimal(d['last_price'])
-                    d['last_price'] = temp.quantize(Decimal('0.00'))
 
                 # Compute the change price using close price and last price
                 # d["change"] = 0

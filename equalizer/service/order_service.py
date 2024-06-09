@@ -1,10 +1,8 @@
 import logging
 from datetime import datetime
-from kiteconnect.utils import log_and_notify
+from kiteconnect.utils import log_info_and_notify
 from kiteconnect.global_cache import (setup_order_hold_for_time_in_seconds, get_kite_client_from_cache,
                                       get_instrument_token_map_from_cache)
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 def realise_arbitrage_opportunity(opportunity, product_type):
@@ -47,9 +45,9 @@ def place_order_for_opportunity_by_transaction_type(opportunity, transaction_typ
             quantity=opportunity.quantity,
             price=price
         )
-        log_and_notify("Order placed for: {}, {} {} at price: {}"
-                       .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
+        log_info_and_notify("Order placed for: {}, {} {} at price: {}"
+                            .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
         return order_id
     except Exception as e:
-        log_and_notify("Error while ordering: {}".format(e))
+        log_info_and_notify("Error while ordering: {}".format(e))
         return None

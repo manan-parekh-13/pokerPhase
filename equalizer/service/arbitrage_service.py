@@ -3,7 +3,6 @@ from mysql_config import add_all
 from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
 from equalizer.service.ticker_service import reduce_quantity_from_topmost_depth
 from copy import deepcopy
-from decimal import Decimal
 
 
 def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent, product_type, max_buy_quantity, ws_id):
@@ -80,7 +79,7 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_sprea
         if len(bids_data) == 0 or len(offers_data) == 0:
             break
 
-    return {'buy_price': Decimal(buy_price), 'sell_price': Decimal(sell_price), 'quantity': Decimal(quantity)}
+    return {'buy_price': buy_price, 'sell_price': sell_price, 'quantity': quantity}
 
 
 def save_arbitrage_opportunities(arbitrage_opportunities):

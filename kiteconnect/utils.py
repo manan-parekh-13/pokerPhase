@@ -5,8 +5,6 @@ import requests
 import json
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-
 AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 
@@ -39,11 +37,18 @@ def truncate_microseconds(timestamp):
     return timestamp.replace(microsecond=0)
 
 
-def log_and_notify(message):
+def log_info_and_notify(message):
     logging.info(json.dumps(message))
+    send_slack_message(message)
 
+
+def log_error_and_notify(message):
+    logging.error(json.dumps(message))
+    send_slack_message(message)
+
+
+def send_slack_message(message):
     webhook_url = get_env_variable('SLACK_UPDATE_CHANNEL_WEBHOOK')
-
     data = {'text': message}
     headers = {'Content-Type': 'application/json'}
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)

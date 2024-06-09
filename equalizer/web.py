@@ -1,10 +1,9 @@
 import logging
-
+import traceback
 from flask import Flask, jsonify, request, abort
-
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
 from kiteconnect.utils import get_env_variable
-from kiteconnect.global_cache import (init_latest_tick_data_in_global_cache, init_aggregate_data_in_global_cache,
+from kiteconnect.global_cache import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
                                       init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache)
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
 from service.instrument_service import get_ws_id_to_token_to_instrument_map
@@ -12,10 +11,18 @@ from service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
-from kiteconnect.utils import log_and_notify
+from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 from service.holding_service import get_holdings_available_for_arbitrage_in_map
 
-logging.basicConfig(level=logging.DEBUG)
+# Remove all handlers associated with the root logger object
+for handler in logging.root.handlers[:]:
+    logging.root.removeHandler(handler)
+# Logger settings
+logging.basicConfig(
+    level=get_env_variable('LOGGING_MODE'),
+    format='%(asctime)s|%(levelname)s|%(name)s|%(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 # Base settings
 PORT = 5010
@@ -46,7 +53,6 @@ def login_with_enc_token():
     kite = login_via_enc_token(enc_token)
     if not kite.enc_token:
         abort(500, "Unable to set enc token")
-
     return "Successfully logged in via enc token"
 
 
@@ -57,14 +63,13 @@ def start_up_equalizer():
         kite = login_via_two_f_a()
 
     if not kite.enc_token:
-        log_and_notify("Unable to login")
+        log_info_and_notify("Unable to login")
         abort(500, "Unable to login")
 
-    log_and_notify("Successfully logged in!, enc_token: {}".format(kite.enc_token))
+    log_info_and_notify("Successfully logged in!, enc_token: {}".format(kite.enc_token))
 
     # init the global level data points
     init_latest_tick_data_in_global_cache()
-    init_aggregate_data_in_global_cache()
     init_instrument_token_to_equivalent_token_map(get_instrument_token_to_equivalent_map())
 
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
@@ -72,7 +77,7 @@ def start_up_equalizer():
     available_holdings_map = get_holdings_available_for_arbitrage_in_map()
     kite.set_available_margin_and_holdings(new_margins=usable_margin, new_holdings=available_holdings_map)
 
-    log_and_notify("Available margin: {} and holdings: {}".format(usable_margin, available_holdings_map))
+    log_info_and_notify("Available margin: {} and holdings: {}".format(usable_margin, available_holdings_map))
 
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
@@ -82,17 +87,20 @@ def start_up_equalizer():
         try_ordering = True if "order" in ws_id else False
 
         if try_ordering and (not usable_margin or usable_margin <= 0):
-            log_and_notify("Ordering not possible for ws_id {} as no margins available".format(ws_id))
+            log_info_and_notify("Ordering not possible for ws_id {} as no margins available".format(ws_id))
             continue
 
         if try_ordering and (not available_holdings_map):
-            log_and_notify("Ordering not possible for ws_id {} as no holdings available".format(ws_id))
+            log_info_and_notify("Ordering not possible for ws_id {} as no holdings available".format(ws_id))
             continue
 
         is_data_ws = True if "data" in ws_id else False
 
         kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
         kws.connect(threaded=True)
+
+        # init the latest aggregate data for this ws_id
+        init_aggregate_data_for_ws_in_global_cache(ws_id=ws_id)
 
     # This is main thread. Will send status of each websocket every hour
     send_web_socket_updates()
@@ -141,6 +149,12 @@ def instruments():
     instrument_model_list = instrument.convert_all(instrument_records)
     add_all(instrument_model_list)
     return jsonify(instrument_records)
+
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    stack_trace = traceback.format_exc()
+    log_error_and_notify("Trace: {} Error: {}".format(stack_trace, str(e)))
 
 
 if __name__ == "__main__":

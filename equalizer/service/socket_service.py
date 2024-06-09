@@ -22,13 +22,11 @@ from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
 import time
-from kiteconnect.utils import log_and_notify, get_env_variable
+from kiteconnect.utils import log_info_and_notify, get_env_variable
 from kiteconnect.global_cache import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
                                       update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 # Callback for tick reception.
@@ -90,12 +88,13 @@ def analyze_data_on_ticks(ws, ticks):
 
     latest_aggregate_data = get_latest_aggregate_data_for_ws_id_from_global_cache(ws.ws_id)
     for instrument_token, latest_tick_for_instrument in ticks.items():
-        if latest_aggregate_data and instrument_token in latest_aggregate_data:
+        if instrument_token in latest_aggregate_data:
             prev_ticker_for_instrument = latest_aggregate_data.get('instrument_token')
             latest_aggregate_data[instrument_token] = get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument)
         else:
             latest_aggregate_data[instrument_token] = {
-                'ticker_time': datetime.now().timestamp()
+                'ticker_time': datetime.now().timestamp(),
+                'started_at': datetime.now()
             }
 
 
@@ -135,7 +134,7 @@ def on_order_update(ws, data):
     kite_client = get_kite_client_from_cache()
 
     data['received_time'] = update_received_time
-    log_and_notify("Order update: {}".format(data))
+    log_info_and_notify("Order update: {}".format(data))
 
     if data['status'] != kite_client.COMPLETE or data['status'] != kite_client.CANCELLED:
         # wait for it
@@ -170,7 +169,7 @@ def on_order_update(ws, data):
     # save order info - todo @manan can be removed once we crack the zerodha's console
     # init_order_info_from_order_update(data, update_received_time)
 
-    log_and_notify(order_updates)
+    log_info_and_notify(order_updates)
 
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, try_ordering, is_data_ws):
@@ -193,7 +192,6 @@ def send_web_socket_updates():
     # Block main thread
     while True:
         if count % 60 == 0:
-            log_and_notify("Equalizer up and running")
             save_latest_aggregate_data_from_cache()
         count += 1
         time.sleep(60)

@@ -40,8 +40,10 @@ def init_latest_tick_data_in_global_cache():
     global_cache['latest_tick_data'] = {}
 
 
-def init_aggregate_data_in_global_cache():
-    global_cache['aggregate_data'] = {}
+def init_aggregate_data_for_ws_in_global_cache(ws_id):
+    if 'aggregate_data' not in global_cache:
+        global_cache['aggregate_data'] = {}
+    global_cache['aggregate_data'][ws_id] = {}
 
 
 def init_instrument_token_to_equivalent_token_map(map):

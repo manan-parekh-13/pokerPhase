@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DECIMAL, JSON, Boolean
+from sqlalchemy import Column, String, Integer, Float, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine, session
 
@@ -20,7 +20,7 @@ class ArbitrageInstruments(Base):
     exchange_token2 = Column(Integer, nullable=False)
     instrument_token1 = Column(Integer, nullable=False)
     instrument_token2 = Column(Integer, nullable=False)
-    min_profit_percent = Column(DECIMAL(8, 2))
+    min_profit_percent = Column(Float)
     product_type = Column(JSON)
     try_ordering = Column(Boolean)
 
