@@ -191,7 +191,7 @@ def send_web_socket_updates():
     count = 0
     # Block main thread
     while True:
-        if count % 10 == 0:
+        if count % 10 == 0 and count > 0:
             save_latest_aggregate_data_from_cache()
         count += 1
         time.sleep(60)
