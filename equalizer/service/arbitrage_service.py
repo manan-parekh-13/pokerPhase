@@ -15,7 +15,7 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
                                                           threshold_spread_coef=threshold_spread_coef,
                                                           max_buy_quantity=max_buy_quantity)
 
-    if strat_1_result['quantity'] > 0:
+    if strat_1_result['quantity'] > 0 and strat_1_result['buy_value'] > 0:
         spread_coef_for_reqd_profit = get_threshold_spread_coef_for_reqd_profit(
             buy_value=strat_1_result['quantity'] * strat_1_result['buy_price'],
             profit_percent=min_profit_percent,
@@ -37,7 +37,7 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
                                                           threshold_spread_coef=threshold_spread_coef,
                                                           max_buy_quantity=max_buy_quantity)
 
-    if strat_2_result['quantity'] > 0:
+    if strat_2_result['quantity'] > 0 and strat_2_result['buy_value'] > 0:
         spread_coef_for_reqd_profit = get_threshold_spread_coef_for_reqd_profit(
             buy_value=strat_2_result['quantity'] * strat_2_result['buy_price'],
             profit_percent=min_profit_percent,
