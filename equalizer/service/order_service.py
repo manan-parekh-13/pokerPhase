@@ -14,7 +14,7 @@ def realise_arbitrage_opportunity(opportunity, product_type):
     if not opportunity.buy_order_id:
         return
 
-    setup_order_hold_for_time_in_seconds(60)
+    setup_order_hold_for_time_in_seconds(120)
     opportunity.buy_ordered_at = datetime.now()
     opportunity.sell_order_id = place_order_for_opportunity_by_transaction_type(
         opportunity, kite_client.TRANSACTION_TYPE_SELL, product_type)
@@ -38,7 +38,8 @@ def place_order_for_opportunity_by_transaction_type(opportunity, transaction_typ
             variety=kite_client.VARIETY_REGULAR,
             product=product_type,
             order_type=kite_client.ORDER_TYPE_LIMIT,
-            validity=kite_client.VALIDITY_IOC,
+            validity=kite_client.VALIDITY_TTL,
+            validity_ttl=1,
             exchange=instrument['exchange'],
             tradingsymbol=instrument['trading_symbol'],
             transaction_type=transaction_type,
