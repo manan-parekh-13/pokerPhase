@@ -9,15 +9,19 @@ Base = declarative_base()
 
 
 def init_aggregate_data_for_instrument_and_ws_id(data, instrument_token, ws_id):
+    avg_time_diff = 0
+    if 'n' in data and data.get('n') != 0:
+        avg_time_diff = data.get('sum_of_time_diff') / data.get('n')
+        std_dev_time_diff = math.sqrt((data.get('sum_of_square_of_time_diff') / data.get('n')) -
+                                      avg_time_diff ** 2)
     return AggregateData(
-        started_at=data['started_at'],
+        started_at=data.get('started_at'),
         created_at=datetime.now(),
         instrument_token=instrument_token,
-        max_time_diff=data['max'],
-        min_time_diff=data['min'],
-        avg_tim_diff=data['sum_of_time_diff'] / data['n'],
-        std_dev_time_diff=math.sqrt((data['sum_of_square_of_time_diff'] / data['n']) -
-                                    (data['sum_of_time_diff'] / data['n']) ** 2),
+        max_time_diff=data.get('max'),
+        min_time_diff=data.get('min'),
+        avg_tim_diff=avg_time_diff,
+        std_dev_time_diff=std_dev_time_diff,
         ws_id=ws_id
     )
 
