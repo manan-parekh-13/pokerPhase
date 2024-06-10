@@ -18,6 +18,7 @@ def get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument):
     new_sum_of_square_of_time_diff = (prev_ticker_for_instrument.get(
                                           'sum_of_square_of_time_diff') or 0) + new_time_diff ** 2
     return {
+        'started_at': prev_ticker_for_instrument['started_at'],
         'ticker_time': current_time,
         'min': new_min,
         'max': new_max,
