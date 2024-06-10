@@ -89,7 +89,7 @@ def analyze_data_on_ticks(ws, ticks):
     latest_aggregate_data = get_latest_aggregate_data_for_ws_id_from_global_cache(ws.ws_id)
     for instrument_token, latest_tick_for_instrument in ticks.items():
         if instrument_token in latest_aggregate_data:
-            prev_ticker_for_instrument = latest_aggregate_data.get('instrument_token')
+            prev_ticker_for_instrument = latest_aggregate_data.get(instrument_token)
             latest_aggregate_data[instrument_token] = get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument)
         else:
             latest_aggregate_data[instrument_token] = {

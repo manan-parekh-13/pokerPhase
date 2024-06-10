@@ -8,15 +8,15 @@ def get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument):
     current_time = datetime.now().timestamp()
     new_time_diff = current_time - prev_ticker_for_instrument['ticker_time']
 
-    new_min = min(new_time_diff, prev_ticker_for_instrument['min']) if prev_ticker_for_instrument['min'] else (
+    new_min = min(new_time_diff, prev_ticker_for_instrument['min']) if 'min' in prev_ticker_for_instrument else (
         new_time_diff)
-    new_max = max(new_time_diff, prev_ticker_for_instrument['max']) if prev_ticker_for_instrument['max'] else (
+    new_max = max(new_time_diff, prev_ticker_for_instrument['max']) if 'max' in prev_ticker_for_instrument else (
         new_time_diff)
 
-    new_n = (prev_ticker_for_instrument['n'] or 0) + 1
-    new_sum_of_time_diff = (prev_ticker_for_instrument['sum_of_time_diff'] or 0) + new_time_diff
-    new_sum_of_square_of_time_diff = (prev_ticker_for_instrument[
-                                          'sum_of_square_of_time_diff'] or 0) + new_time_diff ** 2
+    new_n = (prev_ticker_for_instrument.get('n') or 0) + 1
+    new_sum_of_time_diff = (prev_ticker_for_instrument.get('sum_of_time_diff') or 0) + new_time_diff
+    new_sum_of_square_of_time_diff = (prev_ticker_for_instrument.get(
+                                          'sum_of_square_of_time_diff') or 0) + new_time_diff ** 2
     return {
         'ticker_time': current_time,
         'min': new_min,
