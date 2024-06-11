@@ -82,6 +82,7 @@ def on_ticks(ws, ticks):
 def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
+    start_time = datetime.now().timestamp()
     logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
 
     update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
@@ -94,8 +95,11 @@ def analyze_data_on_ticks(ws, ticks):
         else:
             latest_aggregate_data[instrument_token] = {
                 'ticker_time': datetime.now().timestamp(),
-                'started_at': datetime.now()
+                'started_at': datetime.now().timestamp()
             }
+
+    time_diff = datetime.now().timestamp() - start_time
+    logging.info("websocket.{}.Processed {} ticks in {} seconds".format(ws.ws_id, len(ticks), time_diff))
 
 
 # Callback for successful connection.
@@ -191,7 +195,7 @@ def send_web_socket_updates():
     count = 0
     # Block main thread
     while True:
-        if count % 5 == 0 and count > 0:
+        if count % 3 == 0 and count > 0:
             save_latest_aggregate_data_from_cache()
         count += 1
         time.sleep(60)

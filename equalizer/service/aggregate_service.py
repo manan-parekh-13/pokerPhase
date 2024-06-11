@@ -35,6 +35,9 @@ def save_latest_aggregate_data_from_cache():
             continue
         aggregate_data_rows = []
         for instrument_token, aggregate_data in instrument_to_aggregates_map.items():
-            aggregate_data_rows.append(init_aggregate_data_for_instrument_and_ws_id(
-                data=aggregate_data, instrument_token=instrument_token, ws_id=ws_id))
+            aggregate = init_aggregate_data_for_instrument_and_ws_id(
+                data=aggregate_data, instrument_token=instrument_token, ws_id=ws_id)
+            if not aggregate:
+                continue
+            aggregate_data_rows.append(aggregate)
         add_all(aggregate_data_rows)

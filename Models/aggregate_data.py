@@ -9,11 +9,12 @@ Base = declarative_base()
 
 
 def init_aggregate_data_for_instrument_and_ws_id(data, instrument_token, ws_id):
-    avg_time_diff = 0
-    if 'n' in data and data.get('n') != 0:
-        avg_time_diff = data.get('sum_of_time_diff') / data.get('n')
-        std_dev_time_diff = math.sqrt((data.get('sum_of_square_of_time_diff') / data.get('n')) -
-                                      avg_time_diff ** 2)
+    if 'n' not in data or data.get('n') == 0:
+        return None
+
+    avg_time_diff = data.get('sum_of_time_diff') / data.get('n')
+    std_dev_time_diff = math.sqrt((data.get('sum_of_square_of_time_diff') / data.get('n')) -
+                                  avg_time_diff ** 2)
     return AggregateData(
         started_at=data.get('started_at'),
         created_at=datetime.now(),

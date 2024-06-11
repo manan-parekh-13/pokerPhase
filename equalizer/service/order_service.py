@@ -12,7 +12,7 @@ def realise_arbitrage_opportunity(opportunity, product_type):
         opportunity, kite_client.TRANSACTION_TYPE_BUY, product_type)
 
     if not opportunity.buy_order_id:
-        return
+        return opportunity
 
     setup_order_hold_for_time_in_seconds(120)
     opportunity.buy_ordered_at = datetime.now()
