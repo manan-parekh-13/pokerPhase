@@ -196,7 +196,7 @@ def send_web_socket_updates():
     count = 0
     # Block main thread
     while True:
-        if count % 3 == 0 and count > 0:
+        if count % 2 == 0 and count > 0:
             save_latest_aggregate_data_from_cache()
             latest_opportunity = ArbitrageOpportunity.get_latest_arbitrage_opportunity()
             if not latest_opportunity:
