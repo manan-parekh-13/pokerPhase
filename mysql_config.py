@@ -1,4 +1,5 @@
 import os
+import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from environment.loader import load_environment
@@ -38,3 +39,14 @@ def add(entry):
 def add_all(entries):
     session.add_all(entries)
     session.commit()
+
+
+def add_all_and_flush(entries):
+    try:
+        session.add_all(entries)
+        session.flush()
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logging.error("Error while saving and flushing entries of type {}"
+                      .format("No entries" if not entries else type(entries[0])), e)
