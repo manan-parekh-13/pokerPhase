@@ -18,6 +18,7 @@ from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid, is_ticker_stale
 from equalizer.service.order_service import realise_arbitrage_opportunity
 from Models.order_info import init_order_info_from_order_update
+from Models.arbitrage_opportunity import ArbitrageOpportunity
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
@@ -197,6 +198,11 @@ def send_web_socket_updates():
     while True:
         if count % 30 == 0 and count > 0:
             save_latest_aggregate_data_from_cache()
+            latest_opportunity = ArbitrageOpportunity.get_latest_arbitrage_opportunity()
+            if not latest_opportunity:
+                log_info_and_notify("No opportunity found!")
+            else:
+                log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
         count += 1
         time.sleep(60)
     return None

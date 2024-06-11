@@ -1,6 +1,6 @@
-from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean, String
+from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean, String, desc
 from sqlalchemy.ext.declarative import declarative_base
-from mysql_config import engine
+from mysql_config import engine, session
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
 from kiteconnect.login import set_timezone_in_datetime
 from datetime import datetime
@@ -50,6 +50,10 @@ class ArbitrageOpportunity(Base):
         Index('index_buy_order_id', 'buy_order_id'),
         Index('index_sell_order_id', 'sell_order_id'),
     )
+
+    @classmethod
+    def get_latest_arbitrage_opportunity(cls):
+        return session.query(cls).order_by(desc(cls.created_at)).first()
 
 
 Base.metadata.create_all(engine, checkfirst=True)
