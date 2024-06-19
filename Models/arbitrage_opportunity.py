@@ -1,6 +1,6 @@
 from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean, String, desc
 from sqlalchemy.ext.declarative import declarative_base
-from mysql_config import engine, session
+from mysql_config import engine, get_thread_session
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
 from kiteconnect.login import set_timezone_in_datetime
 from datetime import datetime
@@ -53,6 +53,7 @@ class ArbitrageOpportunity(Base):
 
     @classmethod
     def get_latest_arbitrage_opportunity_by_id(cls):
+        session = get_thread_session()
         return session.query(cls).order_by(desc(cls.id)).first()
 
 

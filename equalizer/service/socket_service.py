@@ -14,6 +14,7 @@ import logging
 from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
+import threading
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_valid, is_ticker_stale
 from equalizer.service.order_service import realise_arbitrage_opportunity
@@ -34,7 +35,8 @@ from equalizer.service.aggregate_service import save_latest_aggregate_data_from_
 def on_ticks(ws, ticks):
     if not ticks:
         return
-    logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
+    logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
+                  .format(ws.ws_id, threading.current_thread().name, len(ticks), len(ws.token_map)))
 
     raw_tickers = []
     kite_client = get_kite_client_from_cache()
@@ -84,7 +86,8 @@ def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
     start_time = datetime.now().timestamp()
-    logging.debug("websocket.{}.Received {} ticks for {} tokens".format(ws.ws_id, len(ticks), len(ws.token_map)))
+    logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
+                  .format(ws.ws_id, threading.current_thread().name, len(ticks), len(ws.token_map)))
 
     update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
 
@@ -100,40 +103,46 @@ def analyze_data_on_ticks(ws, ticks):
             }
 
     time_diff = datetime.now().timestamp() - start_time
-    logging.debug("websocket.{}.Processed {} ticks in {} seconds".format(ws.ws_id, len(ticks), time_diff))
+    logging.debug("websocket.{}.process_thread {}.Processed {} ticks in {} seconds"
+                  .format(ws.ws_id, threading.current_thread().name, len(ticks), time_diff))
 
 
 # Callback for successful connection.
 def on_connect(ws, response):
-    logging.info("websocket.{}.Successfully connected. Response: {}".format(ws.ws_id, response))
+    logging.info("websocket.{}.process_thread {}.Successfully connected. Response: {}"
+                 .format(ws.ws_id, threading.current_thread().name, response))
     tokens = list(ws.token_map.keys())
     ws.subscribe(tokens)
     ws.set_mode(ws.mode, tokens)
-    logging.info("websocket.{}.Subscribe to tokens in {} mode: {}".format(ws.ws_id, ws.mode, tokens))
+    logging.info("websocket.{}.process_thread {}.Subscribe to tokens in {} mode: {}"
+                 .format(ws.ws_id, threading.current_thread().name, ws.mode, tokens))
 
 
 # Callback when current connection is closed.
 def on_close(ws, code, reason):
-    logging.info("websocket.{id}.Connection closed: {code} - {reason}".format(id=ws.ws_id, code=code, reason=reason))
+    logging.info("websocket.{id}.process_thread {thread}.Connection closed: {code} - {reason}"
+                 .format(id=ws.ws_id, thread=threading.current_thread().name, code=code, reason=reason))
 
 
 # Callback when connection closed with error.
 def on_error(ws, code, reason):
-    logging.info("websocket.{id}.Connection error: {code} - {reason}".format(id=ws.ws_id, code=code, reason=reason))
+    logging.info("websocket.{id}.process_thread {thread}.Connection error: {code} - {reason}"
+                 .format(id=ws.ws_id, thread=threading.current_thread().name, code=code, reason=reason))
 
 
 # Callback when reconnect is on progress
 def on_reconnect(ws, attempts_count):
-    logging.info("websocket.{}.Reconnecting: {}".format(ws.ws_id, attempts_count))
+    logging.info("websocket.{}.process_thread {}.Reconnecting: {}"
+                 .format(ws.ws_id, threading.current_thread().name, attempts_count))
 
 
 # Callback when all reconnect failed (exhausted max retries)
 def on_noreconnect(ws):
-    logging.info("websocket.{}.Reconnect failed.".format(ws.ws_id))
+    logging.info("websocket.{}.process_thread {}.Reconnect failed.".format(ws.ws_id, threading.get_ident()))
 
 
 def on_order_update(ws, data):
-    logging.info("websocket.{}.Order update : {}".format(ws.ws_id, data))
+    logging.info("websocket.{}.process_thread {}.Order update : {}".format(ws.ws_id, threading.current_thread().name, data))
 
     update_received_time = datetime.now()
     kite_client = get_kite_client_from_cache()
@@ -196,8 +205,8 @@ def send_web_socket_updates():
     count = 0
     # Block main thread
     while True:
-        if count % 10 == 0 and count > 0:
-            # save_latest_aggregate_data_from_cache()
+        if count % 30 == 0 and count > 0:
+            save_latest_aggregate_data_from_cache()
             latest_opportunity = ArbitrageOpportunity.get_latest_arbitrage_opportunity_by_id()
             if not latest_opportunity:
                 log_info_and_notify("No opportunity found!")

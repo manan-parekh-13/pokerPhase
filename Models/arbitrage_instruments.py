@@ -1,6 +1,6 @@
 from sqlalchemy import Column, String, Integer, Float, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from mysql_config import engine, session
+from mysql_config import engine, get_thread_session
 
 Base = declarative_base()
 
@@ -26,6 +26,7 @@ class ArbitrageInstruments(Base):
 
     @classmethod
     def get_arbitrage_instruments(cls):
+        session = get_thread_session()
         return session.query(cls).all()
 
 

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime
 from sqlalchemy.ext.declarative import declarative_base
-from mysql_config import engine, session
+from mysql_config import engine, get_thread_session
 
 Base = declarative_base()
 
@@ -37,6 +37,7 @@ class Holdings(Base):
 
     @classmethod
     def get_holdings_available_for_arbitrage(cls):
+        session = get_thread_session()
         return session.query(cls).filter(cls.arbitrage_quantity.isnot(None)).all()
 
 

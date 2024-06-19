@@ -1,4 +1,5 @@
 import logging
+import threading
 import traceback
 from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
@@ -79,6 +80,8 @@ def start_up_equalizer():
 
     log_info_and_notify("Available margin: {} and holdings: {}".format(usable_margin, available_holdings_map))
 
+    logging.debug("main_thread: {}".format(threading.current_thread().name))
+
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
 
@@ -96,11 +99,11 @@ def start_up_equalizer():
 
         is_data_ws = True if "data" in ws_id else False
 
-        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
-        kws.connect(threaded=True)
-
         # init the latest aggregate data for this ws_id
         init_aggregate_data_for_ws_in_global_cache(ws_id=ws_id)
+
+        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
+        kws.connect(threaded=True)
 
     # This is main thread. Will send status of each websocket every hour
     send_web_socket_updates()

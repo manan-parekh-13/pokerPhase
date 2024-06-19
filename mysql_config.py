@@ -1,5 +1,6 @@
 import os
 import logging
+import threading
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from environment.loader import load_environment
@@ -19,41 +20,45 @@ DATABASE_URL = f"mysql+mysqlconnector://{mysql_user_name}:{mysql_password}@{mysq
 
 # Create the engine
 engine = create_engine(DATABASE_URL)
-
-# Create a session
 Session = sessionmaker(bind=engine)
-session = Session()
+default_session = Session()
+
+thread_local = threading.local()
+
+
+def init_thread_session():
+    thread_local.session = Session()
+
+
+def get_thread_session():
+    if not hasattr(thread_local, 'session'):
+        init_thread_session()
+    return thread_local.session
 
 
 # Function to close the session
 def close_session():
+    session = get_thread_session()
     session.close()
 
 
 def add(entry):
+    session = get_thread_session()
     try:
         session.add(entry)
         session.commit()
+        logging.debug("Added entry with session {}".format(id(session)))
     except Exception as e:
         session.rollback()
         logging.error(f"Rollback due to exception: {e}")
 
 
 def add_all(entries):
+    session = get_thread_session()
     try:
         session.add_all(entries)
         session.commit()
+        logging.debug("Added entries with session {}".format(id(session)))
     except Exception as e:
         session.rollback()
         logging.error(f"Rollback due to exception: {e}")
-
-
-def add_all_and_flush(entries):
-    # try:
-        session.add_all(entries)
-        session.flush()
-        session.commit()
-    # except Exception as e:
-    #     session.rollback()
-    #     logging.error("Error while saving and flushing entries of type {}"
-    #                   .format("No entries" if not entries else type(entries[0])), e)

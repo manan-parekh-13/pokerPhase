@@ -13,18 +13,22 @@ import time
 import json
 import struct
 import logging
-import threading
 from datetime import datetime
 from twisted.internet import reactor, ssl
+from twisted.internet.threads import deferToThreadPool
 from twisted.python import log as twisted_log
 from twisted.internet.protocol import ReconnectingClientFactory
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory, connectWS
 from kiteconnect.login import set_timezone_in_datetime
-
+import threading
+from twisted.python.threadpool import ThreadPool
 from .__version__ import __version__, __title__
 
 log = logging.getLogger(__name__)
+
+custom_thread_pool = ThreadPool(minthreads=5, maxthreads=20)
+custom_thread_pool.start()
 
 
 class KiteTickerClientProtocol(WebSocketClientProtocol):
@@ -477,6 +481,8 @@ class KiteTicker(object):
 
         self.try_ordering = try_ordering
 
+        self.reactor_thread = None
+
     def _create_connection(self, url, **kwargs):
         """Create a WebSocket client connection."""
         self.factory = KiteTickerClientFactory(url, **kwargs)
@@ -536,11 +542,12 @@ class KiteTicker(object):
         # Run when reactor is not running
         if not reactor.running:
             if threaded:
-                # Signals are not allowed in non main thread by twisted so suppress it.
+                # Signals are not allowed in non-main thread by twisted so suppress it.
                 opts["installSignalHandlers"] = False
-                self.websocket_thread = threading.Thread(target=reactor.run, kwargs=opts)
-                self.websocket_thread.daemon = True
-                self.websocket_thread.start()
+                self.reactor_thread = threading.Thread(target=reactor.run, kwargs=opts)
+                self.reactor_thread.daemon = True
+                self.reactor_thread.start()
+                logging.debug("reactor_thread {}".format(self.reactor_thread.name))
             else:
                 reactor.run(**opts)
 
@@ -680,11 +687,11 @@ class KiteTicker(object):
 
         # If the message is binary, parse it and send it to the callback.
         if self.on_ticks and is_binary and len(payload) > 4:
-            self.on_ticks(self, self._parse_binary(payload))
+            deferToThreadPool(reactor, custom_thread_pool, self.on_ticks, self, self._parse_binary(payload))
 
         # Parse text messages
         if not is_binary:
-            self._parse_text_message(payload)
+            deferToThreadPool(reactor, custom_thread_pool, self._parse_text_message, payload)
 
     def _on_open(self, ws):
         # Resubscribe if its reconnect
