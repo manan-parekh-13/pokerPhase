@@ -1,7 +1,7 @@
 from datetime import datetime
 from kiteconnect.global_cache import get_latest_aggregate_data_from_global_cache
 from Models.aggregate_data import init_aggregate_data_for_instrument_and_ws_id
-from mysql_config import add_all_and_flush
+from mysql_config import add_all
 
 
 def get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument):
@@ -40,4 +40,4 @@ def save_latest_aggregate_data_from_cache():
             if not aggregate:
                 continue
             aggregate_data_rows.append(aggregate)
-        add_all_and_flush(aggregate_data_rows)
+        add_all(aggregate_data_rows)

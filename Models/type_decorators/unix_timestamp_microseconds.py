@@ -4,6 +4,7 @@ from datetime import datetime
 
 class UnixTimestampMicroseconds(TypeDecorator):
     impl = BigInteger
+    cache_ok = True
 
     def process_bind_param(self, value, dialect):
         """Convert a datetime object to a Unix timestamp with microsecond accuracy."""

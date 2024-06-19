@@ -52,8 +52,8 @@ class ArbitrageOpportunity(Base):
     )
 
     @classmethod
-    def get_latest_arbitrage_opportunity(cls):
-        return session.query(cls).order_by(desc(cls.created_at)).first()
+    def get_latest_arbitrage_opportunity_by_id(cls):
+        return session.query(cls).order_by(desc(cls.id)).first()
 
 
 Base.metadata.create_all(engine, checkfirst=True)

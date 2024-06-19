@@ -31,14 +31,21 @@ def close_session():
 
 
 def add(entry):
-    session.add(entry)
-    session.commit()
-    return entry
+    try:
+        session.add(entry)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logging.error(f"Rollback due to exception: {e}")
 
 
 def add_all(entries):
-    session.add_all(entries)
-    session.commit()
+    try:
+        session.add_all(entries)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        logging.error(f"Rollback due to exception: {e}")
 
 
 def add_all_and_flush(entries):

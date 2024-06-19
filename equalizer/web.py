@@ -155,6 +155,7 @@ def instruments():
 def handle_exception(e):
     stack_trace = traceback.format_exc()
     log_error_and_notify("Trace: {} Error: {}".format(stack_trace, str(e)))
+    return jsonify(stack_trace, 500)
 
 
 if __name__ == "__main__":
