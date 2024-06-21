@@ -43,7 +43,7 @@ def place_order_for_opportunity_by_transaction_type(opportunity, transaction_typ
             exchange=instrument['exchange'],
             tradingsymbol=instrument['trading_symbol'],
             transaction_type=transaction_type,
-            quantity=opportunity.quantity,
+            quantity=int(opportunity.quantity),
             price=price
         )
         log_info_and_notify("Order placed for: {}, {} {} at price: {}"

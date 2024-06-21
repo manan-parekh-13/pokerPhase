@@ -150,7 +150,7 @@ def on_order_update(ws, data):
     data['received_time'] = update_received_time
     log_info_and_notify("Order update: {}".format(data))
 
-    if data['status'] != kite_client.COMPLETE or data['status'] != kite_client.CANCELLED:
+    if data['status'] != kite_client.COMPLETE and data['status'] != kite_client.CANCELLED:
         # wait for it
         return
 
