@@ -2,8 +2,10 @@ from datetime import datetime, timedelta
 from kiteconnect.utils import get_env_variable
 from kiteconnect import KiteConnect
 from flask import abort
+from queue import Queue
 
 global_cache = {}
+opportunity_queue = Queue()
 
 
 def get_kite_client(root=None, debug=False):
@@ -73,3 +75,11 @@ def is_order_on_hold_currently():
 
 def get_instrument_token_map_from_cache():
     return global_cache['token_to_equivalent_map']
+
+
+def add_opportunity_to_queue(event):
+    opportunity_queue.put(event)
+
+
+def get_opportunity_queue():
+    return opportunity_queue

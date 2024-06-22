@@ -1,5 +1,5 @@
 from kiteconnect.utils import set_timezone_in_datetime
-from kiteconnect.global_cache import get_kite_client_from_cache
+from kiteconnect.global_stuff import get_kite_client_from_cache
 from flask import abort
 from datetime import datetime
 

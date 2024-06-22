@@ -1,4 +1,4 @@
-from kiteconnect.global_cache import get_latest_tick_by_instrument_token_from_global_cache
+from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache
 
 
 def is_ticker_stale(ticker):

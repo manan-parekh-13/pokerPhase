@@ -54,3 +54,7 @@ def send_slack_message(message):
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
     if response.status_code != 200:
         logging.error(f"Failed to send Slack message: {response.text}")
+
+
+def get_product_type_from_ws_id(ws_id):
+    return ws_id.split('_')[0]

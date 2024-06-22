@@ -15,20 +15,18 @@ from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
 import threading
+import asyncio
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.ticker_service import is_ticker_stale
-from equalizer.service.order_service import realise_arbitrage_opportunity
-from Models.order_info import init_order_info_from_order_update
 from Models.arbitrage_opportunity import ArbitrageOpportunity
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
-import time
 from kiteconnect.utils import log_info_and_notify, get_env_variable
-from kiteconnect.global_cache import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
+from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
                                       update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently,
-                                      setup_order_hold_for_time_in_seconds)
+                                      setup_order_hold_for_time_in_seconds, add_opportunity_to_queue)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 
@@ -73,9 +71,9 @@ def on_ticks(ws, ticks):
 
         if ws.try_ordering and not is_order_on_hold_currently() and not opportunity.is_stale:
             setup_order_hold_for_time_in_seconds(120)
-            opportunity = realise_arbitrage_opportunity(opportunity, instrument.product_type)
-
-        add(opportunity)
+            add_opportunity_to_queue(opportunity)
+        else:
+            add(opportunity)
 
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
@@ -202,20 +200,15 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
     return kws
 
 
-def send_web_socket_updates():
-    count = 0
-    # Block main thread
+async def send_web_socket_updates():
     while True:
-        if count % 30 == 0 and count > 0:
-            save_latest_aggregate_data_from_cache()
-            latest_opportunity = ArbitrageOpportunity.get_latest_arbitrage_opportunity_by_id()
-            if not latest_opportunity:
-                log_info_and_notify("No opportunity found!")
-            else:
-                log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
-        count += 1
-        time.sleep(60)
-    return None
+        save_latest_aggregate_data_from_cache()
+        latest_opportunity = ArbitrageOpportunity.get_latest_arbitrage_opportunity_by_id()
+        if not latest_opportunity:
+            log_info_and_notify("No opportunity found!")
+        else:
+            log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
+        await asyncio.sleep(30 * 60)
 
 
 def get_instrument_from_token(ws, instrument_token):

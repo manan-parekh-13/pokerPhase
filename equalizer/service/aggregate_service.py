@@ -1,5 +1,5 @@
 from datetime import datetime
-from kiteconnect.global_cache import get_latest_aggregate_data_from_global_cache
+from kiteconnect.global_stuff import get_latest_aggregate_data_from_global_cache
 from Models.aggregate_data import init_aggregate_data_for_instrument_and_ws_id
 from mysql_config import add_all
 

@@ -1,4 +1,4 @@
-from kiteconnect.global_cache import get_kite_client_from_cache
+from kiteconnect.global_stuff import get_kite_client_from_cache
 
 
 def calc_transac_charges(order_value, product_type, transaction_type):

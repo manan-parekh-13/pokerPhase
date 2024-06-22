@@ -1,6 +1,6 @@
 from Models.arbitrage_instruments import ArbitrageInstruments
 from kiteconnect.utils import get_env_variable
-from kiteconnect.global_cache import get_kite_client_from_cache
+from kiteconnect.global_stuff import get_kite_client_from_cache
 from copy import deepcopy
 from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
 
