@@ -16,7 +16,7 @@ from urllib.parse import quote
 from datetime import datetime
 import threading
 from Models.raw_ticker_data import init_raw_ticker_data
-from equalizer.service.ticker_service import is_ticker_valid, is_ticker_stale
+from equalizer.service.ticker_service import is_ticker_stale
 from equalizer.service.order_service import realise_arbitrage_opportunity
 from Models.order_info import init_order_info_from_order_update
 from Models.arbitrage_opportunity import ArbitrageOpportunity
@@ -27,7 +27,8 @@ import time
 from kiteconnect.utils import log_info_and_notify, get_env_variable
 from kiteconnect.global_cache import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
-                                      update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently)
+                                      update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently,
+                                      setup_order_hold_for_time_in_seconds)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 
@@ -35,6 +36,8 @@ from equalizer.service.aggregate_service import save_latest_aggregate_data_from_
 def on_ticks(ws, ticks):
     if not ticks:
         return
+    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
+
     logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
                   .format(ws.ws_id, threading.current_thread().name, len(ticks), len(ws.token_map)))
 
@@ -44,10 +47,7 @@ def on_ticks(ws, ticks):
     for instrument_token, latest_tick_for_instrument in ticks.items():
         latest_tick_for_equivalent = get_equivalent_tick_from_token(ws, instrument_token)
 
-        if not is_ticker_valid(latest_tick_for_equivalent) or not is_ticker_valid(latest_tick_for_instrument):
-            continue
-
-        ltp = latest_tick_for_instrument['last_price']
+        ltp = latest_tick_for_instrument['depth']['sell'][0]['price']
         instrument = get_instrument_from_token(ws, instrument_token)
 
         if ws.try_ordering:
@@ -72,6 +72,7 @@ def on_ticks(ws, ticks):
             opportunity.is_stale = True
 
         if ws.try_ordering and not is_order_on_hold_currently() and not opportunity.is_stale:
+            setup_order_hold_for_time_in_seconds(120)
             opportunity = realise_arbitrage_opportunity(opportunity, instrument.product_type)
 
         add(opportunity)
@@ -85,11 +86,11 @@ def on_ticks(ws, ticks):
 def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
+    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
+
     start_time = datetime.now().timestamp()
     logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
                   .format(ws.ws_id, threading.current_thread().name, len(ticks), len(ws.token_map)))
-
-    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
 
     latest_aggregate_data = get_latest_aggregate_data_for_ws_id_from_global_cache(ws.ws_id)
     for instrument_token, latest_tick_for_instrument in ticks.items():
@@ -170,9 +171,9 @@ def on_order_update(ws, data):
     latest_margins = kite_client.margins(segment=kite_client.MARGIN_EQUITY)
 
     if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
-        kite_client.set_new_margin(new_margin=latest_margins)
+        kite_client.set_new_margin(new_margin=latest_margins.get('net'))
     else:
-        kite_client.set_new_margins_and_remove_used_holdings(new_margins=latest_margins,
+        kite_client.set_new_margins_and_remove_used_holdings(new_margins=latest_margins.get('net'),
                                                              used_holdings=data['filled_quantity'],
                                                              trading_symbol=data['tradingsymbol'])
 

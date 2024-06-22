@@ -20,7 +20,6 @@ from twisted.python import log as twisted_log
 from twisted.internet.protocol import ReconnectingClientFactory
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory, connectWS
-from kiteconnect.login import set_timezone_in_datetime
 import threading
 from twisted.python.threadpool import ThreadPool
 from .__version__ import __version__, __title__
@@ -748,113 +747,144 @@ class KiteTicker(object):
             else:
                 divisor = 100.0
 
+            # Prioritizing full mode for best equalizer performance
+            # Other modes will be commented for now
+            #############################################################
+
+            d = {
+                "instrument_token": instrument_token,
+                "ticker_received_time": datetime.now()
+            }
+
+            # Market depth entries.
+            depth = {
+                "buy": [],
+                "sell": []
+            }
+
+            # Compile the market depth lists.
+            for i, p in enumerate(range(64, len(packet), 12)):
+                quantity = self._unpack_int(packet, p, p + 4)
+                depth["sell" if i >= 5 else "buy"].append({
+                    "quantity": quantity,
+                    "left_quantity": quantity,
+                    "price": self._unpack_int(packet, p + 4, p + 8) / divisor,
+                })
+
+            d["depth"] = depth
+            data[d['instrument_token']] = d
+
+            ##########################################################
+
             # All indices are not tradable
-            tradable = False if segment == self.EXCHANGE_MAP["indices"] else True
+            # tradable = False if segment == self.EXCHANGE_MAP["indices"] else True
 
             # LTP packets
-            if len(packet) == 8:
-                d = {
-                    "tradable": tradable,
-                    "mode": self.MODE_LTP,
-                    "instrument_token": instrument_token,
-                    "last_price": self._unpack_int(packet, 4, 8) / divisor
-                }
-                data[instrument_token] = d
+            # if len(packet) == 8:
+            #     d = {
+            #         "tradable": tradable,
+            #         "mode": self.MODE_LTP,
+            #         "instrument_token": instrument_token,
+            #         "last_price": self._unpack_int(packet, 4, 8) / divisor
+            #     }
+            #     data[instrument_token] = d
             # Indices quote and full mode
-            elif len(packet) == 28 or len(packet) == 32:
-                mode = self.MODE_QUOTE if len(packet) == 28 else self.MODE_FULL
-
-                d = {
-                    "tradable": tradable,
-                    "mode": mode,
-                    "instrument_token": instrument_token,
-                    "last_price": self._unpack_int(packet, 4, 8) / divisor,
-                    "ohlc": {
-                        "high": self._unpack_int(packet, 8, 12) / divisor,
-                        "low": self._unpack_int(packet, 12, 16) / divisor,
-                        "open": self._unpack_int(packet, 16, 20) / divisor,
-                        "close": self._unpack_int(packet, 20, 24) / divisor
-                    }
-                }
-
-                # Compute the change price using close price and last price
-                d["change"] = 0
-                if (d["ohlc"]["close"] != 0):
-                    d["change"] = (d["last_price"] - d["ohlc"]["close"]) * 100 / d["ohlc"]["close"]
-
-                # Full mode with timestamp
-                if len(packet) == 32:
-                    try:
-                        timestamp = datetime.fromtimestamp(self._unpack_int(packet, 28, 32))
-                    except Exception:
-                        timestamp = None
-
-                    d["exchange_timestamp"] = timestamp
-
-                data[d['instrument_token']] = d
+            # elif len(packet) == 28 or len(packet) == 32:
+            #     mode = self.MODE_QUOTE if len(packet) == 28 else self.MODE_FULL
+            #
+            #     d = {
+            #         "tradable": tradable,
+            #         "mode": mode,
+            #         "instrument_token": instrument_token,
+            #         "last_price": self._unpack_int(packet, 4, 8) / divisor,
+            #         "ohlc": {
+            #             "high": self._unpack_int(packet, 8, 12) / divisor,
+            #             "low": self._unpack_int(packet, 12, 16) / divisor,
+            #             "open": self._unpack_int(packet, 16, 20) / divisor,
+            #             "close": self._unpack_int(packet, 20, 24) / divisor
+            #         }
+            #     }
+            #
+            #     # Compute the change price using close price and last price
+            #     d["change"] = 0
+            #     if (d["ohlc"]["close"] != 0):
+            #         d["change"] = (d["last_price"] - d["ohlc"]["close"]) * 100 / d["ohlc"]["close"]
+            #
+            #     # Full mode with timestamp
+            #     if len(packet) == 32:
+            #         try:
+            #             timestamp = datetime.fromtimestamp(self._unpack_int(packet, 28, 32))
+            #         except Exception:
+            #             timestamp = None
+            #
+            #         d["exchange_timestamp"] = timestamp
+            #
+            #     data[d['instrument_token']] = d
             # Quote and full mode
-            elif len(packet) == 44 or len(packet) == 184:
-                mode = self.MODE_QUOTE if len(packet) == 44 else self.MODE_FULL
-
-                d = {
-                    "tradable": tradable,
-                    "mode": mode,
-                    "instrument_token": instrument_token,
-                    "last_price": self._unpack_int(packet, 4, 8) / divisor,
-                    "last_traded_quantity": self._unpack_int(packet, 8, 12),
-                    # "average_traded_price": self._unpack_int(packet, 12, 16) / divisor,
-                    # "volume_traded": self._unpack_int(packet, 16, 20),
-                    # "total_buy_quantity": self._unpack_int(packet, 20, 24),
-                    # "total_sell_quantity": self._unpack_int(packet, 24, 28),
-                    # "ohlc": {
-                    #     "open": self._unpack_int(packet, 28, 32) / divisor,
-                    #     "high": self._unpack_int(packet, 32, 36) / divisor,
-                    #     "low": self._unpack_int(packet, 36, 40) / divisor,
-                    #     "close": self._unpack_int(packet, 40, 44) / divisor
-                    # }
-                }
-
-                # Compute the change price using close price and last price
-                # d["change"] = 0
-                # if (d["ohlc"]["close"] != 0):
-                #     d["change"] = (d["last_price"] - d["ohlc"]["close"]) * 100 / d["ohlc"]["close"]
-
-                # Parse full mode
-                if len(packet) == 184:
-                    try:
-                        last_trade_time = datetime.fromtimestamp(self._unpack_int(packet, 44, 48))
-                    except Exception:
-                        last_trade_time = None
-
-                    try:
-                        timestamp = datetime.fromtimestamp(self._unpack_int(packet, 60, 64))
-                    except Exception:
-                        timestamp = None
-
-                    d["last_trade_time"] = last_trade_time
-                    # d["oi"] = self._unpack_int(packet, 48, 52)
-                    # d["oi_day_high"] = self._unpack_int(packet, 52, 56)
-                    # d["oi_day_low"] = self._unpack_int(packet, 56, 60)
-                    d["exchange_timestamp"] = timestamp
-
-                    # Market depth entries.
-                    depth = {
-                        "buy": [],
-                        "sell": []
-                    }
-
-                    # Compile the market depth lists.
-                    for i, p in enumerate(range(64, len(packet), 12)):
-                        depth["sell" if i >= 5 else "buy"].append({
-                            "quantity": self._unpack_int(packet, p, p + 4),
-                            "price": self._unpack_int(packet, p + 4, p + 8) / divisor,
-                            "orders": self._unpack_int(packet, p + 8, p + 10, byte_format="H")
-                        })
-
-                    d["depth"] = depth
-                    d['ticker_received_time'] = set_timezone_in_datetime(datetime.now())
-
-                data[d['instrument_token']] = d
+            # elif len(packet) == 44 or len(packet) == 184:
+            #     mode = self.MODE_QUOTE if len(packet) == 44 else self.MODE_FULL
+            #
+            #     d = {
+            #         "tradable": tradable,
+            #         "mode": mode,
+            #         "instrument_token": instrument_token,
+            #         "last_price": self._unpack_int(packet, 4, 8) / divisor,
+            #         "last_traded_quantity": self._unpack_int(packet, 8, 12),
+            #         "average_traded_price": self._unpack_int(packet, 12, 16) / divisor,
+            #         "volume_traded": self._unpack_int(packet, 16, 20),
+            #         "total_buy_quantity": self._unpack_int(packet, 20, 24),
+            #         "total_sell_quantity": self._unpack_int(packet, 24, 28),
+            #         "ohlc": {
+            #             "open": self._unpack_int(packet, 28, 32) / divisor,
+            #             "high": self._unpack_int(packet, 32, 36) / divisor,
+            #             "low": self._unpack_int(packet, 36, 40) / divisor,
+            #             "close": self._unpack_int(packet, 40, 44) / divisor
+            #         }
+            #     }
+            #
+            #     # Compute the change price using close price and last price
+            #     d["change"] = 0
+            #     if (d["ohlc"]["close"] != 0):
+            #         d["change"] = (d["last_price"] - d["ohlc"]["close"]) * 100 / d["ohlc"]["close"]
+            #
+            #     # Parse full mode
+            #     if len(packet) == 184:
+            #         try:
+            #             last_trade_time = datetime.fromtimestamp(self._unpack_int(packet, 44, 48))
+            #         except Exception:
+            #             last_trade_time = None
+            #
+            #         try:
+            #             timestamp = datetime.fromtimestamp(self._unpack_int(packet, 60, 64))
+            #         except Exception:
+            #             timestamp = None
+            #
+            #         d["last_trade_time"] = last_trade_time
+            #         d["oi"] = self._unpack_int(packet, 48, 52)
+            #         d["oi_day_high"] = self._unpack_int(packet, 52, 56)
+            #         d["oi_day_low"] = self._unpack_int(packet, 56, 60)
+            #         d["exchange_timestamp"] = timestamp
+            #
+            #         # Market depth entries.
+            #         depth = {
+            #             "buy": [],
+            #             "sell": []
+            #         }
+            #
+            #         # Compile the market depth lists.
+            #         for i, p in enumerate(range(64, len(packet), 12)):
+            #             quantity = self._unpack_int(packet, p, p + 4)
+            #             depth["sell" if i >= 5 else "buy"].append({
+            #                 "quantity": quantity,
+            #                 "left_quantity": quantity,
+            #                 "price": self._unpack_int(packet, p + 4, p + 8) / divisor,
+            #                 "orders": self._unpack_int(packet, p + 8, p + 10, byte_format="H")
+            #             })
+            #
+            #         d["depth"] = depth
+            #         d['ticker_received_time'] = set_timezone_in_datetime(datetime.now())
+            #
+            #     data[d['instrument_token']] = d
 
         return data
 

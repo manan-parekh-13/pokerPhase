@@ -19,7 +19,11 @@ mysql_port = get_env_variable("MYSQL_PORT")
 DATABASE_URL = f"mysql+mysqlconnector://{mysql_user_name}:{mysql_password}@{mysql_host}:{mysql_port}/pokerPhase"
 
 # Create the engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL,
+                       pool_size=20,  # Increase pool size
+                       max_overflow=25,  # Allow for overflow connections
+                       pool_timeout=30,  # Timeout for getting a connection from the pool
+                       pool_recycle=3600)  # Recycle connections after one hour
 Session = sessionmaker(bind=engine)
 default_session = Session()
 

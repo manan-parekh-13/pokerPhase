@@ -1,17 +1,12 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
 from mysql_config import add_all
 from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
-from equalizer.service.ticker_service import reduce_quantity_from_topmost_depth
-from copy import deepcopy
 
 
 def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent, product_type, max_buy_quantity, ws_id):
     # strategy 1 - buy from ticker2 and sell in ticker1
-    ticker1_bids = deepcopy(ticker1)['depth']['buy']
-    ticker2_offers = deepcopy(ticker2)['depth']['sell']
-
-    strat_1_result = get_price_and_quantity_for_arbitrage(bids_data=ticker1_bids,
-                                                          offers_data=ticker2_offers,
+    strat_1_result = get_price_and_quantity_for_arbitrage(bids_data=ticker1['depth']['buy'],
+                                                          offers_data=ticker2['depth']['sell'],
                                                           threshold_spread_coef=threshold_spread_coef,
                                                           max_buy_quantity=max_buy_quantity)
 
@@ -30,10 +25,8 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
                                                                            ws_id=ws_id)
 
     # strategy 2 - buy from ticker1 and sell in ticker2
-    ticker2_bids = deepcopy(ticker2)['depth']['buy']
-    ticker1_offers = deepcopy(ticker1)['depth']['sell']
-    strat_2_result = get_price_and_quantity_for_arbitrage(bids_data=ticker2_bids,
-                                                          offers_data=ticker1_offers,
+    strat_2_result = get_price_and_quantity_for_arbitrage(bids_data=ticker2['depth']['buy'],
+                                                          offers_data=ticker1['depth']['sell'],
                                                           threshold_spread_coef=threshold_spread_coef,
                                                           max_buy_quantity=max_buy_quantity)
 
@@ -56,9 +49,12 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
 def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_spread_coef, max_buy_quantity):
     quantity = 0
 
+    current_offers_depth = 0
+    current_bids_depth = 0
+
     while True:
-        lowest_buy = offers_data[0]
-        highest_sell = bids_data[0]
+        lowest_buy = offers_data.get(current_offers_depth)
+        highest_sell = bids_data.get(current_bids_depth)
 
         buy_price = lowest_buy['price']
         sell_price = highest_sell['price']
@@ -67,16 +63,23 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_sprea
         if spread_coef < threshold_spread_coef:
             break
 
-        add_quantity = min(lowest_buy['quantity'], highest_sell['quantity'])
+        add_quantity = min(lowest_buy['left_quantity'], highest_sell['left_quantity'])
         quantity = min(quantity + add_quantity, max_buy_quantity)
         # quantity == 0 is only possible when zerodha sends us a stupid depth value
         if quantity == max_buy_quantity or quantity == 0:
             break;
 
-        reduce_quantity_from_topmost_depth(offers_data, add_quantity)
-        reduce_quantity_from_topmost_depth(bids_data, add_quantity)
+        offers_data[current_offers_depth]['left_quantity'] = offers_data[current_offers_depth]['left_quantity'] - add_quantity
+        if offers_data[current_offers_depth]['left_quantity'] == 0:
+            current_offers_depth += 1
 
-        if len(bids_data) == 0 or len(offers_data) == 0:
+        bids_data[current_bids_depth]['left_quantity'] = bids_data[current_bids_depth]['left_quantity'] - add_quantity
+        if bids_data[current_bids_depth]['left_quantity'] == 0:
+            current_bids_depth += 1
+
+        # Zerodha assumes that 5 levels of market depth are received while unpacking ticker packets
+        # hence we go with the same assumption!
+        if current_offers_depth == 5 or current_bids_depth == 5:
             break
 
     return {'buy_price': buy_price, 'sell_price': sell_price, 'quantity': quantity}
