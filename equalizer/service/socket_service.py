@@ -36,7 +36,7 @@ from memory_profiler import profile
 def on_ticks(ws, ticks):
     if not ticks:
         return
-    # update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
+    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
 
     logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
                   .format(ws.ws_id, threading.current_thread().name, len(ticks), len(ws.token_map)))
@@ -68,10 +68,9 @@ def on_ticks(ws, ticks):
         if max_buy_quantity == 0:
             continue
 
-        opportunity = None
-            # check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-            #                           instrument.threshold_spread_coef, instrument.min_profit_percent,
-            #                           instrument.product_type, max_buy_quantity, ws.ws_id)
+        opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
+                                      instrument.threshold_spread_coef, instrument.min_profit_percent,
+                                      instrument.product_type, max_buy_quantity, ws.ws_id)
 
         if not opportunity:
             continue
@@ -95,7 +94,7 @@ def on_ticks(ws, ticks):
 def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
-    # update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
+    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
 
     start_time = datetime.now().timestamp()
     logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
@@ -105,7 +104,7 @@ def analyze_data_on_ticks(ws, ticks):
     for instrument_token, latest_tick_for_instrument in ticks.items():
         if instrument_token in latest_aggregate_data:
             prev_ticker_for_instrument = latest_aggregate_data.get(instrument_token)
-            # latest_aggregate_data[instrument_token] = get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument)
+            latest_aggregate_data[instrument_token] = get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument)
         else:
             latest_aggregate_data[instrument_token] = {
                 'ticker_time': datetime.now().timestamp(),
@@ -201,7 +200,7 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
                      token_map=token_map, ws_id=ws_id, try_ordering=try_ordering)
 
     # Assign the callbacks.
-    kws.on_ticks = None if is_data_ws else on_ticks
+    kws.on_ticks = analyze_data_on_ticks if is_data_ws else on_ticks
     kws.on_close = on_close
     kws.on_error = on_error
     kws.on_connect = on_connect
