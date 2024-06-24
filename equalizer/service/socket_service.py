@@ -200,7 +200,7 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
                      token_map=token_map, ws_id=ws_id, try_ordering=try_ordering)
 
     # Assign the callbacks.
-    # kws.on_ticks = analyze_data_on_ticks if is_data_ws else on_ticks
+    kws.on_ticks = analyze_data_on_ticks if is_data_ws else None
     kws.on_close = on_close
     kws.on_error = on_error
     kws.on_connect = on_connect
