@@ -21,13 +21,12 @@ from twisted.internet.protocol import ReconnectingClientFactory
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory, connectWS
 import threading
-from twisted.python.threadpool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor
 from .__version__ import __version__, __title__
 
 log = logging.getLogger(__name__)
 
-custom_thread_pool = ThreadPool(minthreads=5, maxthreads=20)
-custom_thread_pool.start()
+executor = ThreadPoolExecutor(max_workers=20)
 
 
 class KiteTickerClientProtocol(WebSocketClientProtocol):
@@ -686,12 +685,11 @@ class KiteTicker(object):
 
         # If the message is binary, parse it and send it to the callback.
         if self.on_ticks and is_binary and len(payload) > 4:
-            # deferToThreadPool(reactor, custom_thread_pool, self.on_ticks, self, self._parse_binary(payload))
-            self.on_ticks(self, self._parse_binary(payload))
+            executor.submit(self.on_ticks, self, self._parse_binary(payload))
 
         # Parse text messages
         if not is_binary:
-            deferToThreadPool(reactor, custom_thread_pool, self._parse_text_message, payload)
+            executor.submit(self._parse_text_message, payload)
 
     def _on_open(self, ws):
         # Resubscribe if its reconnect
