@@ -686,7 +686,8 @@ class KiteTicker(object):
 
         # If the message is binary, parse it and send it to the callback.
         if self.on_ticks and is_binary and len(payload) > 4:
-            deferToThreadPool(reactor, custom_thread_pool, self.on_ticks, self, self._parse_binary(payload))
+            # deferToThreadPool(reactor, custom_thread_pool, self.on_ticks, self, self._parse_binary(payload))
+            self.on_ticks(self, self._parse_binary(payload))
 
         # Parse text messages
         if not is_binary:
