@@ -111,10 +111,10 @@ async def start_up_equalizer():
         kws.connect(threaded=True)
 
     # start consumer to realise arbitrage opportunities in case order web sockets exist
-    consumer_task = asyncio.create_task(consume_opportunity())
-    status_update_task = asyncio.create_task(send_web_socket_updates())
+    # consumer_task = asyncio.create_task(consume_opportunity())
+    # status_update_task = asyncio.create_task(send_web_socket_updates())
 
-    await asyncio.gather(status_update_task, consumer_task)
+    # await asyncio.gather(status_update_task, consumer_task)
 
 
 @app.route("/holdings.json", methods=['GET'])
