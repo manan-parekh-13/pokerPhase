@@ -1,5 +1,4 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
-from mysql_config import add_all
 from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
 
 
@@ -84,9 +83,3 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_sprea
 
     return {'buy_price': buy_price, 'sell_price': sell_price, 'quantity': quantity}
 
-
-def save_arbitrage_opportunities(arbitrage_opportunities):
-    if not arbitrage_opportunities:
-        return;
-
-    add_all(arbitrage_opportunities)

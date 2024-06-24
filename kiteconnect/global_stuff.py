@@ -3,6 +3,8 @@ from kiteconnect.utils import get_env_variable
 from kiteconnect import KiteConnect
 from flask import abort
 from queue import Queue
+from memory_profiler import profile
+
 
 global_cache = {}
 opportunity_queue = Queue()
@@ -56,6 +58,7 @@ def get_latest_tick_by_instrument_token_from_global_cache(instrument_token):
     return global_cache['latest_tick_data'].get(instrument_token)
 
 
+@profile
 def update_latest_ticks_for_instrument_tokens_in_bulk(token_to_tick_map):
     global_cache['latest_tick_data'].update(token_to_tick_map)
 

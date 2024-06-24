@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from environment.loader import load_environment
 from kiteconnect.utils import get_env_variable
+from memory_profiler import profile
 
 # Load the environment configuration
 environment = os.getenv('FLASK_ENV')
@@ -46,6 +47,7 @@ def close_session():
     session.close()
 
 
+@profile
 def add(entry):
     session = get_thread_session()
     try:
@@ -57,6 +59,7 @@ def add(entry):
         logging.error(f"Rollback due to exception: {e}")
 
 
+@profile
 def add_all(entries):
     session = get_thread_session()
     try:
