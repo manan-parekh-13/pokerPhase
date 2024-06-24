@@ -53,8 +53,8 @@ def get_price_and_quantity_for_arbitrage(bids_data, offers_data, threshold_sprea
     current_bids_depth = 0
 
     while True:
-        lowest_buy = offers_data.get(current_offers_depth)
-        highest_sell = bids_data.get(current_bids_depth)
+        lowest_buy = offers_data[current_offers_depth]
+        highest_sell = bids_data[current_bids_depth]
 
         buy_price = lowest_buy['price']
         sell_price = highest_sell['price']
