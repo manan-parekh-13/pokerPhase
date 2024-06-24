@@ -28,9 +28,11 @@ from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_agg
                                       update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently,
                                       setup_order_hold_for_time_in_seconds, add_opportunity_to_queue)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
+from memory_profiler import profile
 
 
 # Callback for tick reception.
+@profile
 def on_ticks(ws, ticks):
     if not ticks:
         return
@@ -45,7 +47,14 @@ def on_ticks(ws, ticks):
     for instrument_token, latest_tick_for_instrument in ticks.items():
         latest_tick_for_equivalent = get_equivalent_tick_from_token(ws, instrument_token)
 
+        if not latest_tick_for_equivalent:
+            continue
+
         ltp = latest_tick_for_instrument['depth']['sell'][0]['price']
+
+        if ltp == 0.0:
+            continue
+
         instrument = get_instrument_from_token(ws, instrument_token)
 
         if ws.try_ordering:
@@ -81,6 +90,7 @@ def on_ticks(ws, ticks):
     add_all(raw_tickers)
 
 
+@profile
 def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
@@ -200,6 +210,7 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
     return kws
 
 
+@profile
 async def send_web_socket_updates():
     while True:
         save_latest_aggregate_data_from_cache()
