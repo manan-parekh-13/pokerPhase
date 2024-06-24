@@ -94,7 +94,7 @@ def on_ticks(ws, ticks):
 def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
-    update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
+    # update_latest_ticks_for_instrument_tokens_in_bulk(ticks)
 
     start_time = datetime.now().timestamp()
     logging.debug("websocket.{}.process_thread {}.Received {} ticks for {} tokens"
