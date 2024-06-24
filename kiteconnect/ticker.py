@@ -22,6 +22,7 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory, connectWS
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from memory_profiler import profile
 from .__version__ import __version__, __title__
 
 log = logging.getLogger(__name__)
@@ -678,6 +679,7 @@ class KiteTicker(object):
         if self.on_error:
             self.on_error(self, code, reason)
 
+    @profile
     def _on_message(self, ws, payload, is_binary):
         """Call `on_message` callback when text message is received."""
         if self.on_message:
@@ -729,6 +731,7 @@ class KiteTicker(object):
         if data.get("type") == "error":
             self._on_error(self, 0, data)
 
+    @profile
     def _parse_binary(self, bin):
         """Parse binary data to a (list of) ticks structure."""
         packets = self._split_packets(bin)  # split data to individual ticks packet
@@ -884,7 +887,7 @@ class KiteTicker(object):
             #         d['ticker_received_time'] = set_timezone_in_datetime(datetime.now())
             #
             #     data[d['instrument_token']] = d
-
+        packets = []
         return data
 
     def _unpack_int(self, bin, start, end, byte_format="I"):

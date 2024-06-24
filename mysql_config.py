@@ -47,7 +47,6 @@ def close_session():
     session.close()
 
 
-@profile
 def add(entry):
     session = get_thread_session()
     try:
@@ -59,7 +58,6 @@ def add(entry):
         logging.error(f"Rollback due to exception: {e}")
 
 
-@profile
 def add_all(entries):
     session = get_thread_session()
     try:

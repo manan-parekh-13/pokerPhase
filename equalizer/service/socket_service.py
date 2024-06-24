@@ -32,7 +32,6 @@ from memory_profiler import profile
 
 
 # Callback for tick reception.
-@profile
 def on_ticks(ws, ticks):
     if not ticks:
         return
@@ -88,9 +87,10 @@ def on_ticks(ws, ticks):
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
 
     add_all(raw_tickers)
+    raw_tickers = []
+    ticks = []
 
 
-@profile
 def analyze_data_on_ticks(ws, ticks):
     if not ticks:
         return
@@ -210,7 +210,6 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
     return kws
 
 
-@profile
 async def send_web_socket_updates():
     while True:
         save_latest_aggregate_data_from_cache()
