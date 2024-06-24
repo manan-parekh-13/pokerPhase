@@ -68,9 +68,10 @@ def on_ticks(ws, ticks):
         if max_buy_quantity == 0:
             continue
 
-        opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-                                      instrument.threshold_spread_coef, instrument.min_profit_percent,
-                                      instrument.product_type, max_buy_quantity, ws.ws_id)
+        opportunity = None
+            # check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
+            #                           instrument.threshold_spread_coef, instrument.min_profit_percent,
+            #                           instrument.product_type, max_buy_quantity, ws.ws_id)
 
         if not opportunity:
             continue
