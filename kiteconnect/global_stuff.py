@@ -4,7 +4,6 @@ from kiteconnect import KiteConnect
 from flask import abort
 from queue import Queue
 import threading
-from memory_profiler import profile
 
 
 global_cache = {}
