@@ -16,6 +16,7 @@ from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 from service.holding_service import get_holdings_available_for_arbitrage_in_map
 import asyncio
 from service.order_service import consume_opportunity
+from datetime import datetime
 
 # Remove all handlers associated with the root logger object
 for handler in logging.root.handlers[:]:
@@ -159,6 +160,47 @@ def instruments():
     instrument_model_list = instrument.convert_all(instrument_records)
     add_all(instrument_model_list)
     return jsonify(instrument_records)
+
+
+@app.route("/dummy_order.json", methods=['POST'])
+def place_dummy_order():
+    kite_client = get_kite_client_from_cache()
+    result = {}
+    order_params = {
+        "variety": kite_client.VARIETY_REGULAR,
+        "product": kite_client.PRODUCT_MIS,
+        "order_type": kite_client.ORDER_TYPE_MARKET,
+        "validity": kite_client.VALIDITY_IOC,
+        "exchange": kite_client.EXCHANGE_NSE,
+        "tradingsymbol": "INFY",
+        "transaction_type": kite_client.TRANSACTION_TYPE_BUY,
+        "quantity": 1
+    }
+
+    nse_buy_order = order_params
+    order_start_time = datetime.now()
+    result['nse_buy_order_id'] = kite_client.place_order(**nse_buy_order)
+    result['nse_buy_order_time'] = datetime.now().microsecond - order_start_time.microsecond
+
+    nse_sell_order = nse_buy_order
+    nse_sell_order['transaction_type'] = kite_client.TRANSACTION_TYPE_SELL
+    order_start_time = datetime.now()
+    result['nse_sell_order_id'] = kite_client.place_order(**nse_sell_order)
+    result['nse_sell_order_time'] = datetime.now().microsecond - order_start_time.microsecond
+
+    bse_sell_order = nse_sell_order
+    bse_sell_order['exchange'] = kite_client.EXCHANGE_BSE
+    order_start_time = datetime.now()
+    result['bse_sell_order_id'] = kite_client.place_order(**bse_sell_order)
+    result['bse_sell_order_time'] = datetime.now().microsecond - order_start_time.microsecond
+
+    bse_buy_order = bse_sell_order
+    bse_buy_order['transaction_type'] = kite_client.TRANSACTION_TYPE_BUY
+    order_start_time = datetime.now()
+    result['bse_buy_order_id'] = kite_client.place_order(**bse_buy_order)
+    result['bse_buy_order_time'] = datetime.now().microsecond = order_start_time.microsecond
+
+    return jsonify(result, 200)
 
 
 @app.errorhandler(Exception)
