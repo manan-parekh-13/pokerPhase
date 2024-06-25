@@ -15,7 +15,6 @@ import struct
 import logging
 from datetime import datetime
 from twisted.internet import reactor, ssl
-from twisted.internet.threads import deferToThreadPool
 from twisted.python import log as twisted_log
 from twisted.internet.protocol import ReconnectingClientFactory
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
@@ -70,7 +69,7 @@ class KiteTickerClientProtocol(WebSocketClientProtocol):
     def onMessage(self, payload, is_binary):  # noqa
         """Called when text or binary message is received."""
         if self.factory.on_message:
-            self.factory.on_message(self, payload, is_binary)
+            self.factory.on_message(self, payload, is_binary, datetime.now())
 
     # Overide method
     def onClose(self, was_clean, code, reason):  # noqa
@@ -259,7 +258,7 @@ class KiteTicker(object):
         - `reason` - DOMString indicating the reason the server closed the connection
     - `on_connect` -  Triggered when connection is established successfully.
         - `response` - Response received from server on successful connection.
-    - `on_message(ws, payload, is_binary)` -  Triggered when message is received from the server.
+    - `on_message(ws, payload, is_binary, ticker_received_time)` -  Triggered when message is received from the server.
         - `payload` - Raw response from the server (either text or binary).
         - `is_binary` - Bool to check if response is binary type.
     - `on_reconnect(ws, attempts_count)` -  Triggered when auto reconnection is attempted.
@@ -678,18 +677,18 @@ class KiteTicker(object):
         if self.on_error:
             self.on_error(self, code, reason)
 
-    def _on_message(self, ws, payload, is_binary):
-        """Call `on_message` callback when text message is received."""
-        if self.on_message:
-            self.on_message(self, payload, is_binary)
-
+    def _on_message(self, ws, payload, is_binary, ticker_received_time):
         # If the message is binary, parse it and send it to the callback.
         if self.on_ticks and is_binary and len(payload) > 4:
-            executor.submit(self.on_ticks, self, self._parse_binary(payload))
+            executor.submit(self.on_ticks, self, self._parse_binary(payload, ticker_received_time))
 
         # Parse text messages
         if not is_binary:
             executor.submit(self._parse_text_message, payload)
+
+        """Call `on_message` callback when text message is received."""
+        if self.on_message:
+            self.on_message(self, payload, is_binary)
 
     def _on_open(self, ws):
         # Resubscribe if its reconnect
@@ -729,7 +728,7 @@ class KiteTicker(object):
         if data.get("type") == "error":
             self._on_error(self, 0, data)
 
-    def _parse_binary(self, bin):
+    def _parse_binary(self, bin, ticker_received_time):
         """Parse binary data to a (list of) ticks structure."""
         packets = self._split_packets(bin)  # split data to individual ticks packet
         data = {}
@@ -752,7 +751,7 @@ class KiteTicker(object):
 
             d = {
                 "instrument_token": instrument_token,
-                "ticker_received_time": datetime.now()
+                "ticker_received_time": ticker_received_time
             }
 
             # Market depth entries.

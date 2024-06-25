@@ -43,6 +43,8 @@ def on_ticks(ws, ticks):
     kite_client = get_kite_client_from_cache()
 
     for instrument_token, latest_tick_for_instrument in ticks.items():
+        opportunity_check_started_at = datetime.now()
+
         latest_tick_for_equivalent = get_equivalent_tick_from_token(ws, instrument_token)
 
         if not latest_tick_for_equivalent:
@@ -72,6 +74,8 @@ def on_ticks(ws, ticks):
 
         if not opportunity:
             continue
+
+        opportunity.opportunity_check_started_at = opportunity_check_started_at
 
         if is_ticker_stale(latest_tick_for_instrument) or is_ticker_stale(latest_tick_for_equivalent):
             opportunity.is_stale = True

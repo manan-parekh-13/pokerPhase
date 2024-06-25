@@ -37,7 +37,7 @@ async def realise_and_save_arbitrage_opportunity(opportunity):
     add(opportunity)
 
 
-def place_order_for_opportunity_by_transaction_type(opportunity, transaction_type, product_type):
+async def place_order_for_opportunity_by_transaction_type(opportunity, transaction_type, product_type):
     kite_client = get_kite_client_from_cache()
     instrument_token_map = get_instrument_token_map_from_cache()
 
@@ -47,18 +47,20 @@ def place_order_for_opportunity_by_transaction_type(opportunity, transaction_typ
     else:
         instrument = instrument_token_map.get(opportunity.sell_source)
         price = opportunity.sell_price
+
+    order_params = {
+        "variety": kite_client.VARIETY_REGULAR,
+        "product": product_type,
+        "order_type": kite_client.ORDER_TYPE_LIMIT,
+        "validity": kite_client.VALIDITY_IOC,
+        "exchange": instrument['exchange'],
+        "tradingsymbol": instrument['trading_symbol'],
+        "transaction_type": transaction_type,
+        "quantity": int(opportunity.quantity),
+        "price": price
+    }
     try:
-        order_id = kite_client.place_order(
-            variety=kite_client.VARIETY_REGULAR,
-            product=product_type,
-            order_type=kite_client.ORDER_TYPE_LIMIT,
-            validity=kite_client.VALIDITY_IOC,
-            exchange=instrument['exchange'],
-            tradingsymbol=instrument['trading_symbol'],
-            transaction_type=transaction_type,
-            quantity=int(opportunity.quantity),
-            price=price
-        )
+        order_id = await asyncio.to_thread(kite_client.place_order, **order_params)
         log_info_and_notify("Order placed for: {}, {} {} at price: {}"
                             .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
         return order_id
