@@ -3,7 +3,7 @@ import threading
 import traceback
 from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
-from kiteconnect.utils import get_env_variable
+from kiteconnect.utils import get_env_variable, get_time_diff_in_micro
 from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
                                       init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache)
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
@@ -180,27 +180,27 @@ def place_dummy_order():
     nse_buy_order = order_params
     order_start_time = datetime.now()
     result['nse_buy_order_id'] = kite_client.place_order(**nse_buy_order)
-    result['nse_buy_order_time'] = datetime.now().microsecond - order_start_time.microsecond
+    result['nse_buy_order_time'] = get_time_diff_in_micro(order_start_time)
 
     nse_sell_order = nse_buy_order
     nse_sell_order['transaction_type'] = kite_client.TRANSACTION_TYPE_SELL
     order_start_time = datetime.now()
     result['nse_sell_order_id'] = kite_client.place_order(**nse_sell_order)
-    result['nse_sell_order_time'] = datetime.now().microsecond - order_start_time.microsecond
+    result['nse_sell_order_time'] = get_time_diff_in_micro(order_start_time)
 
     bse_sell_order = nse_sell_order
     bse_sell_order['exchange'] = kite_client.EXCHANGE_BSE
     order_start_time = datetime.now()
     result['bse_sell_order_id'] = kite_client.place_order(**bse_sell_order)
-    result['bse_sell_order_time'] = datetime.now().microsecond - order_start_time.microsecond
+    result['bse_sell_order_time'] = get_time_diff_in_micro(order_start_time)
 
     bse_buy_order = bse_sell_order
     bse_buy_order['transaction_type'] = kite_client.TRANSACTION_TYPE_BUY
     order_start_time = datetime.now()
     result['bse_buy_order_id'] = kite_client.place_order(**bse_buy_order)
-    result['bse_buy_order_time'] = datetime.now().microsecond = order_start_time.microsecond
+    result['bse_buy_order_time'] = get_time_diff_in_micro(order_start_time)
 
-    return jsonify(result, 200)
+    return jsonify(result)
 
 
 @app.errorhandler(Exception)

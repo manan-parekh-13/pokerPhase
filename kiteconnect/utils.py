@@ -58,3 +58,17 @@ def send_slack_message(message):
 
 def get_product_type_from_ws_id(ws_id):
     return ws_id.split('_')[0]
+
+
+def convert_to_micro(value):
+    """Convert a datetime object to a Unix timestamp with microsecond accuracy."""
+    if value is not None:
+        microseconds = value.microsecond  # Extract microseconds
+        return int((value.timestamp() * 1e6) + microseconds)  # Convert seconds to microseconds and add microseconds
+    return None
+
+
+def get_time_diff_in_micro(start_time):
+    end_time_in_micro = convert_to_micro(datetime.now())
+    start_time_in_micro = convert_to_micro(start_time)
+    return end_time_in_micro - start_time_in_micro
