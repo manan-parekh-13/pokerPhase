@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from kiteconnect.utils import get_env_variable
 from kiteconnect import KiteConnect
@@ -82,6 +83,7 @@ def get_instrument_token_map_from_cache():
 
 
 def add_opportunity_to_queue(event):
+    logging.critical("Opportunity created at {} added in queue at {}".format(event.created_at, datetime.now()))
     opportunity_queue.put(event)
 
 

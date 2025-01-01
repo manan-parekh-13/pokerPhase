@@ -28,6 +28,23 @@ def convert_str_to_datetime(timestamp_str):
     return timestamp_ist
 
 
+def datetime_to_str(dt: datetime):
+    return dt.strftime("%d/%m/%Y %H:%M:%S")
+
+
+def dict_to_string(obj: dict) -> str:
+    """
+    Converts a dictionary or object into a formatted string with each key-value pair on a new line.
+
+    :param obj: The dictionary or object to format
+    :return: A string with each key-value pair in the format 'key: value', one per line
+    """
+    if not isinstance(obj, dict):
+        raise ValueError("Input must be a dictionary.")
+
+    return '\n'.join(f"{key}: {value}" for key, value in obj.items())
+
+
 def set_timezone_in_datetime(timestamp, time_zone='Asia/Kolkata'):
     timezone = pytz.timezone(time_zone)
     return timestamp.astimezone(timezone)

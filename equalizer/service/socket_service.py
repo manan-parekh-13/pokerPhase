@@ -11,6 +11,8 @@
 # in your main thread while running KiteTicker in separate thread.
 ###############################################################################
 import logging
+
+from equalizer.service.positions_service import get_instrument_wise_positions
 from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
@@ -22,7 +24,7 @@ from Models.arbitrage_opportunity import ArbitrageOpportunity
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
-from kiteconnect.utils import log_info_and_notify, get_env_variable
+from kiteconnect.utils import log_info_and_notify, get_env_variable, datetime_to_str, dict_to_string
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
                                       update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently,
@@ -58,10 +60,9 @@ def on_ticks(ws, ticks):
         instrument = get_instrument_from_token(ws, instrument_token)
 
         if ws.try_ordering:
-            margin_and_holdings = kite_client.get_available_margin_and_holdings_for_trading_symbol(instrument.trading_symbol)
-            available_holdings = margin_and_holdings['available_holdings']
-            available_margin = margin_and_holdings['available_margin']
-            max_buy_quantity = min(available_holdings, available_margin / ltp)
+            available_margin = kite_client.get_available_margin()
+            # available_holdings = margin_and_holdings['available_holdings']
+            max_buy_quantity = available_margin / ltp
         else:
             max_buy_quantity = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')) / ltp
 
@@ -152,48 +153,46 @@ def on_noreconnect(ws):
 
 
 def on_order_update(ws, data):
-    logging.info("websocket.{}.process_thread {}.Order update : {}".format(ws.ws_id, threading.current_thread().name, data))
+    logging.info("websocket.{}.process_thread {}.Order id : {} and status: {}".format(
+        ws.ws_id, threading.current_thread().name, data['order_id'], data['status']))
 
     update_received_time = datetime.now()
     kite_client = get_kite_client_from_cache()
 
-    data['received_time'] = update_received_time
-    log_info_and_notify("Order update: {}".format(data))
+    # data['received_time'] = datetime_to_str(update_received_time)
 
     if data['status'] != kite_client.COMPLETE and data['status'] != kite_client.CANCELLED:
         # wait for it
         return
 
-    initial_value = kite_client.get_available_margin_and_holdings_for_trading_symbol(data['tradingsymbol'])
+    initial_value = kite_client.get_available_margin_and_positions_for_trading_symbol_exchange(
+        data['tradingsymbol'], data['exchange'])
 
     order_updates = {
-        'instrument': data['tradingsymbol'],
-        'received_time': update_received_time,
+        'instrument': f"{data['exchange']}_{data['tradingsymbol']}",
+        'received_time': datetime_to_str(update_received_time),
         'initial_margin': initial_value['available_margin'],
-        'initial_holdings': initial_value['available_holdings'],
+        'initial_positions': initial_value['open_positions'],
         'price': data['average_price'],
         'quantity': data['filled_quantity'],
-        'type': '{} : {}'.format(data['transaction_type'], data['exchange'])
+        'type': data['transaction_type']
     }
 
-    # update available margins and holdings
+    # update available margins and positions
     latest_margins = kite_client.margins(segment=kite_client.MARGIN_EQUITY)
+    latest_positions = get_instrument_wise_positions()
 
-    if data['transaction_type'] == kite_client.TRANSACTION_TYPE_BUY:
-        kite_client.set_new_margin(new_margin=latest_margins.get('net'))
-    else:
-        kite_client.set_new_margins_and_remove_used_holdings(new_margins=latest_margins.get('net'),
-                                                             used_holdings=data['filled_quantity'],
-                                                             trading_symbol=data['tradingsymbol'])
+    kite_client.set_available_margin_and_positions(new_margins=latest_margins.get('net'), new_positions=latest_positions)
 
-    final_value = kite_client.get_available_margin_and_holdings_for_instrument(data['tradingsymbol'])
+    final_value = kite_client.get_available_margin_and_positions_for_trading_symbol_exchange(
+        data['tradingsymbol'], data['exchange'])
     order_updates['final_margin'] = final_value['available_margin']
-    order_updates['final_holdings'] = final_value['available_holdings']
+    order_updates['final_positions'] = final_value['open_positions']
 
-    # save order info - todo @manan can be removed once we crack the zerodha's console
+    # save order info
     # init_order_info_from_order_update(data, update_received_time)
 
-    log_info_and_notify(order_updates)
+    log_info_and_notify("Order update: \n{}".format(dict_to_string(order_updates)))
 
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, try_ordering, is_data_ws):

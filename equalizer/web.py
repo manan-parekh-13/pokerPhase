@@ -3,7 +3,7 @@ import threading
 import traceback
 from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
-from kiteconnect.utils import get_env_variable, get_time_diff_in_micro
+from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string
 from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
                                       init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache)
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
@@ -16,6 +16,7 @@ from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 from service.holding_service import get_holdings_available_for_arbitrage_in_map
 import asyncio
 from service.order_service import consume_opportunity
+from service.positions_service import get_positions_resp, get_instrument_wise_positions
 from datetime import datetime
 
 # Remove all handlers associated with the root logger object
@@ -70,7 +71,7 @@ async def start_up_equalizer():
         log_info_and_notify("Unable to login")
         abort(500, "Unable to login")
 
-    log_info_and_notify("Successfully logged in!, enc_token: {}".format(kite.enc_token))
+    log_info_and_notify("Successfully logged in!")
 
     # init the global level data points
     init_latest_tick_data_in_global_cache()
@@ -78,10 +79,13 @@ async def start_up_equalizer():
 
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
     usable_margin = 0 if not request.form.get('usable_margin') else int(request.form.get('usable_margin'))
-    available_holdings_map = get_holdings_available_for_arbitrage_in_map()
-    kite.set_available_margin_and_holdings(new_margins=usable_margin, new_holdings=available_holdings_map)
 
-    log_info_and_notify("Available margin: {} and holdings: {}".format(usable_margin, available_holdings_map))
+    # available_holdings_map = get_holdings_available_for_arbitrage_in_map()
+    open_positions = get_instrument_wise_positions()
+    kite.set_available_margin_and_positions(new_margins=usable_margin, new_positions=open_positions)
+
+    log_info_and_notify(
+        "Available margin: {} \nOpen positions: \n{}".format(usable_margin, dict_to_string(open_positions)))
 
     logging.debug("main_thread: {}".format(threading.current_thread().name))
 
@@ -98,9 +102,9 @@ async def start_up_equalizer():
             log_info_and_notify("Ordering not possible for ws_id {} as no margins available".format(ws_id))
             continue
 
-        if try_ordering and (not available_holdings_map):
-            log_info_and_notify("Ordering not possible for ws_id {} as no holdings available".format(ws_id))
-            continue
+        # if try_ordering and (not available_holdings_map):
+        #     log_info_and_notify("Ordering not possible for ws_id {} as no holdings available".format(ws_id))
+        #     continue
 
         if try_ordering and not has_order_ws:
             has_order_ws = True
@@ -148,8 +152,7 @@ def margins():
 
 @app.route("/positions.json", methods=['GET'])
 def positions():
-    kite = get_kite_client_from_cache()
-    position_resp = kite.positions()
+    position_resp = get_positions_resp()
     return jsonify(position_resp)
 
 

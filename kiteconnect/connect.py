@@ -190,7 +190,8 @@ class KiteConnect(object):
                  password=None,
                  request_id=None,
                  available_margin=0,
-                 available_holdings=None):
+                 available_holdings=None,
+                 open_positions=None):
         """
         Initialise a new Kite Connect client instance.
 
@@ -231,6 +232,8 @@ class KiteConnect(object):
         self.available_margin = available_margin
 
         self.available_holdings = available_holdings
+
+        self.open_positions = open_positions
 
         # Create requests session by default
         # Same session to be used by pool connections
@@ -298,6 +301,11 @@ class KiteConnect(object):
             return {'available_margin': self.available_margin or 0,
                     'available_holdings': self.available_holdings.get(trading_symbol) or 0}
 
+    def get_available_margin_and_positions_for_trading_symbol_exchange(self, trading_symbol, exchange):
+        with self.lock:
+            return {'available_margin': self.available_margin or 0,
+                    'open_positions': self.open_positions.get(f"{exchange}_{trading_symbol}") or 0}
+
     def get_available_margin(self):
         with self.lock:
             return self.available_margin or 0
@@ -306,6 +314,11 @@ class KiteConnect(object):
         with self.lock:
             self.available_margin = new_margins
             self.available_holdings = new_holdings
+
+    def set_available_margin_and_positions(self, new_margins, new_positions):
+        with self.lock:
+            self.available_margin = new_margins
+            self.open_positions = new_positions
 
     def set_new_margin(self, new_margin):
         with self.lock:

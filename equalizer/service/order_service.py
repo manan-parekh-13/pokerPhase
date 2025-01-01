@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from kiteconnect.utils import log_info_and_notify, get_product_type_from_ws_id
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_instrument_token_map_from_cache,
@@ -11,6 +12,7 @@ async def consume_opportunity():
         queue = get_opportunity_queue()
         if not queue.empty():
             opportunity = queue.get()
+            logging.critical("Opportunity created at {}, received at {}".format(opportunity.created_at, datetime.now()))
             await realise_and_save_arbitrage_opportunity(opportunity)
         await asyncio.sleep(0.0001)
 
@@ -23,10 +25,13 @@ async def realise_and_save_arbitrage_opportunity(opportunity):
         place_order_for_opportunity_by_transaction_type(opportunity,
                                                         kite_client.TRANSACTION_TYPE_BUY,
                                                         product_type))
+    logging.critical("Opportunity created at {} buy task created at {}".format(opportunity.created_at, datetime.now()))
+
     sell_order_task = asyncio.create_task(
         place_order_for_opportunity_by_transaction_type(opportunity,
                                                         kite_client.TRANSACTION_TYPE_SELL,
                                                         product_type))
+    logging.critical("Opportunity created at {} sell task created at {}".format(opportunity.created_at, datetime.now()))
 
     opportunity.buy_order_id = await buy_order_task
     opportunity.sell_order_id = await sell_order_task
@@ -38,6 +43,8 @@ async def realise_and_save_arbitrage_opportunity(opportunity):
 
 
 async def place_order_for_opportunity_by_transaction_type(opportunity, transaction_type, product_type):
+    logging.critical("Opportunity created at {} {} task received at {}"
+                  .format(opportunity.created_at, transaction_type, datetime.now()))
     kite_client = get_kite_client_from_cache()
     instrument_token_map = get_instrument_token_map_from_cache()
 
@@ -62,6 +69,8 @@ async def place_order_for_opportunity_by_transaction_type(opportunity, transacti
     try:
         order_id = await asyncio.to_thread(kite_client.place_order, **order_params)
         log_info_and_notify("Order placed for: {}, {} {} at price: {}"
+                            .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
+        logging.critical("Order placed for: {}, {} {} at price: {}"
                             .format(instrument['trading_symbol'], opportunity.quantity, transaction_type, price))
         return order_id
     except Exception as e:
