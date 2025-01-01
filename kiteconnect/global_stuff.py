@@ -84,6 +84,7 @@ def get_instrument_token_map_from_cache():
 
 def add_opportunity_to_queue(event):
     logging.critical("Opportunity created at {} added in queue at {}".format(event.created_at, datetime.now()))
+    event.opp_added_to_queue_at = datetime.now()
     opportunity_queue.put(event)
 
 
