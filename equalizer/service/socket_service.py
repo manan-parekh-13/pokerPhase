@@ -196,8 +196,15 @@ def on_order_update(ws, data):
 
 
 def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_id, try_ordering, is_data_ws):
+    trading_symbol_map = {}
+
+    for token, instrument in token_map.items():
+        if instrument.trading_symbol in trading_symbol_map:
+            continue
+        trading_symbol_map[instrument.trading_symbol] = True
+
     kws = KiteTicker(enc_token=quote(kite_client.enc_token), debug=debug, reconnect_max_tries=reconnect_max_tries,
-                     token_map=token_map, ws_id=ws_id, try_ordering=try_ordering)
+                     token_map=token_map, ws_id=ws_id, try_ordering=try_ordering, trading_symbol_map=trading_symbol_map)
 
     # Assign the callbacks.
     kws.on_ticks = analyze_data_on_ticks if is_data_ws else on_ticks

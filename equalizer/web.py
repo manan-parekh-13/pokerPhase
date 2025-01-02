@@ -5,7 +5,8 @@ from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
 from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string
 from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
-                                      init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache)
+                                      init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache,
+                                      set_event_loop)
 from service.socket_service import init_kite_web_socket, send_web_socket_updates
 from service.instrument_service import get_ws_id_to_token_to_instrument_map
 from service.instrument_service import get_instrument_token_to_equivalent_map
@@ -92,6 +93,8 @@ async def start_up_equalizer():
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
     has_order_ws = False
+
+    set_event_loop(asyncio.get_running_loop())
 
     for ws_id in ws_id_to_token_to_instrument_map.keys():
         sub_token_map = ws_id_to_token_to_instrument_map[ws_id]

@@ -404,7 +404,8 @@ class KiteTicker(object):
 
     def __init__(self, enc_token, debug=False, root=None,
                  reconnect=True, reconnect_max_tries=RECONNECT_MAX_TRIES, reconnect_max_delay=RECONNECT_MAX_DELAY,
-                 connect_timeout=CONNECT_TIMEOUT, token_map={}, ws_id=None, mode=MODE_FULL, try_ordering=False):
+                 connect_timeout=CONNECT_TIMEOUT, token_map={}, ws_id=None, mode=MODE_FULL, try_ordering=False,
+                 trading_symbol_map={}):
         """
         Initialise websocket client instance.
 
@@ -471,6 +472,9 @@ class KiteTicker(object):
 
         # Dict of instrument_token to arbitrage_instrument
         self.token_map = token_map
+
+        # Dict of trading symbol to true
+        self.trading_symbol_map = trading_symbol_map
 
         self.ws_id = ws_id
 
@@ -721,7 +725,10 @@ class KiteTicker(object):
             return
 
         # Order update callback
-        if self.on_order_update and data and data.get("type") == "order":
+        if (self.on_order_update
+                and data
+                and data.get("type") == "order"
+                and data.get('tradingsymbol') in self.trading_symbol_map):
             self.on_order_update(self, data)
 
         # Custom error with websocket error code 0

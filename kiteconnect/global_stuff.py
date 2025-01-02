@@ -3,12 +3,14 @@ from datetime import datetime, timedelta
 from kiteconnect.utils import get_env_variable
 from kiteconnect import KiteConnect
 from flask import abort
-from queue import Queue
+from asyncio import Queue
+import asyncio
 import threading
 
 
 global_cache = {}
-opportunity_queue = Queue()
+opportunity_queue = Queue(maxsize=100)
+event_loop = None
 lock = threading.Lock()
 
 
@@ -83,10 +85,15 @@ def get_instrument_token_map_from_cache():
 
 
 def add_opportunity_to_queue(event):
-    logging.critical("Opportunity created at {} added in queue at {}".format(event.created_at, datetime.now()))
+    # logging.critical("Opportunity created at {} added in queue at {}".format(event.created_at, datetime.now()))
     event.opp_added_to_queue_at = datetime.now()
-    opportunity_queue.put(event)
+    asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
 
 
 def get_opportunity_queue():
     return opportunity_queue
+
+
+def set_event_loop(value):
+    global event_loop
+    event_loop = value
