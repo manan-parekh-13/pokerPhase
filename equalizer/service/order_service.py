@@ -12,10 +12,14 @@ async def consume_opportunity():
         try:
             queue = get_opportunity_queue()
             # logging.critical(f"Current queue length: {queue.qsize()}")
-            opportunity = await queue.get()
-            # logging.critical(
-            #     "Opportunity created at {}, received at {}".format(opportunity.created_at, datetime.now()))
-            asyncio.create_task(realise_and_save_arbitrage_opportunity(opportunity))
+            if not queue.empty():
+                opportunity = await queue.get()
+                # logging.critical(
+                #     "Opportunity created at {}, received at {}".format(opportunity.created_at, datetime.now()))
+                asyncio.create_task(realise_and_save_arbitrage_opportunity(opportunity))
+                queue.task_done()
+            else:
+                await asyncio.sleep(0.001)
         except Exception as e:
             logging.critical(f"Error in consume_opportunity: {e}", exc_info=True)
 
