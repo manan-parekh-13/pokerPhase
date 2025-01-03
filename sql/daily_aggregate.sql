@@ -108,13 +108,20 @@ DO
 
 DELIMITER ;
 
-
-
-
-
-
-
-
-
-
+-- calc avg + 1 std dev for all trading symbols for all of the day wise aggregates to get min profit percent
+UPDATE arbitrage_instruments i
+JOIN (
+    SELECT
+        d.trading_symbol,
+        COUNT(date_created) AS dateCount,
+        ROUND(AVG(avg_profit_percent), 3) AS avg,
+        ROUND(STDDEV(avg_profit_percent), 3) AS std_dev,
+        ROUND(AVG(avg_profit_percent) + STDDEV(avg_profit_percent), 3) AS avg_plus_one_dev
+    FROM daily_aggregates d
+    WHERE opp_count > 10
+    GROUP BY trading_symbol
+    HAVING dateCount > 10
+) AS d
+ON d.trading_symbol = i.trading_symbol
+SET i.min_profit_percent = d.avg_plus_one_dev, i.try_ordering = 1;
 
