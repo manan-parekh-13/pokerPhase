@@ -6,16 +6,13 @@ from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicr
 Base = declarative_base()
 
 
-def init_order_info_from_order_update(order_update, update_received_time):
-    fields_to_remove = ['app_id', 'checksum', 'placed_by', 'status_message_raw', 'market_protection', 'meta', 'tag',
-                        'guid']
+def init_order_info(order):
+    fields_to_remove = []
     for field in fields_to_remove:
-        if field in order_update:
-            del order_update[field]
+        if field in order:
+            del order[field]
 
-    order_update['update_received_time'] = update_received_time
-
-    return OrderInfo(**order_update)
+    return OrderInfo(**order)
 
 
 class OrderInfo(Base):

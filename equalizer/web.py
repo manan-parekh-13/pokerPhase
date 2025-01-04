@@ -1,6 +1,5 @@
 import logging
 import threading
-import traceback
 from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
 from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string
@@ -13,8 +12,8 @@ from service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
+from Models.order_info import init_order_info
 from kiteconnect.utils import log_info_and_notify, log_error_and_notify
-from service.holding_service import get_holdings_available_for_arbitrage_in_map
 import asyncio
 from service.order_service import consume_opportunity
 from service.positions_service import get_positions_resp, get_instrument_wise_positions
@@ -143,6 +142,10 @@ def holdings():
 def orders():
     kite = get_kite_client_from_cache()
     response = kite.orders()
+
+    if response:
+        order_list = [init_order_info(element) for element in response]
+        add_all(order_list)
     return jsonify(response)
 
 
@@ -211,9 +214,9 @@ def place_dummy_order():
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    stack_trace = traceback.format_exc()
-    log_error_and_notify("Trace: {} Error: {}".format(stack_trace, str(e)))
-    return jsonify(stack_trace, 500)
+    # stack_trace = traceback.format_exc()
+    log_error_and_notify("Error: {}".format(str(e)))
+    return e
 
 
 if __name__ == "__main__":
