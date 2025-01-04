@@ -12,7 +12,7 @@ send_slack_message() {
   curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
 }
 
-nohup curl -s --request GET http://localhost:5000/orders >> "$LOG_FILE" 2>&1 && {
+nohup curl -s --request GET http://localhost:5000/orders.json >> "$LOG_FILE" 2>&1 && {
   send_slack_message "Orders Fetched";
 } || {
   send_slack_message "Order Fetch Failure";
