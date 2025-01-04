@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Configuration
+HOME_PATH="/home/ec2-user"
 LOG_DIR="$HOME_PATH/logs"
 LOG_FILE="$LOG_DIR/equalizer_$(date +'%Y-%m-%d').log"
 SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
