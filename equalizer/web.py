@@ -12,10 +12,9 @@ from service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
-from Models.order_info import init_order_info
 from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 import asyncio
-from service.order_service import consume_opportunity
+from service.order_service import consume_opportunity, save_order_info
 from service.positions_service import get_positions_resp, get_instrument_wise_positions
 from datetime import datetime
 
@@ -144,8 +143,7 @@ def orders():
     response = kite.orders()
 
     if response:
-        order_list = [init_order_info(element) for element in response]
-        add_all(order_list)
+        save_order_info(response)
     return jsonify(response)
 
 

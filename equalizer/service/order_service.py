@@ -4,7 +4,8 @@ from kiteconnect.utils import log_info_and_notify, get_product_type_from_ws_id
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_instrument_token_map_from_cache,
                                       get_opportunity_queue)
 import asyncio
-from mysql_config import add
+from mysql_config import add, add_all
+from Models.order_info import OrderInfo, init_order_info
 
 
 async def consume_opportunity():
@@ -95,3 +96,25 @@ async def place_order_for_opportunity_by_transaction_type(opportunity, transacti
     except Exception as e:
         log_info_and_notify("Error while ordering: {}".format(e))
         return None
+
+
+def save_order_info(order_list):
+    """
+    Parse an order_list, check if rows with the same order_id exist in the database,
+    and saves orders that do not exist.
+
+    :param order_list: List of order dictionaries to check
+    """
+    orders_to_be_saved = []
+
+    for order_data in order_list:
+        order_id = order_data['order_id']
+        existing_order = OrderInfo.get_order_by_id(order_id)
+
+        if existing_order:
+            continue
+        else:
+            orders_to_be_saved.append(init_order_info(order_data))
+
+    add_all(orders_to_be_saved)
+
