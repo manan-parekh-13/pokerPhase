@@ -189,9 +189,6 @@ def on_order_update(ws, data):
     order_updates['final_margin'] = final_value['available_margin']
     order_updates['final_positions'] = final_value['open_positions']
 
-    # save order info
-    # init_order_info_from_order_update(data, update_received_time)
-
     log_info_and_notify("Order update: \n{}".format(dict_to_string(order_updates)))
 
 

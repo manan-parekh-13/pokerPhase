@@ -28,7 +28,6 @@ nohup flask run --host=0.0.0.0 --port=5000 >> "$LOG_FILE" 2>&1 &
 sleep 5
 
 # Hit equalizer startup endpoint (this will keep running)
-nohup curl -s --request POST http://localhost:5000/equalizer/startup \
---data-urlencode 'usable_margin=97654' >> "$LOG_FILE" 2>&1 || {
+nohup curl -s --request POST http://localhost:5000/equalizer/startup >> "$LOG_FILE" 2>&1 || {
   send_slack_message "Equalizer Startup Failure"; exit 1;
 }
