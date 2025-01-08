@@ -28,7 +28,7 @@ class OrderInfo(Base):
     status_message_raw = Column(Text)
     order_timestamp = Column(DateTime, nullable=False)
     exchange_update_timestamp = Column(DateTime)
-    exchange_timestamp = Column(DateTime, nullable=False)
+    exchange_timestamp = Column(DateTime, nullable=True)
     variety = Column(String(20))
     modified = Column(Boolean)
     exchange = Column(String(10), nullable=False)

@@ -1,8 +1,11 @@
 import logging
 from datetime import datetime
+
+from equalizer.service.ticker_service import is_opportunity_stale
 from kiteconnect.utils import log_info_and_notify, get_product_type_from_ws_id
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_instrument_token_map_from_cache,
-                                      get_opportunity_queue)
+                                      get_opportunity_queue, is_order_on_hold_currently,
+                                      setup_order_hold_for_time_in_seconds)
 import asyncio
 from mysql_config import add, add_all
 from Models.order_info import OrderInfo, init_order_info
@@ -82,7 +85,14 @@ async def place_order_for_opportunity_by_transaction_type(opportunity, transacti
         "quantity": int(opportunity.quantity),
         # "price": price
     }
+
+    opportunity.is_stale = is_opportunity_stale(opportunity)
+
+    if opportunity.is_stale or is_order_on_hold_currently():
+        return None
+
     try:
+        setup_order_hold_for_time_in_seconds(120)
         order_id = await asyncio.to_thread(kite_client.place_order, **order_params)
         if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
             opportunity.buy_ordered_at = datetime.now()
