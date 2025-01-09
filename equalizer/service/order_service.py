@@ -35,6 +35,13 @@ async def realise_and_save_arbitrage_opportunity(opportunity):
     kite_client = get_kite_client_from_cache()
     product_type = get_product_type_from_ws_id(opportunity.ws_id)
 
+    if is_order_on_hold_currently():
+        opportunity.order_on_hold = True
+        add(opportunity)
+        return
+
+    setup_order_hold_for_time_in_seconds(120)
+
     buy_order_task = asyncio.create_task(
         place_order_for_opportunity_by_transaction_type(opportunity,
                                                         kite_client.TRANSACTION_TYPE_BUY,
@@ -86,13 +93,12 @@ async def place_order_for_opportunity_by_transaction_type(opportunity, transacti
         # "price": price
     }
 
-    opportunity.is_stale = is_opportunity_stale(opportunity)
+    opportunity.is_stale = is_opportunity_stale(opportunity) if not opportunity.is_stale else opportunity.is_stale
 
-    if opportunity.is_stale or is_order_on_hold_currently():
+    if opportunity.is_stale:
         return None
 
     try:
-        setup_order_hold_for_time_in_seconds(120)
         order_id = await asyncio.to_thread(kite_client.place_order, **order_params)
         if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
             opportunity.buy_ordered_at = datetime.now()

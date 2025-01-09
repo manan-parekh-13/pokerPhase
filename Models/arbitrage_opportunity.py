@@ -22,6 +22,7 @@ def init_arbitrage_opportunities_from_strat_res_and_tickers(buy_ticker, sell_tic
         buy_order_id=None,
         sell_order_id=None,
         is_stale=False,
+        order_on_hold=False,
         opportunity_check_started_at=None,
         opp_added_to_queue_at=None,
         opp_received_in_queue_at=None,
@@ -50,6 +51,7 @@ class ArbitrageOpportunity(Base):
     buy_order_id = Column(Integer)
     sell_order_id = Column(Integer)
     is_stale = Column(Boolean)
+    order_on_hold = Column(Boolean)
     opportunity_check_started_at = Column(UnixTimestampMicroseconds)
     opp_added_to_queue_at = Column(UnixTimestampMicroseconds)
     opp_received_in_queue_at = Column(UnixTimestampMicroseconds)

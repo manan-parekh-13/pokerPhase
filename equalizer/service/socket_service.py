@@ -78,12 +78,11 @@ def on_ticks(ws, ticks):
 
         opportunity.opportunity_check_started_at = opportunity_check_started_at
 
-        # if is_ticker_stale(latest_tick_for_instrument) or is_ticker_stale(latest_tick_for_equivalent):
-        #     opportunity.is_stale = True
-
-        if ws.try_ordering and not is_order_on_hold_currently() and not opportunity.is_stale:
-            setup_order_hold_for_time_in_seconds(120)
+        if ws.try_ordering and not is_order_on_hold_currently():
             add_opportunity_to_queue(opportunity)
+        elif ws.try_ordering:
+            opportunity.order_on_hold = True
+            add(opportunity)
         else:
             add(opportunity)
 
