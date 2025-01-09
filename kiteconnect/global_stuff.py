@@ -1,15 +1,15 @@
-import logging
 from datetime import datetime, timedelta
-from kiteconnect.utils import get_env_variable
+from kiteconnect.utils import get_env_variable, log_info_and_notify
 from kiteconnect import KiteConnect
 from flask import abort
 from asyncio import Queue
 import asyncio
 import threading
+from mysql_config import add
 
 
 global_cache = {}
-opportunity_queue = Queue(maxsize=100)
+opportunity_queue = Queue(maxsize=8)
 event_loop = None
 lock = threading.Lock()
 
@@ -84,10 +84,14 @@ def get_instrument_token_map_from_cache():
     return global_cache['token_to_equivalent_map']
 
 
-def add_opportunity_to_queue(event):
-    # logging.critical("Opportunity created at {} added in queue at {}".format(event.created_at, datetime.now()))
-    event.opp_added_to_queue_at = datetime.now()
-    asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
+def add_buy_or_sell_task_to_queue(event):
+    try:
+        asyncio.run_coroutine_threadsafe(opportunity_queue.put_nowait(event), event_loop)
+    except asyncio.QueueFull:
+        event["opportunity"].order_on_hold = True
+        add(event["opportunity"])
+    except Exception as e:
+        log_info_and_notify("Error while adding task to queue: {}".format(e))
 
 
 def get_opportunity_queue():

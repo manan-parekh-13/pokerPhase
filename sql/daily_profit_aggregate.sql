@@ -108,20 +108,41 @@ DO
 
 DELIMITER ;
 
--- calc avg + 1 std dev for all trading symbols for all of the day wise aggregates to get min profit percent
-UPDATE arbitrage_instruments i
-JOIN (
-    SELECT
-        d.trading_symbol,
-        COUNT(date_created) AS dateCount,
-        ROUND(AVG(avg_profit_percent), 3) AS avg,
-        ROUND(STDDEV(avg_profit_percent), 3) AS std_dev,
-        ROUND(AVG(avg_profit_percent) + STDDEV(avg_profit_percent), 3) AS avg_plus_one_dev
-    FROM daily_aggregates d
-    WHERE opp_count > 10
-    GROUP BY trading_symbol
-    HAVING dateCount > 10
-) AS d
-ON d.trading_symbol = i.trading_symbol
-SET i.min_profit_percent = d.avg_plus_one_dev, i.try_ordering = 1;
+-- query to get expected and actual order info
+select
+s.*, CAST(s.actual_sell AS DECIMAL(8, 2)) - CAST(s.actual_buy AS DECIMAL(8, 2)) as actual_delta
+from
+(
+select
+a.id, DATE_FORMAT(FROM_UNIXTIME(a.created_at/1000000), '%d-%m-%Y') as date_created, i.trading_symbol,
+group_concat(CASE
+	when o.transaction_type = "BUY" then o.order_id
+	else ''
+end separator '') as buy_order_id,
+group_concat(CASE
+	when o.transaction_type = "SELL" then o.order_id
+	else ''
+end separator '') as sell_order_id,
+a.buy_price, a.sell_price, a.quantity,
+group_concat(CASE
+	when o.transaction_type = "BUY" then o.average_price
+	else ''
+end separator '') as actual_buy,
+group_concat(CASE
+	when o.transaction_type = "SELL" then o.average_price
+	else ''
+end separator '') as actual_sell,
+group_concat(CASE
+	when o.transaction_type = "SELL" then o.filled_quantity
+	else ''
+end separator '') as actual_quantity,
+a.sell_price - a.buy_price as delta
+from arbitrage_opportunities a
+inner join arbitrage_instruments i
+on (i.instrument_token1 = a.buy_source or i.instrument_token2 = a.buy_source)
+inner join order_info o
+on (o.order_id = a.buy_order_id or o.order_id = a.sell_order_id)
+where a.buy_order_id is not null
+group by a.id
+) as s;
 
