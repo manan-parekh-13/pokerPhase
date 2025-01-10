@@ -14,7 +14,7 @@ from mysql_config import add_all
 from Models import instrument
 from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 import asyncio
-from service.order_service import consume_opportunity, save_order_info
+from service.order_service import consume_buy_or_sell_tasks, save_order_info
 from service.positions_service import get_positions_resp, get_instrument_wise_positions
 from datetime import datetime
 
@@ -117,11 +117,12 @@ async def start_up_equalizer():
         kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
         kws.connect(threaded=True)
 
-    # start consumer to realise arbitrage opportunities in case order web sockets exist
-    consumer_task = asyncio.create_task(consume_opportunity())
+    # start consumers to realise arbitrage opportunities in case order web sockets exist
+    num_consumers = 10
+    consumer_tasks = [asyncio.create_task(consume_buy_or_sell_tasks(i)) for i in range(num_consumers)]
     status_update_task = asyncio.create_task(send_web_socket_updates())
 
-    await asyncio.gather(status_update_task, consumer_task)
+    await asyncio.gather(status_update_task, *consumer_tasks)
 
 
 @app.route("/holdings.json", methods=['GET'])

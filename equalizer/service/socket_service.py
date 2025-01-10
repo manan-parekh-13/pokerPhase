@@ -19,16 +19,16 @@ from datetime import datetime
 import threading
 import asyncio
 from Models.raw_ticker_data import init_raw_ticker_data
-from equalizer.service.ticker_service import is_ticker_stale
 from Models.arbitrage_opportunity import ArbitrageOpportunity
 from equalizer.service.arbitrage_service import check_arbitrage
 from mysql_config import add_all, add
 from equalizer.service.aggregate_service import get_new_aggregate_data_from_pre_value
-from kiteconnect.utils import log_info_and_notify, get_env_variable, datetime_to_str, dict_to_string
+from kiteconnect.utils import log_info_and_notify, get_env_variable, datetime_to_str, dict_to_string, \
+    get_product_type_from_ws_id
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
-                                      update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently,
-                                      setup_order_hold_for_time_in_seconds, add_opportunity_to_queue)
+                                      update_latest_ticks_for_instrument_tokens_in_bulk,
+                                      add_buy_or_sell_task_to_queue)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 
@@ -61,7 +61,6 @@ def on_ticks(ws, ticks):
 
         if ws.try_ordering:
             available_margin = kite_client.get_available_margin()
-            # available_holdings = margin_and_holdings['available_holdings']
             max_buy_quantity = available_margin / ltp
         else:
             max_buy_quantity = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')) / ltp
@@ -78,11 +77,17 @@ def on_ticks(ws, ticks):
 
         opportunity.opportunity_check_started_at = opportunity_check_started_at
 
-        if ws.try_ordering and not is_order_on_hold_currently():
-            add_opportunity_to_queue(opportunity)
-        elif ws.try_ordering:
-            opportunity.order_on_hold = True
-            add(opportunity)
+        if ws.try_ordering:
+            add_buy_or_sell_task_to_queue({
+                "opportunity": opportunity,
+                "transaction_type": kite_client.TRANSACTION_TYPE_BUY,
+                "product_type": get_product_type_from_ws_id(opportunity.ws_id)
+            })
+            add_buy_or_sell_task_to_queue({
+                "opportunity": opportunity,
+                "transaction_type": kite_client.TRANSACTION_TYPE_SELL,
+                "product_type": get_product_type_from_ws_id(opportunity.ws_id)
+            })
         else:
             add(opportunity)
 
@@ -221,7 +226,7 @@ async def send_web_socket_updates():
             log_info_and_notify("No opportunity found!")
         else:
             log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
-        await asyncio.sleep(30 * 60)
+        await asyncio.sleep(60 * 60)
 
 
 def get_instrument_from_token(ws, instrument_token):
