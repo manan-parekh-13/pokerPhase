@@ -15,7 +15,7 @@ async def consume_buy_or_sell_tasks(consumer_id):
         try:
             queue = get_opportunity_queue()
             if not queue.empty():
-                task = queue.get()
+                task = await queue.get()
                 place_order(task["opportunity"], task["transaction_type"], task["product_type"])
                 queue.task_done()
                 logging.debug("Completed {} task for opportunity {} using consumer {}."

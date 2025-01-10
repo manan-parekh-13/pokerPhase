@@ -86,10 +86,11 @@ def get_instrument_token_map_from_cache():
 
 def add_buy_or_sell_task_to_queue(event):
     try:
-        asyncio.run_coroutine_threadsafe(opportunity_queue.put_nowait(event), event_loop)
-    except asyncio.QueueFull:
-        event["opportunity"].order_on_hold = True
-        add(event["opportunity"])
+        if opportunity_queue.qsize() < opportunity_queue.maxsize:
+            asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
+        else:
+            event["opportunity"].order_on_hold = True
+            add(event["opportunity"])
     except Exception as e:
         log_info_and_notify("Error while adding task to queue: {}".format(e))
 
