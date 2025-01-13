@@ -102,3 +102,15 @@ def get_opportunity_queue():
 def set_event_loop(value):
     global event_loop
     event_loop = value
+
+
+def get_product_int_for_product_type(product_type):
+    kite_client = get_kite_client_from_cache()
+    if product_type == kite_client.PRODUCT_MIS:
+        return kite_client.PRODUCT_MIS_INT
+    if product_type == kite_client.PRODUCT_CNC:
+        return kite_client.PRODUCT_CNC_INT
+    if product_type == kite_client.PRODUCT_NRML:
+        return kite_client.PRODUCT_NRML_INT
+    if product_type == kite_client.PRODUCT_CO:
+        return kite_client.PRODUCT_CO_INT

@@ -1,8 +1,8 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
-from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
+import equalizer.service.charges_service_c as cs
 
 
-def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent, product_type, max_buy_quantity, ws_id):
+def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent, product_type_int, max_buy_quantity, ws_id):
     # strategy 1 - buy from ticker2 and sell in ticker1
     strat_1_result = get_price_and_quantity_for_arbitrage(bids_data=ticker1['depth']['buy'],
                                                           offers_data=ticker2['depth']['sell'],
@@ -10,10 +10,10 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
                                                           max_buy_quantity=max_buy_quantity)
 
     if strat_1_result['quantity'] > 0 and strat_1_result['buy_price'] > 0:
-        spread_coef_for_reqd_profit = get_threshold_spread_coef_for_reqd_profit(
+        spread_coef_for_reqd_profit = cs.get_threshold_spread_coef_for_reqd_profit(
             buy_value=strat_1_result['quantity'] * strat_1_result['buy_price'],
             profit_percent=min_profit_percent,
-            product_type=product_type)
+            product_type_int=product_type_int)
 
         spread_coef = (strat_1_result['sell_price'] / strat_1_result['buy_price']) - 1
         if spread_coef >= spread_coef_for_reqd_profit:
@@ -30,10 +30,10 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
                                                           max_buy_quantity=max_buy_quantity)
 
     if strat_2_result['quantity'] > 0 and strat_2_result['buy_price'] > 0:
-        spread_coef_for_reqd_profit = get_threshold_spread_coef_for_reqd_profit(
+        spread_coef_for_reqd_profit = cs.get_threshold_spread_coef_for_reqd_profit(
             buy_value=strat_2_result['quantity'] * strat_2_result['buy_price'],
             profit_percent=min_profit_percent,
-            product_type=product_type)
+            product_type_int=product_type_int)
 
         spread_coef = (strat_2_result['sell_price'] / strat_2_result['buy_price']) - 1
         if spread_coef >= spread_coef_for_reqd_profit:
