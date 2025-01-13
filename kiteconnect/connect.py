@@ -324,6 +324,15 @@ class KiteConnect(object):
         with self.lock:
             self.available_margin = new_margin
 
+    def update_margin_or_throw_error(self, reqd_margin):
+        with self.lock:
+            if self.available_margin < reqd_margin:
+                raise ex.OrderException(
+                    "Avl margin {avl_margin} lower than reqd margin: {reqd_margin}".format(
+                        avl_margin=self.available_margin, reqd_margin=reqd_margin)
+                )
+            self.available_margin = self.available_margin - reqd_margin
+
     def set_new_margins_and_remove_used_holdings(self, new_margins, trading_symbol, used_holdings):
         with self.lock:
             self.available_margin = new_margins

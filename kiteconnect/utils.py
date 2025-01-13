@@ -89,3 +89,10 @@ def get_time_diff_in_micro(start_time):
     end_time_in_micro = convert_to_micro(datetime.now())
     start_time_in_micro = convert_to_micro(start_time)
     return end_time_in_micro - start_time_in_micro
+
+
+def convert_depth_to_string(depth_list):
+    return '|'.join(
+        f"{obj.get('price', 0)},{obj.get('quantity', 0)},{obj.get('left_quantity', 0)}"
+        for obj in depth_list
+    )

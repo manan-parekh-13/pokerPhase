@@ -23,6 +23,7 @@ class ArbitrageInstruments(Base):
     min_profit_percent = Column(Float)
     product_type = Column(JSON)
     try_ordering = Column(Boolean)
+    leverage = Column(Integer)
 
     @classmethod
     def get_arbitrage_instruments(cls):

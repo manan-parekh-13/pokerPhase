@@ -76,21 +76,24 @@ def on_ticks(ws, ticks):
             continue
 
         opportunity.opportunity_check_started_at = opportunity_check_started_at
+        instrument.leverage = instrument.leverage if instrument.leverage else 1
 
-        if ws.try_ordering:
-            add_buy_or_sell_task_to_queue({
-                "opportunity": opportunity,
-                "transaction_type": kite_client.TRANSACTION_TYPE_BUY,
-                "product_type": get_product_type_from_ws_id(opportunity.ws_id)
-            })
-            add_buy_or_sell_task_to_queue({
-                "opportunity": opportunity,
-                "transaction_type": kite_client.TRANSACTION_TYPE_SELL,
-                "product_type": get_product_type_from_ws_id(opportunity.ws_id)
-            })
-        else:
+        if not ws.try_ordering:
             add(opportunity)
+            continue
 
+        add_buy_or_sell_task_to_queue({
+            "opportunity": opportunity,
+            "transaction_type": kite_client.TRANSACTION_TYPE_BUY,
+            "product_type": get_product_type_from_ws_id(opportunity.ws_id),
+            "reqd_margin": opportunity.buy_price * opportunity.quantity / instrument.leverage
+        })
+        add_buy_or_sell_task_to_queue({
+            "opportunity": opportunity,
+            "transaction_type": kite_client.TRANSACTION_TYPE_SELL,
+            "product_type": get_product_type_from_ws_id(opportunity.ws_id),
+            "reqd_margin": opportunity.sell_price * opportunity.quantity / instrument.leverage
+        })
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
 
@@ -163,10 +166,7 @@ def on_order_update(ws, data):
     update_received_time = datetime.now()
     kite_client = get_kite_client_from_cache()
 
-    # data['received_time'] = datetime_to_str(update_received_time)
-
     if data['status'] != kite_client.COMPLETE and data['status'] != kite_client.CANCELLED:
-        # wait for it
         return
 
     initial_value = kite_client.get_available_margin_and_positions_for_trading_symbol_exchange(
