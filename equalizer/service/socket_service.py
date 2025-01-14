@@ -28,7 +28,7 @@ from kiteconnect.utils import log_info_and_notify, get_env_variable, datetime_to
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
                                       update_latest_ticks_for_instrument_tokens_in_bulk,
-                                      add_buy_or_sell_task_to_queue)
+                                      add_buy_and_sell_task_to_queue)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 
@@ -82,17 +82,11 @@ def on_ticks(ws, ticks):
             add(opportunity)
             continue
 
-        add_buy_or_sell_task_to_queue({
+        add_buy_and_sell_task_to_queue({
             "opportunity": opportunity,
-            "transaction_type": kite_client.TRANSACTION_TYPE_BUY,
             "product_type": get_product_type_from_ws_id(opportunity.ws_id),
-            "reqd_margin": opportunity.buy_price * opportunity.quantity / instrument.leverage
-        })
-        add_buy_or_sell_task_to_queue({
-            "opportunity": opportunity,
-            "transaction_type": kite_client.TRANSACTION_TYPE_SELL,
-            "product_type": get_product_type_from_ws_id(opportunity.ws_id),
-            "reqd_margin": opportunity.sell_price * opportunity.quantity / instrument.leverage
+            "reqd_buy_margin": opportunity.buy_price * opportunity.quantity / instrument.leverage,
+            "reqd_sell_margin": opportunity.sell_price * opportunity.quantity / instrument.leverage
         })
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
