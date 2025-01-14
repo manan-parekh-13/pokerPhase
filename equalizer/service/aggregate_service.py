@@ -4,6 +4,18 @@ from Models.aggregate_data import init_aggregate_data_for_instrument_and_ws_id
 from mysql_config import add_all
 
 
+def save_aggregate_data_for_tickers(existing_aggregate_data, new_ticks):
+    for instrument_token, latest_tick_for_instrument in new_ticks.items():
+        if instrument_token in existing_aggregate_data:
+            prev_ticker_for_instrument = existing_aggregate_data.get(instrument_token)
+            existing_aggregate_data[instrument_token] = get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument)
+        else:
+            existing_aggregate_data[instrument_token] = {
+                'ticker_time': datetime.now().timestamp(),
+                'started_at': datetime.now()
+            }
+
+
 def get_new_aggregate_data_from_pre_value(prev_ticker_for_instrument):
     current_time = datetime.now().timestamp()
     new_time_diff = current_time - prev_ticker_for_instrument['ticker_time']
