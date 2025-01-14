@@ -13,6 +13,10 @@ def get_env_variable(parameter_name):
     return os.getenv(parameter_name)
 
 
+def set_env_variable(parameter_name, parameter_value):
+    os.environ[parameter_name] = parameter_value
+
+
 def convert_str_to_datetime(timestamp_str):
     # Convert string to datetime object
     timestamp_utc = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ")

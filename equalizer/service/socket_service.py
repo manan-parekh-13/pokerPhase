@@ -85,8 +85,8 @@ def on_ticks(ws, ticks):
         add_buy_and_sell_task_to_queue({
             "opportunity": opportunity,
             "product_type": get_product_type_from_ws_id(opportunity.ws_id),
-            "reqd_buy_margin": opportunity.buy_price * opportunity.quantity / instrument.leverage,
-            "reqd_sell_margin": opportunity.sell_price * opportunity.quantity / instrument.leverage
+            "reqd_margin": (opportunity.buy_price + opportunity.sell_price) * opportunity.quantity / instrument.leverage,
+            "leverage": instrument.leverage
         })
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
         raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
