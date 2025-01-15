@@ -1,4 +1,5 @@
 import logging
+import random
 from datetime import datetime
 
 from equalizer.service.ticker_service import is_opportunity_stale
@@ -18,14 +19,20 @@ async def consume_buy_or_sell_tasks(consumer_id):
                 task = await queue.get()
                 kite_client = get_kite_client_from_cache()
                 opportunity = task["opportunity"]
-                buy_task = asyncio.create_task(
-                    place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"], task["leverage"])
-                )
-                sell_task = asyncio.create_task(
-                    place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"], task["leverage"])
-                )
 
-                await buy_task, sell_task
+                opportunity.is_stale = is_opportunity_stale(
+                    opportunity) if not opportunity.is_stale else opportunity.is_stale
+
+                if not opportunity.is_stale:
+                    buy_task = asyncio.create_task(
+                        place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"], task["leverage"])
+                    )
+                    sell_task = asyncio.create_task(
+                        place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"], task["leverage"])
+                    )
+                    await buy_task
+                    await sell_task
+
                 add(opportunity)
 
                 queue.task_done()
@@ -36,7 +43,7 @@ async def consume_buy_or_sell_tasks(consumer_id):
             logging.critical(f"Error in consume_buy_or_sell_tasks: {e}", exc_info=True)
 
 
-def place_order(opportunity, transaction_type, product_type, leverage):
+async def place_order(opportunity, transaction_type, product_type, leverage):
     kite_client = get_kite_client_from_cache()
 
     if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
@@ -65,11 +72,6 @@ def place_order(opportunity, transaction_type, product_type, leverage):
         # "price": price
     }
 
-    opportunity.is_stale = is_opportunity_stale(opportunity) if not opportunity.is_stale else opportunity.is_stale
-
-    if opportunity.is_stale:
-        return None
-
     try:
         is_order_allowed = get_env_variable("ALLOW_ORDER")
         if is_order_allowed != "yes":
@@ -82,7 +84,7 @@ def place_order(opportunity, transaction_type, product_type, leverage):
                         order_params["exchange"], order_params["tradingsymbol"]
                 )
             )
-            order_id = 10**15 + opportunity.id
+            order_id = 10**15 + random.randint(1, 100000000000)
         else:
             order_id = kite_client.place_order(**order_params)
 
