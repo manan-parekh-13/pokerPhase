@@ -2,7 +2,7 @@ import logging
 import threading
 from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
-from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string
+from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string, set_env_variable
 from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
                                       init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache,
                                       set_event_loop)
@@ -77,8 +77,12 @@ async def start_up_equalizer():
     init_instrument_token_to_equivalent_token_map(get_instrument_token_to_equivalent_map())
 
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
-    equity_margins = kite.margins(segment=kite.MARGIN_EQUITY)
-    usable_margin = equity_margins.get('net')
+    is_order_allowed = get_env_variable("ALLOW_ORDER")
+    if is_order_allowed != "yes":
+        usable_margin = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING'))
+    else:
+        equity_margins = kite.margins(segment=kite.MARGIN_EQUITY)
+        usable_margin = equity_margins.get('net')
 
     # available_holdings_map = get_holdings_available_for_arbitrage_in_map()
     open_positions = get_instrument_wise_positions()
@@ -129,19 +133,14 @@ async def start_up_equalizer():
 def holdings():
     kite = get_kite_client_from_cache()
     response = kite.holdings()
-    # if response:
-    #     holding_list = []
-    #     for holding in response:
-    #         holding['arbitrage_quantity'] = None
-    #         holding['authorisation'] = json.dumps(holding['authorisation'])
-    #         holding_list.append(Holdings(**holding))
-    #     add_all(holding_list)
     return jsonify(response)
 
 
 @app.route("/orders.json", methods=['GET'])
 def orders():
     kite = get_kite_client_from_cache()
+    if not kite.enc_token:
+        kite = login_via_two_f_a()
     response = kite.orders()
 
     if response:
@@ -169,6 +168,20 @@ def instruments():
     instrument_model_list = instrument.convert_all(instrument_records)
     add_all(instrument_model_list)
     return jsonify(instrument_records)
+
+
+@app.route("/allow_orders", methods=['POST'])
+def allow_orders():
+    kite_client = get_kite_client_from_cache()
+    latest_margins = kite_client.margins(segment=kite_client.MARGIN_EQUITY)
+    latest_positions = get_instrument_wise_positions()
+    kite_client.set_available_margin_and_positions(new_margins=latest_margins.get('net'), new_positions=latest_positions)
+    set_env_variable("ALLOW_ORDER", "yes")
+
+
+@app.route("/dont_allow_orders", methods=['POST'])
+def dont_allow_orders():
+    set_env_variable("ALLOW_ORDER", "no")
 
 
 @app.route("/dummy_order.json", methods=['POST'])

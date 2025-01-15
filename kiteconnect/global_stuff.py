@@ -6,10 +6,10 @@ from asyncio import Queue
 import asyncio
 import threading
 from mysql_config import add
-
+from kiteconnect.exceptions import OrderException
 
 global_cache = {}
-opportunity_queue = Queue(maxsize=8)
+opportunity_queue = Queue(maxsize=4)
 event_loop = None
 lock = threading.Lock()
 
@@ -84,13 +84,18 @@ def get_instrument_token_map_from_cache():
     return global_cache['token_to_equivalent_map']
 
 
-def add_buy_or_sell_task_to_queue(event):
+def add_buy_and_sell_task_to_queue(event):
     try:
         if opportunity_queue.qsize() < opportunity_queue.maxsize:
+            kite_client = get_kite_client_from_cache()
+            kite_client.update_margin_or_throw_error(event["reqd_margin"])
             asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
         else:
             event["opportunity"].order_on_hold = True
             add(event["opportunity"])
+    except OrderException:
+        event["opportunity"].low_margin_hold = True
+        add(event["opportunity"])
     except Exception as e:
         log_info_and_notify("Error while adding task to queue: {}".format(e))
 

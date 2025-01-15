@@ -13,21 +13,19 @@
 import logging
 
 from equalizer.service.positions_service import get_instrument_wise_positions
+from equalizer.service.ticker_service import check_tickers_for_arbitrage
 from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
 import threading
 import asyncio
-from Models.raw_ticker_data import init_raw_ticker_data
 from Models.arbitrage_opportunity import ArbitrageOpportunity
-import equalizer.service.arbitrage_service_c as ac
-from mysql_config import add_all, add
-import equalizer.service.aggregate_service_c as agc
-from kiteconnect.utils import log_info_and_notify, get_env_variable, datetime_to_str, dict_to_string
+from mysql_config import add_all
+from equalizer.service.aggregate_service import save_aggregate_data_for_tickers
+from kiteconnect.utils import log_info_and_notify, datetime_to_str, dict_to_string
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
-                                      update_latest_ticks_for_instrument_tokens_in_bulk, is_order_on_hold_currently,
-                                      add_opportunity_to_queue)
+                                      update_latest_ticks_for_instrument_tokens_in_bulk)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
 
 
@@ -43,56 +41,7 @@ def on_ticks(ws, ticks):
     raw_tickers = []
     kite_client = get_kite_client_from_cache()
 
-    for instrument_token, latest_tick_for_instrument in ticks.items():
-        opportunity_check_started_at = datetime.now()
-
-        latest_tick_for_equivalent = get_equivalent_tick_from_token(ws, instrument_token)
-
-        if not latest_tick_for_equivalent:
-            continue
-
-        ltp = latest_tick_for_instrument['depth']['sell'][0]['price']
-
-        if ltp == 0.0:
-            continue
-
-        instrument = get_instrument_from_token(ws, instrument_token)
-
-        if ws.try_ordering:
-            available_margin = kite_client.get_available_margin()
-            max_buy_quantity = available_margin / ltp
-        else:
-            max_buy_quantity = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')) / ltp
-
-        if max_buy_quantity == 0:
-            continue
-
-        opportunity = ac.check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
-                                         instrument.threshold_spread_coef, instrument.min_profit_percent,
-                                         instrument.product_type_int, max_buy_quantity, ws.ws_id)
-
-        if not opportunity:
-            continue
-
-        opportunity.opportunity_check_started_at = opportunity_check_started_at
-
-        if ws.try_ordering:
-            add_buy_or_sell_task_to_queue({
-                "opportunity": opportunity,
-                "transaction_type": kite_client.TRANSACTION_TYPE_BUY,
-                "product_type": get_product_type_from_ws_id(opportunity.ws_id)
-            })
-            add_buy_or_sell_task_to_queue({
-                "opportunity": opportunity,
-                "transaction_type": kite_client.TRANSACTION_TYPE_SELL,
-                "product_type": get_product_type_from_ws_id(opportunity.ws_id)
-            })
-        else:
-            add(opportunity)
-
-        raw_tickers.append(init_raw_ticker_data(latest_tick_for_instrument, ws.ws_id))
-        raw_tickers.append(init_raw_ticker_data(latest_tick_for_equivalent, ws.ws_id))
-
+    check_tickers_for_arbitrage(ticks, raw_tickers, ws, kite_client)
     add_all(raw_tickers)
 
 
@@ -106,16 +55,7 @@ def analyze_data_on_ticks(ws, ticks):
                   .format(ws.ws_id, threading.current_thread().name, len(ticks), len(ws.token_map)))
 
     latest_aggregate_data = get_latest_aggregate_data_for_ws_id_from_global_cache(ws.ws_id)
-    for instrument_token, latest_tick_for_instrument in ticks.items():
-        if instrument_token in latest_aggregate_data:
-            prev_ticker_for_instrument = latest_aggregate_data.get(instrument_token)
-            latest_aggregate_data[instrument_token] = agc.get_new_aggregate_data_from_pre_value(
-                prev_ticker_for_instrument)
-        else:
-            latest_aggregate_data[instrument_token] = {
-                'ticker_time': datetime.now().timestamp(),
-                'started_at': datetime.now()
-            }
+    save_aggregate_data_for_tickers(latest_aggregate_data, ticks)
 
     time_diff = datetime.now().timestamp() - start_time
     logging.debug("websocket.{}.process_thread {}.Processed {} ticks in {} seconds"
@@ -163,10 +103,7 @@ def on_order_update(ws, data):
     update_received_time = datetime.now()
     kite_client = get_kite_client_from_cache()
 
-    # data['received_time'] = datetime_to_str(update_received_time)
-
     if data['status'] != kite_client.COMPLETE and data['status'] != kite_client.CANCELLED:
-        # wait for it
         return
 
     initial_value = kite_client.get_available_margin_and_positions_for_trading_symbol_exchange(
@@ -229,12 +166,3 @@ async def send_web_socket_updates():
             log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
         await asyncio.sleep(60 * 60)
 
-
-def get_instrument_from_token(ws, instrument_token):
-    return ws.token_map.get(instrument_token)
-
-
-def get_equivalent_tick_from_token(ws, instrument_token):
-    instrument = get_instrument_from_token(ws, instrument_token)
-    equivalent_token = instrument.equivalent_token
-    return get_latest_tick_by_instrument_token_from_global_cache(equivalent_token)

@@ -1,8 +1,9 @@
 import logging
+import random
 from datetime import datetime
 
 from equalizer.service.ticker_service import is_opportunity_stale
-from kiteconnect.utils import log_info_and_notify
+from kiteconnect.utils import log_info_and_notify, get_env_variable
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_instrument_token_map_from_cache,
                                       get_opportunity_queue)
 import asyncio
@@ -16,17 +17,35 @@ async def consume_buy_or_sell_tasks(consumer_id):
             queue = get_opportunity_queue()
             if not queue.empty():
                 task = await queue.get()
-                place_order(task["opportunity"], task["transaction_type"], task["product_type"])
+                kite_client = get_kite_client_from_cache()
+                opportunity = task["opportunity"]
+
+                opportunity.is_stale = is_opportunity_stale(
+                    opportunity) if not opportunity.is_stale else opportunity.is_stale
+
+                if not opportunity.is_stale:
+                    buy_task = asyncio.create_task(
+                        place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"],
+                                    task["leverage"])
+                    )
+                    sell_task = asyncio.create_task(
+                        place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"],
+                                    task["leverage"])
+                    )
+                    await buy_task
+                    await sell_task
+
+                add(opportunity)
+
                 queue.task_done()
-                logging.debug("Completed {} task for opportunity {} using consumer {}."
-                              .format(task["transaction_type"], task["opportunity"].id, consumer_id))
+                logging.info("Realised opportunity {} using consumer {}.".format(task["opportunity"].id, consumer_id))
             else:
                 await asyncio.sleep(0.001)
         except Exception as e:
             logging.critical(f"Error in consume_buy_or_sell_tasks: {e}", exc_info=True)
 
 
-def place_order(opportunity, transaction_type, product_type):
+async def place_order(opportunity, transaction_type, product_type, leverage):
     kite_client = get_kite_client_from_cache()
 
     if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
@@ -55,24 +74,30 @@ def place_order(opportunity, transaction_type, product_type):
         # "price": price
     }
 
-    opportunity.is_stale = is_opportunity_stale(opportunity) if not opportunity.is_stale else opportunity.is_stale
-
-    if opportunity.is_stale:
-        return None
-
     try:
-        order_id = kite_client.place_order(**order_params)
+        is_order_allowed = get_env_variable("ALLOW_ORDER")
+        if is_order_allowed != "yes":
+            available_margin = kite_client.get_available_margin()
+            new_margin = available_margin + order_params["quantity"] * price / leverage
+            kite_client.set_new_margin(new_margin)
+            await asyncio.sleep(0.1)
+            log_info_and_notify(
+                "Previous margin {}, New margin: {} for {} order of {}_{} at price {} and quantity {}"
+                .format(available_margin, new_margin, transaction_type,
+                        order_params["exchange"], order_params["tradingsymbol"],
+                        price, order_params["quantity"]
+                        )
+            )
+            order_id = 10 ** 15 + random.randint(1, 100000000000)
+        else:
+            order_id = kite_client.place_order(**order_params)
+
         if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
             opportunity.buy_ordered_at = datetime.now()
             opportunity.buy_order_id = order_id
         else:
             opportunity.sell_ordered_at = datetime.now()
             opportunity.sell_order_id = order_id
-
-        if not opportunity.buy_order_id or not opportunity.sell_order_id:
-            return
-
-        add(opportunity)
     except Exception as e:
         log_info_and_notify("Error while ordering: {}".format(e))
         return None
@@ -97,4 +122,3 @@ def save_order_info(order_list):
             orders_to_be_saved.append(init_order_info(order_data))
 
     add_all(orders_to_be_saved)
-

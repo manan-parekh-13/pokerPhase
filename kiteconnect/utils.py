@@ -13,6 +13,10 @@ def get_env_variable(parameter_name):
     return os.getenv(parameter_name)
 
 
+def set_env_variable(parameter_name, parameter_value):
+    os.environ[parameter_name] = parameter_value
+
+
 def convert_str_to_datetime(timestamp_str):
     # Convert string to datetime object
     timestamp_utc = datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ")
@@ -89,3 +93,10 @@ def get_time_diff_in_micro(start_time):
     end_time_in_micro = convert_to_micro(datetime.now())
     start_time_in_micro = convert_to_micro(start_time)
     return end_time_in_micro - start_time_in_micro
+
+
+def convert_depth_to_string(depth_list):
+    return '|'.join(
+        f"{obj.get('price', 0)},{obj.get('quantity', 0)},{obj.get('left_quantity', 0)}"
+        for obj in depth_list
+    )

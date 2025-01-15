@@ -2,7 +2,6 @@ from sqlalchemy import Column, DECIMAL, Integer, Index, Boolean, String, desc
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine, get_thread_session
 from Models.type_decorators.unix_timestamp_microseconds import UnixTimestampMicroseconds
-from kiteconnect.login import set_timezone_in_datetime
 from datetime import datetime
 
 Base = declarative_base()
@@ -23,6 +22,7 @@ def init_arbitrage_opportunities_from_strat_res_and_tickers(buy_ticker, sell_tic
         sell_order_id=None,
         is_stale=False,
         order_on_hold=False,
+        low_margin_hold=False,
         opportunity_check_started_at=None,
         opp_buy_task_received_at=None,
         buy_ordered_at=None,
@@ -48,6 +48,7 @@ class ArbitrageOpportunity(Base):
     sell_order_id = Column(Integer)
     is_stale = Column(Boolean)
     order_on_hold = Column(Boolean)
+    low_margin_hold = Column(Boolean)
     opportunity_check_started_at = Column(UnixTimestampMicroseconds)
     opp_buy_task_received_at = Column(UnixTimestampMicroseconds)
     buy_ordered_at = Column(UnixTimestampMicroseconds)
