@@ -25,10 +25,12 @@ async def consume_buy_or_sell_tasks(consumer_id):
 
                 if not opportunity.is_stale:
                     buy_task = asyncio.create_task(
-                        place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"], task["leverage"])
+                        place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"],
+                                    task["leverage"])
                     )
                     sell_task = asyncio.create_task(
-                        place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"], task["leverage"])
+                        place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"],
+                                    task["leverage"])
                     )
                     await buy_task
                     await sell_task
@@ -78,13 +80,15 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
             available_margin = kite_client.get_available_margin()
             new_margin = available_margin + order_params["quantity"] * price / leverage
             kite_client.set_new_margin(new_margin)
-            asyncio.sleep(0.1)
-            log_info_and_notify("Previous margin {}, New margin: {} for {} order of {}_{}"
+            await asyncio.sleep(0.1)
+            log_info_and_notify(
+                "Previous margin {}, New margin: {} for {} order of {}_{} at price {} and quantity {}"
                 .format(available_margin, new_margin, transaction_type,
-                        order_params["exchange"], order_params["tradingsymbol"]
-                )
+                        order_params["exchange"], order_params["tradingsymbol"],
+                        price, order_params["quantity"]
+                        )
             )
-            order_id = 10**15 + random.randint(1, 100000000000)
+            order_id = 10 ** 15 + random.randint(1, 100000000000)
         else:
             order_id = kite_client.place_order(**order_params)
 
@@ -118,4 +122,3 @@ def save_order_info(order_list):
             orders_to_be_saved.append(init_order_info(order_data))
 
     add_all(orders_to_be_saved)
-

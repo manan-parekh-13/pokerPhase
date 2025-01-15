@@ -12,7 +12,6 @@ def init_raw_ticker_data(ticker, ws_id):
     return RawTickerData(
         instrument_token=ticker['instrument_token'],
         ticker_received_time=ticker['ticker_received_time'],
-        depth=None,
         ws_id=ws_id,
         buy_depth=convert_depth_to_string(ticker['depth']['buy']),
         sell_depth=convert_depth_to_string(ticker['depth']['sell'])
@@ -25,7 +24,6 @@ class RawTickerData(Base):
     id = Column(Integer, primary_key=True)
     instrument_token = Column(Integer)
     ticker_received_time = Column(UnixTimestampMicroseconds)
-    depth = Column(JSON)
     ws_id = Column(String(15))
     buy_depth = Column(String(100), nullable=True)
     sell_depth = Column(String(100), nullable=True)

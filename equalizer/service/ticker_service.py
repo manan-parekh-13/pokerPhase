@@ -4,7 +4,7 @@ from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_gl
     add_buy_and_sell_task_to_queue
 from datetime import datetime
 from mysql_config import add
-from kiteconnect.utils import get_env_variable, get_product_type_from_ws_id
+from kiteconnect.utils import get_product_type_from_ws_id
 
 
 def is_ticker_stale(ticker):
@@ -40,11 +40,8 @@ def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_cli
 
         instrument = get_instrument_from_token(web_socket, instrument_token)
 
-        if web_socket.try_ordering:
-            available_margin = kite_client.get_available_margin()
-            max_buy_quantity = available_margin / ltp
-        else:
-            max_buy_quantity = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')) / ltp
+        available_margin = kite_client.get_available_margin()
+        max_buy_quantity = int(available_margin / ltp)
 
         if max_buy_quantity == 0:
             continue

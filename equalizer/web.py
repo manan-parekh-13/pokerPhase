@@ -77,8 +77,12 @@ async def start_up_equalizer():
     init_instrument_token_to_equivalent_token_map(get_instrument_token_to_equivalent_map())
 
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
-    equity_margins = kite.margins(segment=kite.MARGIN_EQUITY)
-    usable_margin = equity_margins.get('net')
+    is_order_allowed = get_env_variable("ALLOW_ORDER")
+    if is_order_allowed != "yes":
+        usable_margin = int(get_env_variable('DEFAULT_MARGIN_FOR_CHECKING'))
+    else:
+        equity_margins = kite.margins(segment=kite.MARGIN_EQUITY)
+        usable_margin = equity_margins.get('net')
 
     # available_holdings_map = get_holdings_available_for_arbitrage_in_map()
     open_positions = get_instrument_wise_positions()
