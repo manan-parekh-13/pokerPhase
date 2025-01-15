@@ -51,7 +51,7 @@ def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_cli
 
         opportunity = check_arbitrage(latest_tick_for_equivalent, latest_tick_for_instrument,
                                       instrument.threshold_spread_coef, instrument.min_profit_percent,
-                                      instrument.product_type, max_buy_quantity, ws.ws_id)
+                                      instrument.product_type, max_buy_quantity, web_socket.ws_id)
 
         if not opportunity:
             continue
