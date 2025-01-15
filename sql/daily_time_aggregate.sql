@@ -1,4 +1,7 @@
 -- check process times for each opportunity
+SET @today = UNIX_TIMESTAMP(CURDATE()) * 1000000;
+SET @tomorrow = UNIX_TIMESTAMP(CURDATE() + INTERVAL 1 DAY) * 1000000;
+
 select
 a.id,
 i.trading_symbol,
@@ -28,4 +31,6 @@ from arbitrage_opportunities a
 inner join arbitrage_instruments i
 on (i.instrument_token1 = a.buy_source or i.instrument_token1 = a.sell_source)
 where buy_order_id is not null
+and created_at > @today
+and created_at < @tomorrow
 order by created_at desc;
