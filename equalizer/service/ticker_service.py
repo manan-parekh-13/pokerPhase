@@ -1,6 +1,5 @@
 from Models.raw_ticker_data import init_raw_ticker_data
 from equalizer.service.arbitrage_service import check_arbitrage
-from equalizer.service.socket_service import get_equivalent_tick_from_token, get_instrument_from_token
 from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, \
     add_buy_and_sell_task_to_queue
 from datetime import datetime
@@ -72,3 +71,13 @@ def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_cli
         })
         tickers_to_be_saved.append(init_raw_ticker_data(latest_tick_for_instrument, web_socket.ws_id))
         tickers_to_be_saved.append(init_raw_ticker_data(latest_tick_for_equivalent, web_socket.ws_id))
+
+
+def get_instrument_from_token(ws, instrument_token):
+    return ws.token_map.get(instrument_token)
+
+
+def get_equivalent_tick_from_token(ws, instrument_token):
+    instrument = get_instrument_from_token(ws, instrument_token)
+    equivalent_token = instrument.equivalent_token
+    return get_latest_tick_by_instrument_token_from_global_cache(equivalent_token)

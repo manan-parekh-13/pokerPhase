@@ -165,12 +165,3 @@ async def send_web_socket_updates():
             log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
         await asyncio.sleep(60 * 60)
 
-
-def get_instrument_from_token(ws, instrument_token):
-    return ws.token_map.get(instrument_token)
-
-
-def get_equivalent_tick_from_token(ws, instrument_token):
-    instrument = get_instrument_from_token(ws, instrument_token)
-    equivalent_token = instrument.equivalent_token
-    return get_latest_tick_by_instrument_token_from_global_cache(equivalent_token)
