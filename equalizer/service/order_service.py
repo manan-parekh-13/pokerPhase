@@ -34,6 +34,8 @@ async def consume_buy_or_sell_tasks(consumer_id):
                     )
                     await buy_task
                     await sell_task
+                else:
+                    kite_client.add_margin(task["reqd_margin"])
 
                 add(opportunity)
 

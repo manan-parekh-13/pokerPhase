@@ -85,18 +85,20 @@ def get_instrument_token_map_from_cache():
 
 
 def add_buy_and_sell_task_to_queue(event):
+    kite_client = get_kite_client_from_cache()
     try:
         if opportunity_queue.qsize() < opportunity_queue.maxsize:
-            kite_client = get_kite_client_from_cache()
-            kite_client.update_margin_or_throw_error(event["reqd_margin"])
+            kite_client.remove_margin_or_throw_error(event["reqd_margin"])
             asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
         else:
             event["opportunity"].order_on_hold = True
             add(event["opportunity"])
     except OrderException:
         event["opportunity"].low_margin_hold = True
+        kite_client.add_margin(event["reqd_margin"])
         add(event["opportunity"])
     except Exception as e:
+        kite_client.add_margin(event["reqd_margin"])
         log_info_and_notify("Error while adding task to queue: {}".format(e))
 
 
