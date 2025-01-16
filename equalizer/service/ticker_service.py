@@ -1,7 +1,6 @@
 from Models.raw_ticker_data import init_raw_ticker_data
 from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, \
     add_buy_and_sell_task_to_queue
-from kiteconnect.utils import get_env_variable
 from datetime import datetime
 from mysql_config import add
 from kiteconnect.utils import get_product_type_from_ws_id
