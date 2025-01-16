@@ -1,5 +1,5 @@
 from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
-import equalizer.service.charges_service_c as cs
+from charges_service import get_threshold_spread_coef_for_reqd_profit
 
 
 def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
@@ -13,7 +13,7 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
     )
 
     if strat_1_result['quantity'] > 0 and strat_1_result['buy_price'] > 0:
-        spread_coef_for_reqd_profit = cs.get_threshold_spread_coef_for_reqd_profit(
+        spread_coef_for_reqd_profit = get_threshold_spread_coef_for_reqd_profit(
             buy_value=strat_1_result['quantity'] * strat_1_result['buy_price'],
             profit_percent=min_profit_percent,
             product_type_int=product_type_int
@@ -37,7 +37,7 @@ def check_arbitrage(ticker1, ticker2, threshold_spread_coef, min_profit_percent,
     )
 
     if strat_2_result['quantity'] > 0 and strat_2_result['buy_price'] > 0:
-        spread_coef_for_reqd_profit = cs.get_threshold_spread_coef_for_reqd_profit(
+        spread_coef_for_reqd_profit = get_threshold_spread_coef_for_reqd_profit(
             buy_value=strat_2_result['quantity'] * strat_2_result['buy_price'],
             profit_percent=min_profit_percent,
             product_type_int=product_type_int
