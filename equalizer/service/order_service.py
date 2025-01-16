@@ -1,5 +1,5 @@
 import logging
-import random
+import threading
 from datetime import datetime
 
 from equalizer.service.ticker_service import is_opportunity_stale
@@ -40,7 +40,8 @@ async def consume_buy_or_sell_tasks(consumer_id):
                 add(opportunity)
 
                 queue.task_done()
-                logging.info("Realised opportunity {} using consumer {}.".format(task["opportunity"].id, consumer_id))
+                logging.info("Realised opportunity {} using consumer {} on process_thread {}."
+                             .format(task["opportunity"].id, consumer_id, threading.current_thread().name))
             else:
                 await asyncio.sleep(0.001)
         except Exception as e:
@@ -90,7 +91,7 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
                         price, order_params["quantity"], opportunity.id
                         )
             )
-            order_id = 10 ** 15 + random.randint(1, 100000000000)
+            order_id = 10 ** 15 + datetime.now() / 1000000
         else:
             order_id = kite_client.place_order(**order_params)
 
