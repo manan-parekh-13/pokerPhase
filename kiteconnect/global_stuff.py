@@ -95,7 +95,6 @@ def add_buy_and_sell_task_to_queue(event):
             add(event["opportunity"])
     except OrderException:
         event["opportunity"].low_margin_hold = True
-        kite_client.add_margin(event["reqd_margin"])
         add(event["opportunity"])
     except Exception as e:
         kite_client.add_margin(event["reqd_margin"])
