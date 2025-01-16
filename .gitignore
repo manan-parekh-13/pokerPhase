@@ -181,3 +181,8 @@ $RECYCLE.BIN/
 cov_html
 
 # End of https://www.gitignore.io/api/osx,linux,macos,python,windows
+/.idea/*
+/.idea/misc.xml
+/.idea/pokerPhase.iml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/vcs.xml
