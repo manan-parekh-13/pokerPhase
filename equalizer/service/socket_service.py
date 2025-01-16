@@ -11,9 +11,9 @@
 # in your main thread while running KiteTicker in separate thread.
 ###############################################################################
 import logging
+from kiteconnect.utils import get_env_variable
 
 from equalizer.service.positions_service import get_instrument_wise_positions
-from equalizer.service.ticker_service import check_tickers_for_arbitrage
 from kiteconnect import KiteTicker
 from urllib.parse import quote
 from datetime import datetime
@@ -21,12 +21,18 @@ import threading
 import asyncio
 from Models.arbitrage_opportunity import ArbitrageOpportunity
 from mysql_config import add_all
-from equalizer.service.aggregate_service import save_aggregate_data_for_tickers
 from kiteconnect.utils import log_info_and_notify, datetime_to_str, dict_to_string
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
                                       get_latest_tick_by_instrument_token_from_global_cache,
                                       update_latest_ticks_for_instrument_tokens_in_bulk)
 from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
+
+useCython = get_env_variable("USE_CYTHON_FUNC")
+if useCython == "yes":
+    from cython.cython_functions_c import check_tickers_for_arbitrage, save_aggregate_data_for_tickers
+else:
+    from equalizer.service.ticker_service import check_tickers_for_arbitrage
+    from equalizer.service.aggregate_service import save_aggregate_data_for_tickers
 
 
 # Callback for tick reception.
@@ -165,4 +171,3 @@ async def send_web_socket_updates():
         else:
             log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
         await asyncio.sleep(60 * 60)
-
