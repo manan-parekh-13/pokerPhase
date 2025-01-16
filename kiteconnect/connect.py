@@ -296,11 +296,6 @@ class KiteConnect(object):
 
         return None
 
-    def get_available_margin_and_holdings_for_trading_symbol(self, trading_symbol):
-        with self.lock:
-            return {'available_margin': self.available_margin or 0,
-                    'available_holdings': self.available_holdings.get(trading_symbol) or 0}
-
     def get_available_margin_and_positions_for_trading_symbol_exchange(self, trading_symbol, exchange):
         with self.lock:
             return {'available_margin': self.available_margin or 0,
@@ -310,23 +305,15 @@ class KiteConnect(object):
         with self.lock:
             return self.available_margin or 0
 
-    def set_available_margin_and_holdings(self, new_margins, new_holdings):
-        with self.lock:
-            self.available_margin = new_margins
-            self.available_holdings = new_holdings
-
     def set_available_margin_and_positions(self, new_margins, new_positions):
         with self.lock:
             self.available_margin = new_margins
             self.open_positions = new_positions
 
-    def set_new_margin(self, new_margin):
-        with self.lock:
-            self.available_margin = new_margin
-
     def add_margin(self, margin):
         with self.lock:
             self.available_margin += margin
+            return self.available_margin
 
     def remove_margin_or_throw_error(self, reqd_margin):
         with self.lock:
@@ -336,11 +323,6 @@ class KiteConnect(object):
                         avl_margin=self.available_margin, reqd_margin=reqd_margin)
                 )
             self.available_margin = self.available_margin - reqd_margin
-
-    def set_new_margins_and_remove_used_holdings(self, new_margins, trading_symbol, used_holdings):
-        with self.lock:
-            self.available_margin = new_margins
-            self.available_holdings[trading_symbol] = self.available_holdings[trading_symbol] - used_holdings
 
     def set_request_id(self, request_id):
         """Set the `request_id` received after a creating a login request."""
