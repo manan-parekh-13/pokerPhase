@@ -91,7 +91,7 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
                         price, order_params["quantity"], opportunity.id
                         )
             )
-            order_id = 10 ** 15 + datetime.now() / 1000000
+            order_id = 10 ** 15 + datetime.now().timestamp()
         else:
             order_id = kite_client.place_order(**order_params)
 
