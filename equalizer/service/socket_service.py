@@ -75,8 +75,8 @@ def on_connect(ws, response):
     tokens = list(ws.token_map.keys())
     ws.subscribe(tokens)
     ws.set_mode(ws.mode, tokens)
-    logging.info("websocket.{}.process_thread {}.Subscribe to tokens in {} mode: {}"
-                 .format(ws.ws_id, threading.current_thread().name, ws.mode, tokens))
+    logging.info("websocket.{}.process_thread {}.Subscribe to {} tokens in mode: {}"
+                 .format(ws.ws_id, threading.current_thread().name, len(tokens), ws.mode))
 
 
 # Callback when current connection is closed.
