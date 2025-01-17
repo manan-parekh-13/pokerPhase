@@ -44,9 +44,13 @@ class KiteConnect(object):
     # Constants
     # Products
     PRODUCT_MIS = "MIS"
+    PRODUCT_MIS_INT = 1
     PRODUCT_CNC = "CNC"
+    PRODUCT_CNC_INT = 2
     PRODUCT_NRML = "NRML"
+    PRODUCT_NRML_INT = 3
     PRODUCT_CO = "CO"
+    PRODUCT_CO_INT = 4
 
     # Order types
     ORDER_TYPE_MARKET = "MARKET"
@@ -63,7 +67,9 @@ class KiteConnect(object):
 
     # Transaction type
     TRANSACTION_TYPE_BUY = "BUY"
+    TRANSACTION_TYPE_BUY_INT = 1
     TRANSACTION_TYPE_SELL = "SELL"
+    TRANSACTION_TYPE_SELL_INT = 2
 
     # Validity
     VALIDITY_DAY = "DAY"
@@ -125,6 +131,9 @@ class KiteConnect(object):
 
         "market.instruments.all": "/instruments",
 
+        # --------------------------------------------------- HISTORICAL ----------------------------------------
+        "market.quote": "/oms/quote",
+        "market.historical": "/oms/instruments/historical/{instrument_token}/{interval}",
 
 
         # -------------------------------------------------- UNTESTED -------------------------------------------
@@ -158,10 +167,8 @@ class KiteConnect(object):
         #
         # "market.instruments": "/instruments/{exchange}",
         # "market.margins": "/margins/{segment}",
-        # "market.historical": "/instruments/historical/{instrument_token}/{interval}",
         # "market.trigger_range": "/instruments/trigger_range/{transaction_type}",
-        #
-        # "market.quote": "/quote",
+
         # "market.quote.ohlc": "/quote/ohlc",
         # "market.quote.ltp": "/quote/ltp",
         #

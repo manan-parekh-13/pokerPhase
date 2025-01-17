@@ -1,8 +1,13 @@
 from Models.arbitrage_instruments import ArbitrageInstruments
 from kiteconnect.utils import get_env_variable
-from kiteconnect.global_stuff import get_kite_client_from_cache
+from kiteconnect.global_stuff import get_kite_client_from_cache, get_product_int_for_product_type
 from copy import deepcopy
-from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
+
+useCython = get_env_variable("USE_CYTHON_FUNC")
+if useCython == "yes":
+    from cython.cython_functions_c import get_threshold_spread_coef_for_reqd_profit
+else:
+    from equalizer.service.charges_service import get_threshold_spread_coef_for_reqd_profit
 
 MAX_TOKENS_PER_WEB_SOCKET = 500
 
@@ -78,11 +83,16 @@ def get_ws_id_to_token_to_instrument_map():
             instrument1.ws_id = ws_id
             instrument2.ws_id = ws_id
 
+            product_type_int = get_product_int_for_product_type(product)
+
             threshold_spread_coef = get_threshold_spread_coef_for_reqd_profit(buy_value=int(default_buy_value),
                                                                               profit_percent=instrument.min_profit_percent,
-                                                                              product_type=product)
+                                                                              product_type_int=product_type_int)
             instrument1.threshold_spread_coef = threshold_spread_coef
             instrument2.threshold_spread_coef = threshold_spread_coef
+
+            instrument1.product_type_int = product_type_int
+            instrument2.product_type_int = product_type_int
 
             ws_id_to_token_to_instrument_map[instrument1.ws_id][instrument1.instrument_token1] = instrument1
             ws_id_to_token_to_instrument_map[instrument2.ws_id][instrument2.instrument_token2] = instrument2

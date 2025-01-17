@@ -16,7 +16,7 @@ from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 import asyncio
 from service.order_service import consume_buy_or_sell_tasks, save_order_info
 from service.positions_service import get_positions_resp, get_instrument_wise_positions
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Remove all handlers associated with the root logger object
 for handler in logging.root.handlers[:]:
@@ -223,6 +223,28 @@ def place_dummy_order():
     result['bse_buy_order_time'] = get_time_diff_in_micro(order_start_time)
 
     return jsonify(result)
+
+
+@app.route("/historical_data.json", methods = ["GET"])
+def get_historical_data():
+    kiteconnect = get_kite_client_from_cache()
+    max_interval = 2000
+    candle_interval = "day"
+    instrument_token = 256265
+    to_date = datetime.now()
+    diff = int(max_interval / 3)
+    from_date = (to_date - timedelta(days=diff))
+
+    # minute data
+    return kiteconnect.historical_data(instrument_token, from_date, to_date, candle_interval)
+
+
+@app.route("/quote_data.json", methods = ["GET"])
+def get_quote():
+    kiteconnect = get_kite_client_from_cache()
+    instrument_list = ["NSE:INFY"]
+
+    return kiteconnect.quote(instrument_list)
 
 
 @app.errorhandler(Exception)

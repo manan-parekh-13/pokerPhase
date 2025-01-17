@@ -23,6 +23,9 @@ source "$VENV_DIR/bin/activate" || { send_slack_message "Failed to activate virt
 # Pull latest code from Git
 git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
 
+# Create cython build
+cd "$APP_DIR/cython" && python setup.py build_ext --inplace || { send_slack_message "Failed to build cython"; exit 1; }
+
 # Start Flask server using flask and log output
 nohup flask run --host=0.0.0.0 --port=5000 >> "$LOG_FILE" 2>&1 &
 sleep 5
