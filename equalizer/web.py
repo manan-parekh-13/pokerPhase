@@ -6,7 +6,7 @@ from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_
 from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
                                       init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache,
                                       set_event_loop)
-from service.socket_service import init_kite_web_socket, send_web_socket_updates
+from equalizer.service.socket_service import init_kite_web_socket, send_web_socket_updates
 from service.instrument_service import get_ws_id_to_token_to_instrument_map
 from service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
