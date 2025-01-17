@@ -7,15 +7,15 @@ from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, ini
                                       init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache,
                                       set_event_loop)
 from equalizer.service.socket_service import init_kite_web_socket, send_web_socket_updates
-from service.instrument_service import get_ws_id_to_token_to_instrument_map
-from service.instrument_service import get_instrument_token_to_equivalent_map
+from equalizer.service.instrument_service import get_ws_id_to_token_to_instrument_map
+from equalizer.service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
 from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 import asyncio
-from service.order_service import consume_buy_or_sell_tasks, save_order_info
-from service.positions_service import get_positions_resp, get_instrument_wise_positions
+from equalizer.service.order_service import consume_buy_or_sell_tasks, save_order_info
+from equalizer.service.positions_service import get_positions_resp, get_instrument_wise_positions
 from datetime import datetime, timedelta
 
 # Remove all handlers associated with the root logger object
