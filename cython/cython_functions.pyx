@@ -7,24 +7,6 @@ from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue
 from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
 from Models.raw_ticker_data import init_raw_ticker_data
 
-def calc_transac_charges(double order_value, int product_type, int transaction_type):
-    if product_type == 1:  # kite_client.PRODUCT_CNC
-        if transaction_type == 1:  # kite_client.TRANSACTION_TYPE_BUY
-            return 0.001196 * order_value
-        else:
-            return 15.93 + 0.001046 * order_value
-    elif product_type == 2 and order_value > 66000.0:  # kite_client.PRODUCT_MIS
-        if transaction_type == 1:  # kite_client.TRANSACTION_TYPE_BUY
-            return 23.6 + 0.000076 * order_value
-        else:
-            return 23.6 + 0.000296 * order_value
-    elif product_type == 2 and order_value <= 66000.0:  # kite_client.PRODUCT_MIS
-        if transaction_type == 1:  # kite_client.TRANSACTION_TYPE_BUY
-            return 0.00043 * order_value
-        else:
-            return 0.00065 * order_value
-    return 0.0
-
 
 def get_threshold_spread_coef_for_reqd_profit(double buy_value, double profit_percent, int product_type_int):
     cdef double profit_coef = profit_percent / 100.0
@@ -153,25 +135,25 @@ cdef dict get_price_and_quantity_for_arbitrage(list bids_data, list offers_data,
         lowest_buy = offers_data[current_offers_depth]
         highest_sell = bids_data[current_bids_depth]
 
-        buy_price = lowest_buy.price
-        sell_price = highest_sell.price
+        buy_price = lowest_buy['price']
+        sell_price = highest_sell['price']
         spread_coef = (sell_price - buy_price) / buy_price if buy_price > 0 else 0
 
         if spread_coef < threshold_spread_coef:
             break
 
-        add_quantity = min(lowest_buy.left_quantity, highest_sell.left_quantity)
+        add_quantity = min(lowest_buy['left_quantity'], highest_sell['left_quantity'])
         quantity = min(quantity + add_quantity, max_buy_quantity)
 
         if quantity == max_buy_quantity or quantity == 0:
             break
 
-        offers_data[current_offers_depth].left_quantity -= add_quantity
-        if offers_data[current_offers_depth].left_quantity == 0:
+        offers_data[current_offers_depth]['left_quantity'] -= add_quantity
+        if offers_data[current_offers_depth]['left_quantity'] == 0:
             current_offers_depth += 1
 
-        bids_data[current_bids_depth].left_quantity -= add_quantity
-        if bids_data[current_bids_depth].left_quantity == 0:
+        bids_data[current_bids_depth]['left_quantity'] -= add_quantity
+        if bids_data[current_bids_depth]['left_quantity'] == 0:
             current_bids_depth += 1
 
         if current_offers_depth == 5 or current_bids_depth == 5:
