@@ -22,6 +22,7 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, \
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from .__version__ import __version__, __title__
+from .utils import convert_date_time_to_us
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class KiteTickerClientProtocol(WebSocketClientProtocol):
     def onMessage(self, payload, is_binary):  # noqa
         """Called when text or binary message is received."""
         if self.factory.on_message:
-            self.factory.on_message(self, payload, is_binary, datetime.now())
+            self.factory.on_message(self, payload, is_binary, convert_date_time_to_us(datetime.now()))
 
     # Overide method
     def onClose(self, was_clean, code, reason):  # noqa

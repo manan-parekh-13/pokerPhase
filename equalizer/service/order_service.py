@@ -3,7 +3,7 @@ import threading
 from datetime import datetime
 
 from equalizer.service.ticker_service import is_opportunity_stale
-from kiteconnect.utils import log_info_and_notify, get_env_variable
+from kiteconnect.utils import log_info_and_notify, get_env_variable, convert_date_time_to_us
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_instrument_token_map_from_cache,
                                       get_opportunity_queue)
 import asyncio
@@ -52,9 +52,9 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
     kite_client = get_kite_client_from_cache()
 
     if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
-        opportunity.opp_buy_task_received_at = datetime.now()
+        opportunity.opp_buy_task_received_at = convert_date_time_to_us(datetime.now())
     else:
-        opportunity.opp_sell_task_received_at = datetime.now()
+        opportunity.opp_sell_task_received_at = convert_date_time_to_us(datetime.now())
 
     instrument_token_map = get_instrument_token_map_from_cache()
 
@@ -83,7 +83,7 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
             available_margin = kite_client.get_available_margin()
             new_margin = kite_client.add_margin(order_params["quantity"] * price / leverage)
             await asyncio.sleep(0.1)
-            logging.info(
+            log_info_and_notify(
                 "Previous margin {}, New margin: {} for {} order of {}_{} at price {} and quantity {} for "
                 "opportunity: {}"
                 .format(available_margin, new_margin, transaction_type,
@@ -96,10 +96,10 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
             order_id = kite_client.place_order(**order_params)
 
         if transaction_type == kite_client.TRANSACTION_TYPE_BUY:
-            opportunity.buy_ordered_at = datetime.now()
+            opportunity.buy_ordered_at = convert_date_time_to_us(datetime.now())
             opportunity.buy_order_id = order_id
         else:
-            opportunity.sell_ordered_at = datetime.now()
+            opportunity.sell_ordered_at = convert_date_time_to_us(datetime.now())
             opportunity.sell_order_id = order_id
     except Exception as e:
         log_info_and_notify("Error while ordering: {}".format(e))

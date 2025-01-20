@@ -12,7 +12,7 @@ def save_aggregate_data_for_tickers(existing_aggregate_data, new_ticks):
         else:
             existing_aggregate_data[instrument_token] = {
                 'ticker_time': datetime.now().timestamp(),
-                'started_at': datetime.now()
+                'started_at': datetime.now().timestamp()
             }
 
 

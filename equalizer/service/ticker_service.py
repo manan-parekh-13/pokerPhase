@@ -3,7 +3,7 @@ from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_gl
     add_buy_and_sell_task_to_queue
 from datetime import datetime
 from mysql_config import add
-from kiteconnect.utils import get_product_type_from_ws_id
+from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
 from equalizer.service.arbitrage_service import check_arbitrage
 
 
@@ -26,7 +26,7 @@ def is_opportunity_stale(opportunity):
 
 def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_client):
     for instrument_token, latest_tick_for_instrument in ticks.items():
-        opportunity_check_started_at = datetime.now()
+        opportunity_check_started_at = convert_date_time_to_us(datetime.now())
 
         latest_tick_for_equivalent = get_equivalent_tick_from_token(web_socket, instrument_token)
 

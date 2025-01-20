@@ -100,3 +100,14 @@ def convert_depth_to_string(depth_list):
         f"{obj.get('price', 0)},{obj.get('quantity', 0)},{obj.get('left_quantity', 0)}"
         for obj in depth_list
     )
+
+
+def convert_date_time_to_us(date):
+    microseconds = date.microsecond
+    return int((date.timestamp() * 1e6) + microseconds)
+
+
+def convert_us_to_date_time(micros):
+    seconds = int(micros / 1e6)
+    microseconds = int(micros % 1e6)
+    return datetime.fromtimestamp(seconds).replace(microsecond=microseconds)

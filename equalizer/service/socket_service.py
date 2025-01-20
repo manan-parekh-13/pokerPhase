@@ -11,7 +11,7 @@
 # in your main thread while running KiteTicker in separate thread.
 ###############################################################################
 import logging
-from kiteconnect.utils import get_env_variable
+from kiteconnect.utils import get_env_variable, convert_us_to_date_time
 
 from equalizer.service.positions_service import get_instrument_wise_positions
 from kiteconnect import KiteTicker
@@ -169,5 +169,5 @@ async def send_web_socket_updates():
         if not latest_opportunity:
             log_info_and_notify("No opportunity found!")
         else:
-            log_info_and_notify("Latest opportunity at {}".format(latest_opportunity.created_at))
+            log_info_and_notify("Latest opportunity at {}".format(convert_us_to_date_time(latest_opportunity.created_at)))
         await asyncio.sleep(60 * 60)

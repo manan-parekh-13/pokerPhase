@@ -186,4 +186,3 @@ cov_html
 /.idea/pokerPhase.iml
 /.idea/inspectionProfiles/profiles_settings.xml
 /.idea/vcs.xml
-#/cython/cython_functions.cpp

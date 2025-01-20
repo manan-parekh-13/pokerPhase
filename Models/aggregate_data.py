@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, String, Float
-from Models.type_decorators.unix_timestamp_seconds import UnixTimestampSeconds
 from sqlalchemy.ext.declarative import declarative_base
 from mysql_config import engine
 from datetime import datetime
@@ -31,8 +30,8 @@ class AggregateData(Base):
     __tablename__ = 'aggregate_data'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    started_at = Column(UnixTimestampSeconds)
-    created_at = Column(UnixTimestampSeconds)
+    started_at = Column(Integer)
+    created_at = Column(Integer)
     instrument_token = Column(Integer)
     max_time_diff = Column(Float)
     min_time_diff = Column(Float)

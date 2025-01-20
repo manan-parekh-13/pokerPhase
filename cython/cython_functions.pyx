@@ -4,7 +4,7 @@ from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat
 from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token
 from mysql_config import add
 from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue
-from kiteconnect.utils import get_product_type_from_ws_id
+from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
 from Models.raw_ticker_data import init_raw_ticker_data
 
 def calc_transac_charges(double order_value, int product_type, int transaction_type):
@@ -53,7 +53,7 @@ def save_aggregate_data_for_tickers(
         else:
             existing_aggregate_data[instrument_token] = {
                 'ticker_time': datetime.now().timestamp(),
-                'started_at': datetime.now()
+                'started_at': datetime.now().timestamp()
             }
 
 def get_new_aggregate_data_from_pre_value(
@@ -192,7 +192,7 @@ def check_tickers_for_arbitrage(
     cdef object instrument, opportunity
 
     for instrument_token, latest_tick_for_instrument in ticks.items():
-        opportunity_check_started_at = datetime.now()
+        opportunity_check_started_at = convert_date_time_to_us(datetime.now())
 
         latest_tick_for_equivalent = get_equivalent_tick_from_token(web_socket, instrument_token)
 
