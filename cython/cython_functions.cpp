@@ -6655,6 +6655,7 @@ static PyObject *__pyx_pf_18cython_functions_c_10check_tickers_for_arbitrage(CYT
  *             add(opportunity)
  *             continue
  */
+ printf("worked on a opportunity\n");
     __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_web_socket, __pyx_n_s_try_ordering); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __pyx_t_13 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely((__pyx_t_13 < 0))) __PYX_ERR(0, 231, __pyx_L1_error)
