@@ -6098,7 +6098,7 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
  *             latest_tick_for_instrument,
  *             instrument.threshold_spread_coef,             # <<<<<<<<<<<<<<
  *             instrument.min_profit_percent,
- *             instrument.product_type,
+ *             instrument.product_type_int,
  */
     __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_threshold_spread_coef); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 200, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
@@ -6107,7 +6107,7 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
  *             latest_tick_for_instrument,
  *             instrument.threshold_spread_coef,
  *             instrument.min_profit_percent,             # <<<<<<<<<<<<<<
- *             instrument.product_type,
+ *             instrument.product_type_int,
  *             max_buy_quantity,
  */
     __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_min_profit_percent); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 201, __pyx_L1_error)
@@ -6116,16 +6116,16 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
     /* "cython_functions.pyx":202
  *             instrument.threshold_spread_coef,
  *             instrument.min_profit_percent,
- *             instrument.product_type,             # <<<<<<<<<<<<<<
+ *             instrument.product_type_int,             # <<<<<<<<<<<<<<
  *             max_buy_quantity,
  *             web_socket.ws_id
  */
-    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_product_type); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 202, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_v_instrument, __pyx_n_s_product_type_int); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 202, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
 
     /* "cython_functions.pyx":203
  *             instrument.min_profit_percent,
- *             instrument.product_type,
+ *             instrument.product_type_int,
  *             max_buy_quantity,             # <<<<<<<<<<<<<<
  *             web_socket.ws_id
  *         )
@@ -6134,7 +6134,7 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
     __Pyx_GOTREF(__pyx_t_16);
 
     /* "cython_functions.pyx":204
- *             instrument.product_type,
+ *             instrument.product_type_int,
  *             max_buy_quantity,
  *             web_socket.ws_id             # <<<<<<<<<<<<<<
  *         )

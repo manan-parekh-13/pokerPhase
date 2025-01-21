@@ -199,7 +199,7 @@ def check_tickers_for_arbitrage(
             latest_tick_for_instrument,
             instrument.threshold_spread_coef,
             instrument.min_profit_percent,
-            instrument.product_type,
+            instrument.product_type_int,
             max_buy_quantity,
             web_socket.ws_id
         )
