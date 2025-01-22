@@ -4,11 +4,9 @@ from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
 from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string, set_env_variable
 from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
-                                      init_instrument_token_to_equivalent_token_map, get_kite_client_from_cache,
-                                      set_event_loop)
+                                      get_kite_client_from_cache, set_event_loop)
 from equalizer.service.socket_service import init_kite_web_socket, send_web_socket_updates
 from equalizer.service.instrument_service import get_ws_id_to_token_to_instrument_map
-from equalizer.service.instrument_service import get_instrument_token_to_equivalent_map
 from environment.loader import load_environment
 from mysql_config import add_all
 from Models import instrument
@@ -74,7 +72,6 @@ async def start_up_equalizer():
 
     # init the global level data points
     init_latest_tick_data_in_global_cache()
-    init_instrument_token_to_equivalent_token_map(get_instrument_token_to_equivalent_map())
 
     # get and set available margin and holdings in kite_client, along with initial margin in global cache
     is_order_allowed = get_env_variable("ALLOW_ORDER")

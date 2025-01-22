@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from kiteconnect.utils import get_env_variable, log_info_and_notify
 from kiteconnect import KiteConnect
@@ -54,10 +55,6 @@ def init_aggregate_data_for_ws_in_global_cache(ws_id):
     global_cache['aggregate_data'][ws_id] = {}
 
 
-def init_instrument_token_to_equivalent_token_map(map):
-    global_cache['token_to_equivalent_map'] = map
-
-
 def get_latest_tick_by_instrument_token_from_global_cache(instrument_token):
     return global_cache['latest_tick_data'].get(instrument_token)
 
@@ -80,24 +77,25 @@ def is_order_on_hold_currently():
     return False
 
 
-def get_instrument_token_map_from_cache():
-    return global_cache['token_to_equivalent_map']
-
-
 def add_buy_and_sell_task_to_queue(event):
     kite_client = get_kite_client_from_cache()
     try:
         if opportunity_queue.qsize() < opportunity_queue.maxsize:
             kite_client.remove_margin_or_throw_error(event["reqd_margin"])
+            logging.info("Removed margin: {} for opportunity of {}".format(event["reqd_margin"], event["trading_symbol"]))
             asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
         else:
             event["opportunity"].order_on_hold = True
+            logging.info("Didn't remove any margin for opportunity of {} due to full queue".format(event["trading_symbol"]))
             add(event["opportunity"])
     except OrderException:
         event["opportunity"].low_margin_hold = True
+        logging.info("Didn't remove any margin for opportunity of {} due to low margin".format(event["trading_symbol"]))
         add(event["opportunity"])
     except Exception as e:
         kite_client.add_margin(event["reqd_margin"])
+        logging.info("Added margin: {} for opportunity of {} upon exception while adding task to queue"
+                     .format(event["reqd_margin"], event["trading_symbol"]))
         log_info_and_notify("Error while adding task to queue: {}".format(e))
 
 
