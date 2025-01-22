@@ -164,7 +164,7 @@ def init_kite_web_socket(kite_client, debug, reconnect_max_tries, token_map, ws_
 
 async def send_web_socket_updates():
     while True:
-        save_latest_aggregate_data_from_cache()
+        # save_latest_aggregate_data_from_cache()
         latest_opportunity = ArbitrageOpportunity.get_latest_arbitrage_opportunity_by_id()
         if not latest_opportunity:
             log_info_and_notify("No opportunity found!")
