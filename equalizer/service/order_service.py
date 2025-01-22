@@ -83,7 +83,7 @@ async def place_order(opportunity, transaction_type, product_type, leverage):
             available_margin = kite_client.get_available_margin()
             new_margin = kite_client.add_margin(order_params["quantity"] * price / leverage)
             await asyncio.sleep(0.1)
-            log_info_and_notify(
+            logging.info(
                 "Previous margin {}, New margin: {} for {} order of {}_{} at price {} and quantity {}"
                 .format(available_margin, new_margin, transaction_type,
                         order_params["exchange"], order_params["tradingsymbol"],
