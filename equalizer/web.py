@@ -92,7 +92,6 @@ async def start_up_equalizer():
 
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
-    has_order_ws = False
 
     set_event_loop(asyncio.get_running_loop())
 
@@ -105,15 +104,8 @@ async def start_up_equalizer():
             log_info_and_notify("Ordering not possible for ws_id {} as no margins available".format(ws_id))
             continue
 
-        # if try_ordering and (not available_holdings_map):
-        #     log_info_and_notify("Ordering not possible for ws_id {} as no holdings available".format(ws_id))
-        #     continue
-
-        if try_ordering and not has_order_ws:
-            has_order_ws = True
-
         # init the latest aggregate data for this ws_id
-        init_aggregate_data_for_ws_in_global_cache(ws_id=ws_id)
+        # init_aggregate_data_for_ws_in_global_cache(ws_id=ws_id)
 
         kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
         kws.connect(threaded=True)

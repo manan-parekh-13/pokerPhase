@@ -32,17 +32,17 @@ def get_ws_id_to_token_to_instrument_map():
         instrument2.equivalent_token = instrument.instrument_token1
 
         # regardless of status of instrument, we need to have data web socket for every instrument token
-        if not web_socket_index_map.get('data'):
-            web_socket_index_map['data'] = 0
+        # if not web_socket_index_map.get('data'):
+        #     web_socket_index_map['data'] = 0
 
-        data_ws_id = "data_{}".format(web_socket_index_map['data'])
-        if data_ws_id not in ws_id_to_token_to_instrument_map:
-            ws_id_to_token_to_instrument_map[data_ws_id] = {}
-        ws_id_to_token_to_instrument_map[data_ws_id][instrument1.instrument_token1] = instrument1
-        ws_id_to_token_to_instrument_map[data_ws_id][instrument2.instrument_token2] = instrument2
+        # data_ws_id = "data_{}".format(web_socket_index_map['data'])
+        # if data_ws_id not in ws_id_to_token_to_instrument_map:
+        #     ws_id_to_token_to_instrument_map[data_ws_id] = {}
+        # ws_id_to_token_to_instrument_map[data_ws_id][instrument1.instrument_token1] = instrument1
+        # ws_id_to_token_to_instrument_map[data_ws_id][instrument2.instrument_token2] = instrument2
 
-        if len(ws_id_to_token_to_instrument_map[data_ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
-            web_socket_index_map['data'] += 1
+        # if len(ws_id_to_token_to_instrument_map[data_ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
+        #     web_socket_index_map['data'] += 1
 
         status = "order" if instrument.try_ordering else "check"
 
