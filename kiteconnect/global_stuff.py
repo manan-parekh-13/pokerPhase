@@ -82,20 +82,20 @@ def add_buy_and_sell_task_to_queue(event):
     try:
         if opportunity_queue.qsize() < opportunity_queue.maxsize:
             kite_client.remove_margin_or_throw_error(event["reqd_margin"])
-            logging.info("Removed margin: {} for opportunity of {}".format(event["reqd_margin"], event["trading_symbol"]))
+            logging.info(f"Removed margin: {event['reqd_margin']:.2f} for opportunity of {event['trading_symbol']}")
             asyncio.run_coroutine_threadsafe(opportunity_queue.put(event), event_loop)
         else:
             event["opportunity"].order_on_hold = True
-            logging.info("Didn't remove any margin for opportunity of {} due to full queue".format(event["trading_symbol"]))
+            logging.info(f"Didn't remove any margin for opportunity of {event['trading_symbol']} due to full queue")
             add(event["opportunity"])
     except OrderException:
         event["opportunity"].low_margin_hold = True
-        logging.info("Didn't remove any margin for opportunity of {} due to low margin".format(event["trading_symbol"]))
+        logging.info(f"Didn't remove any margin for opportunity of {event['trading_symbol']} due to low margin")
         add(event["opportunity"])
     except Exception as e:
         kite_client.add_margin(event["reqd_margin"])
-        logging.info("Added margin: {} for opportunity of {} upon exception while adding task to queue"
-                     .format(event["reqd_margin"], event["trading_symbol"]))
+        logging.info(f"Added margin: {event['reqd_margin']:.2f} for opportunity of {event['trading_symbol']} "
+                     f"upon exception while adding task to queue")
         log_info_and_notify("Error while adding task to queue: {}".format(e))
 
 

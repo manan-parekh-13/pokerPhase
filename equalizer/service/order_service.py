@@ -35,7 +35,7 @@ async def consume_buy_or_sell_tasks(consumer_id):
                     await sell_task
                 else:
                     kite_client.add_margin(task["reqd_margin"])
-                    logging.info("Added margin: {} for stale opportunity of {}.".format(task["reqd_margin"], task["trading_symbol"]))
+                    logging.info(f"Added margin: {task['reqd_margin']:.2f} for stale opportunity of {task['trading_symbol']}.")
 
                 add(opportunity)
 
@@ -75,15 +75,14 @@ async def place_order(opportunity, transaction_type, product_type, leverage, tra
     try:
         is_order_allowed = get_env_variable("ALLOW_ORDER")
         if is_order_allowed != "yes":
+            await asyncio.sleep(0.1)
             available_margin = kite_client.get_available_margin()
             delta_margin = order_params["quantity"] * price / leverage
             new_margin = kite_client.add_margin(delta_margin)
-            await asyncio.sleep(0.1)
             logging.info(
-                "Margin update: {} + {} = {} for {}_{}_{} at price {} and quantity {}"
-                .format(available_margin, delta_margin, new_margin, transaction_type,
-                        order_params["exchange"], order_params["tradingsymbol"],
-                        price, order_params["quantity"])
+                f"Margin update: {available_margin:.2f} + {delta_margin:.2f} = {new_margin:.2f} "
+                f"for {transaction_type}_{order_params['exchange']}_{order_params['tradingsymbol']} "
+                f"at price {price} and quantity {order_params['quantity']}"
             )
             order_id = 10 ** 15 + datetime.now().timestamp()
         else:

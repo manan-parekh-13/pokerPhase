@@ -26,10 +26,19 @@ def get_ws_id_to_token_to_instrument_map():
                              .format(instrument.id, instrument.trading_symbol))
 
         instrument1 = deepcopy(instrument)
-        instrument1.equivalent_token = instrument.instrument_token2
-
         instrument2 = deepcopy(instrument)
+
+        instrument1.equivalent_token = instrument.instrument_token2
         instrument2.equivalent_token = instrument.instrument_token1
+
+        instrument1.instrument_token = instrument.instrument_token1
+        instrument2.instrument_token = instrument.instrument_token2
+
+        del instrument1.instrument_token1
+        del instrument2.instrument_token1
+
+        del instrument1.instrument_token2
+        del instrument2.instrument_token2
 
         # regardless of status of instrument, we need to have data web socket for every instrument token
         # if not web_socket_index_map.get('data'):
@@ -81,8 +90,8 @@ def get_ws_id_to_token_to_instrument_map():
             del instrument1.exchange2
             del instrument2.exchange2
 
-            ws_id_to_token_to_instrument_map[instrument1.ws_id][instrument1.instrument_token1] = instrument1
-            ws_id_to_token_to_instrument_map[instrument2.ws_id][instrument2.instrument_token2] = instrument2
+            ws_id_to_token_to_instrument_map[instrument1.ws_id][instrument1.instrument_token] = instrument1
+            ws_id_to_token_to_instrument_map[instrument2.ws_id][instrument2.instrument_token] = instrument2
 
             if len(ws_id_to_token_to_instrument_map[ws_id]) >= MAX_TOKENS_PER_WEB_SOCKET:
                 web_socket_index_map[product_and_status] += 1
