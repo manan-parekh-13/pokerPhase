@@ -21,3 +21,5 @@ nohup curl -s --request GET http://localhost:5000/orders.json >> "$LOG_FILE" 2>&
 pkill -f "flask"
 
 send_slack_message "Stopped the flask server";
+
+sudo docker stop mysql-server;
