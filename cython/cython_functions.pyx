@@ -1,5 +1,7 @@
 from datetime import datetime
-from typing import Dict, Union, List
+import struct
+from typing import Dict, Union, List, Any
+
 from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
 from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue
 from mysql_config import add
@@ -231,3 +233,69 @@ def check_tickers_for_arbitrage(
 
         tickers_to_be_saved.append(init_raw_ticker_data(latest_tick_for_instrument, web_socket.ws_id))
         tickers_to_be_saved.append(init_raw_ticker_data(latest_tick_for_equivalent, web_socket.ws_id))
+
+def _unpack_int(bin_t: bytes, start: int, end: int, byte_format: str = "I") -> int:
+    """Unpack binary data as unsigned integer."""
+    return struct.unpack(">" + byte_format, bin_t[start:end])[0]
+
+def _split_packets(bin_t: bytes) -> List[bytes]:
+    """Split the data to individual packets of ticks."""
+    # Ignore heartbeat data.
+    if len(bin_t) < 2:
+        return []
+
+    number_of_packets: int = _unpack_int(bin_t, 0, 2, byte_format="H")
+    packets: List[bytes] = []
+
+    j: int = 2
+    for i in range(number_of_packets):
+        packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")
+        packets.append(bin_t[j + 2: j + 2 + packet_length])
+        j = j + 2 + packet_length
+
+    return packets
+
+def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:
+    """Parse binary data to a (list of) ticks structure."""
+    packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+    data: Dict[int, Dict[str, Any]] = {}
+
+    for packet in packets:
+        instrument_token: int = _unpack_int(packet, 0, 4)
+        segment: int = instrument_token & 0xff  # Retrieve segment constant from instrument_token
+
+        # Add price divisor based on segment
+        if segment == web_socket.EXCHANGE_MAP["cds"]:
+            divisor: float = 10000000.0
+        elif segment == web_socket.EXCHANGE_MAP["bcd"]:
+            divisor: float = 10000.0
+        else:
+            divisor: float = 100.0
+
+        # Prioritizing full mode for best equalizer performance
+        # Other modes will be commented for now
+        #############################################################
+
+        d: Dict[str, Any] = {
+            "instrument_token": instrument_token,
+            "ticker_received_time": ticker_received_time
+        }
+
+        # Market depth entries.
+        depth: Dict[str, List[Dict[str, Any]]] = {
+            "buy": [],
+            "sell": []
+        }
+
+        # Compile the market depth lists.
+        for i, p in enumerate(range(64, len(packet), 12)):
+            quantity: int = _unpack_int(packet, p, p + 4)
+            depth["sell" if i >= 5 else "buy"].append({
+                "quantity": quantity,
+                "left_quantity": quantity,
+                "price": _unpack_int(packet, p + 4, p + 8) / divisor,
+            })
+
+        d["depth"] = depth
+        data[d['instrument_token']] = d
+    return data

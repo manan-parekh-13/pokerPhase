@@ -4,6 +4,7 @@ import pytz
 import requests
 import json
 import logging
+import struct
 
 AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
@@ -111,3 +112,72 @@ def convert_us_to_date_time(micros):
     seconds = int(micros / 1e6)
     microseconds = int(micros % 1e6)
     return datetime.fromtimestamp(seconds).replace(microsecond=microseconds)
+
+
+def _unpack_int(bin_t, start, end, byte_format="I"):
+    """Unpack binary data as unsgined interger."""
+    return struct.unpack(">" + byte_format, bin_t[start:end])[0]
+
+
+def _split_packets(self, bin_t):
+    """Split the data to individual packets of ticks."""
+    # Ignore heartbeat data.
+    if len(bin_t) < 2:
+        return []
+
+    number_of_packets = self._unpack_int(bin_t, 0, 2, byte_format="H")
+    packets = []
+
+    j = 2
+    for i in range(number_of_packets):
+        packet_length = self._unpack_int(bin_t, j, j + 2, byte_format="H")
+        packets.append(bin_t[j + 2: j + 2 + packet_length])
+        j = j + 2 + packet_length
+
+    return packets
+
+
+def _parse_binary(web_socket, bin_t, ticker_received_time):
+    """Parse binary data to a (list of) ticks structure."""
+    packets = _split_packets(bin_t)  # split data to individual ticks packet
+    data = {}
+
+    for packet in packets:
+        instrument_token = _unpack_int(packet, 0, 4)
+        segment = instrument_token & 0xff  # Retrive segment constant from instrument_token
+
+        # Add price divisor based on segment
+        if segment == web_socket.EXCHANGE_MAP["cds"]:
+            divisor = 10000000.0
+        elif segment == web_socket.EXCHANGE_MAP["bcd"]:
+            divisor = 10000.0
+        else:
+            divisor = 100.0
+
+        # Prioritizing full mode for best equalizer performance
+        # Other modes will be commented for now
+        #############################################################
+
+        d = {
+            "instrument_token": instrument_token,
+            "ticker_received_time": ticker_received_time
+        }
+
+        # Market depth entries.
+        depth = {
+            "buy": [],
+            "sell": []
+        }
+
+        # Compile the market depth lists.
+        for i, p in enumerate(range(64, len(packet), 12)):
+            quantity = _unpack_int(packet, p, p + 4)
+            depth["sell" if i >= 5 else "buy"].append({
+                "quantity": quantity,
+                "left_quantity": quantity,
+                "price": _unpack_int(packet, p + 4, p + 8) / divisor,
+            })
+
+        d["depth"] = depth
+        data[d['instrument_token']] = d
+    return data

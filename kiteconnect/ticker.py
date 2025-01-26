@@ -11,7 +11,6 @@ import six
 import sys
 import time
 import json
-import struct
 import logging
 from datetime import datetime
 from twisted.internet import reactor, ssl
@@ -22,7 +21,13 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, \
 import threading
 from .__version__ import __version__, __title__
 from .global_stuff import get_executor_by_process_id
-from .utils import convert_date_time_to_us
+from .utils import get_env_variable, convert_date_time_to_us
+
+useCython = get_env_variable("USE_CYTHON_FUNC")
+if useCython == "yes":
+    from cython.cython_functions_c import _parse_binary
+else:
+    from .utils import _parse_binary
 
 log = logging.getLogger(__name__)
 current_process_id = 0
@@ -693,7 +698,7 @@ class KiteTicker(object):
         # If the message is binary, parse it and send it to the callback.
         executor = get_executor_by_process_id(ws.process_id)
         if self.on_ticks and is_binary and len(payload) > 4:
-            executor.submit(self.on_ticks, self, self._parse_binary(payload, ticker_received_time))
+            executor.submit(self.on_ticks, self, _parse_binary(self, payload, ticker_received_time))
 
         # Parse text messages
         if not is_binary:
@@ -744,68 +749,3 @@ class KiteTicker(object):
         if data.get("type") == "error":
             self._on_error(self, 0, data)
 
-    def _parse_binary(self, bin, ticker_received_time):
-        """Parse binary data to a (list of) ticks structure."""
-        packets = self._split_packets(bin)  # split data to individual ticks packet
-        data = {}
-
-        for packet in packets:
-            instrument_token = self._unpack_int(packet, 0, 4)
-            segment = instrument_token & 0xff  # Retrive segment constant from instrument_token
-
-            # Add price divisor based on segment
-            if segment == self.EXCHANGE_MAP["cds"]:
-                divisor = 10000000.0
-            elif segment == self.EXCHANGE_MAP["bcd"]:
-                divisor = 10000.0
-            else:
-                divisor = 100.0
-
-            # Prioritizing full mode for best equalizer performance
-            # Other modes will be commented for now
-            #############################################################
-
-            d = {
-                "instrument_token": instrument_token,
-                "ticker_received_time": ticker_received_time
-            }
-
-            # Market depth entries.
-            depth = {
-                "buy": [],
-                "sell": []
-            }
-
-            # Compile the market depth lists.
-            for i, p in enumerate(range(64, len(packet), 12)):
-                quantity = self._unpack_int(packet, p, p + 4)
-                depth["sell" if i >= 5 else "buy"].append({
-                    "quantity": quantity,
-                    "left_quantity": quantity,
-                    "price": self._unpack_int(packet, p + 4, p + 8) / divisor,
-                })
-
-            d["depth"] = depth
-            data[d['instrument_token']] = d
-        return data
-
-    def _unpack_int(self, bin, start, end, byte_format="I"):
-        """Unpack binary data as unsgined interger."""
-        return struct.unpack(">" + byte_format, bin[start:end])[0]
-
-    def _split_packets(self, bin):
-        """Split the data to individual packets of ticks."""
-        # Ignore heartbeat data.
-        if len(bin) < 2:
-            return []
-
-        number_of_packets = self._unpack_int(bin, 0, 2, byte_format="H")
-        packets = []
-
-        j = 2
-        for i in range(number_of_packets):
-            packet_length = self._unpack_int(bin, j, j + 2, byte_format="H")
-            packets.append(bin[j + 2: j + 2 + packet_length])
-            j = j + 2 + packet_length
-
-        return packets
