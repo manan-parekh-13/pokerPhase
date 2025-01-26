@@ -28,7 +28,7 @@ cd "$APP_DIR/cython" && python setup.py build_ext --inplace || { send_slack_mess
 
 # Start mysql docker container
 sudo docker start mysql-server;
-sleep 5
+sleep 10
 
 # Start Flask server using flask and log output
 nohup flask run --host=0.0.0.0 --port=5000 >> "$LOG_FILE" 2>&1 &
