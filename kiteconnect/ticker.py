@@ -20,13 +20,12 @@ from twisted.internet.protocol import ReconnectingClientFactory
 from autobahn.twisted.websocket import WebSocketClientProtocol, \
     WebSocketClientFactory, connectWS
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from .__version__ import __version__, __title__
+from .global_stuff import get_executor_by_process_id
 from .utils import convert_date_time_to_us
 
 log = logging.getLogger(__name__)
-
-executor = ThreadPoolExecutor(max_workers=2)
+current_process_id = 0
 
 
 class KiteTickerClientProtocol(WebSocketClientProtocol):
@@ -40,8 +39,16 @@ class KiteTickerClientProtocol(WebSocketClientProtocol):
     _last_pong_time = None
     _last_ping_time = None
 
+    process_id = None
+
     def __init__(self, *args, **kwargs):
         """Initialize protocol with all options passed from factory."""
+        global current_process_id
+        self.process_id = current_process_id
+        if current_process_id == 0:
+            current_process_id = 1
+        else:
+            current_process_id = 0
         super(KiteTickerClientProtocol, self).__init__(*args, **kwargs)
 
     # Overide method
@@ -684,6 +691,7 @@ class KiteTicker(object):
 
     def _on_message(self, ws, payload, is_binary, ticker_received_time):
         # If the message is binary, parse it and send it to the callback.
+        executor = get_executor_by_process_id(ws.process_id)
         if self.on_ticks and is_binary and len(payload) > 4:
             executor.submit(self.on_ticks, self, self._parse_binary(payload, ticker_received_time))
 

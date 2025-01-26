@@ -1,6 +1,6 @@
 from Models.arbitrage_instruments import ArbitrageInstruments
 from kiteconnect.utils import get_env_variable
-from kiteconnect.global_stuff import get_kite_client_from_cache, get_product_int_for_product_type
+from kiteconnect.global_stuff import get_kite_client_from_cache, get_product_int_for_product_type, get_available_margin
 from copy import deepcopy
 
 useCython = get_env_variable("USE_CYTHON_FUNC")
@@ -18,7 +18,7 @@ def get_ws_id_to_token_to_instrument_map():
     web_socket_index_map = {}
     kite_client = get_kite_client_from_cache()
 
-    default_buy_value = kite_client.get_available_margin() or get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')
+    default_buy_value = get_available_margin() or get_env_variable('DEFAULT_MARGIN_FOR_CHECKING')
 
     for instrument in instruments:
         if not instrument.product_type or not isinstance(instrument.product_type, list):

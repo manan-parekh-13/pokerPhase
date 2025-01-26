@@ -1,9 +1,9 @@
 from datetime import datetime
 from typing import Dict, Union, List
 from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
-from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token
+from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue
 from mysql_config import add
-from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue, get_latest_tick_by_instrument_token_from_global_cache
+from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, get_available_margin
 from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
 from Models.raw_ticker_data import init_raw_ticker_data
 
@@ -190,7 +190,7 @@ def check_tickers_for_arbitrage(
 
         instrument = get_instrument_from_token(web_socket, instrument_token)
 
-        available_margin = kite_client.get_available_margin()
+        available_margin = get_available_margin()
         max_buy_quantity = int(available_margin / ltp)
 
         if max_buy_quantity == 0:

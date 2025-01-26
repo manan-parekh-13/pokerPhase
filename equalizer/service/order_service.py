@@ -1,51 +1,47 @@
 import logging
+import os
 import threading
 from datetime import datetime
 
-from equalizer.service.ticker_service import is_opportunity_stale
 from kiteconnect.utils import log_info_and_notify, get_env_variable, convert_date_time_to_us
-from kiteconnect.global_stuff import get_kite_client_from_cache, get_opportunity_queue
+from kiteconnect.global_stuff import (get_kite_client_from_cache, add_margin, get_available_margin,
+                                      add_to_avl_order_task, is_opportunity_stale)
 import asyncio
 from mysql_config import add_all, add
 from Models.order_info import OrderInfo, init_order_info
 
 
-async def consume_buy_or_sell_tasks(consumer_id):
-    while True:
-        try:
-            queue = get_opportunity_queue()
-            if not queue.empty():
-                task = await queue.get()
-                kite_client = get_kite_client_from_cache()
-                opportunity = task["opportunity"]
+async def consume_buy_or_sell_tasks(task):
+    try:
+        kite_client = get_kite_client_from_cache()
+        opportunity = task["opportunity"]
 
-                opportunity.is_stale = is_opportunity_stale(
-                    opportunity) if not opportunity.is_stale else opportunity.is_stale
+        opportunity.is_stale = is_opportunity_stale(
+            opportunity) if not opportunity.is_stale else opportunity.is_stale
 
-                if not opportunity.is_stale:
-                    buy_task = asyncio.create_task(
-                        place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"],
-                                    task["leverage"], task["trading_symbol"], task["buy_exchange"], task["sell_exchange"])
-                    )
-                    sell_task = asyncio.create_task(
-                        place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"],
-                                    task["leverage"], task["trading_symbol"], task["buy_exchange"], task["sell_exchange"])
-                    )
-                    await buy_task
-                    await sell_task
-                else:
-                    kite_client.add_margin(task["reqd_margin"])
-                    logging.info(f"Added margin: {task['reqd_margin']:.2f} for stale opportunity of {task['trading_symbol']}.")
+        if not opportunity.is_stale:
+            buy_task = asyncio.create_task(
+                place_order(opportunity, kite_client.TRANSACTION_TYPE_BUY, task["product_type"],
+                            task["leverage"], task["trading_symbol"], task["buy_exchange"], task["sell_exchange"])
+            )
+            sell_task = asyncio.create_task(
+                place_order(opportunity, kite_client.TRANSACTION_TYPE_SELL, task["product_type"],
+                            task["leverage"], task["trading_symbol"], task["buy_exchange"], task["sell_exchange"])
+            )
+            await buy_task
+            await sell_task
+        else:
+            add_margin(task["reqd_margin"])
+            logging.info(f"Added margin: {task['reqd_margin']:.2f} for stale opportunity of {task['trading_symbol']}.")
 
-                add(opportunity)
+        add(opportunity)
+        add_to_avl_order_task()
 
-                queue.task_done()
-                logging.info("Realised opportunity {} using consumer {} on process_thread {}."
-                             .format(task["opportunity"].id, consumer_id, threading.current_thread().name))
-            else:
-                await asyncio.sleep(0.001)
-        except Exception as e:
-            log_info_and_notify(f"Error in consume_buy_or_sell_tasks: {e}", exc_info=True)
+        logging.info("Realised opportunity {} using process {} on process_thread {}."
+                     .format(task["opportunity"].id, os.getpid(), threading.current_thread().name))
+
+    except Exception as e:
+        log_info_and_notify(f"Error in consume_buy_or_sell_tasks: {e}", exc_info=True)
 
 
 async def place_order(opportunity, transaction_type, product_type, leverage, trading_symbol, buy_exchange, sell_exchange):
@@ -76,9 +72,9 @@ async def place_order(opportunity, transaction_type, product_type, leverage, tra
         is_order_allowed = get_env_variable("ALLOW_ORDER")
         if is_order_allowed != "yes":
             await asyncio.sleep(0.1)
-            available_margin = kite_client.get_available_margin()
+            available_margin = get_available_margin()
             delta_margin = order_params["quantity"] * price / leverage
-            new_margin = kite_client.add_margin(delta_margin)
+            new_margin = add_margin(delta_margin)
             logging.info(
                 f"Margin update: {available_margin:.2f} + {delta_margin:.2f} = {new_margin:.2f} "
                 f"for {transaction_type}_{order_params['exchange']}_{order_params['tradingsymbol']} "

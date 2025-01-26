@@ -2353,7 +2353,6 @@ static const char __pyx_k_Dict_str_Union_float_int_str[] = "Dict[str, Union[floa
 static const char __pyx_k_Models_arbitrage_opportunity[] = "Models.arbitrage_opportunity";
 static const char __pyx_k_opportunity_check_started_at[] = "opportunity_check_started_at";
 static const char __pyx_k_add_buy_and_sell_task_to_queue[] = "add_buy_and_sell_task_to_queue";
-static const char __pyx_k_get_equivalent_tick_from_token[] = "get_equivalent_tick_from_token";
 static const char __pyx_k_new_sum_of_square_of_time_diff[] = "new_sum_of_square_of_time_diff";
 static const char __pyx_k_get_new_aggregate_data_from_pre[] = "get_new_aggregate_data_from_pre_value";
 static const char __pyx_k_save_aggregate_data_for_tickers[] = "save_aggregate_data_for_tickers";
@@ -2366,7 +2365,7 @@ static PyObject *__pyx_pf_18cython_functions_c_get_threshold_spread_coef_for_req
 static PyObject *__pyx_pf_18cython_functions_c_2save_aggregate_data_for_tickers(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_existing_aggregate_data, PyObject *__pyx_v_new_ticks); /* proto */
 static PyObject *__pyx_pf_18cython_functions_c_4get_new_aggregate_data_from_pre_value(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_prev_ticker_for_instrument); /* proto */
 static PyObject *__pyx_pf_18cython_functions_c_6check_arbitrage(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ticker1, PyObject *__pyx_v_ticker2, PyObject *__pyx_v_threshold_spread_coef, PyObject *__pyx_v_min_profit_percent, PyObject *__pyx_v_product_type_int, PyObject *__pyx_v_max_buy_quantity, PyObject *__pyx_v_ws_id); /* proto */
-static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ticks, PyObject *__pyx_v_tickers_to_be_saved, PyObject *__pyx_v_web_socket, PyObject *__pyx_v_kite_client); /* proto */
+static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ticks, PyObject *__pyx_v_tickers_to_be_saved, PyObject *__pyx_v_web_socket, CYTHON_UNUSED PyObject *__pyx_v_kite_client); /* proto */
 static __Pyx_CachedCFunction __pyx_umethod_PyDict_Type_get = {0, 0, 0, 0, 0};
 /* #### Code section: late_includes ### */
 /* #### Code section: module_state ### */
@@ -2435,7 +2434,6 @@ typedef struct {
   PyObject *__pyx_n_s_existing_aggregate_data;
   PyObject *__pyx_n_s_get;
   PyObject *__pyx_n_s_get_available_margin;
-  PyObject *__pyx_n_s_get_equivalent_tick_from_token;
   PyObject *__pyx_n_s_get_instrument_from_token;
   PyObject *__pyx_n_s_get_latest_tick_by_instrument_to;
   PyObject *__pyx_n_s_get_new_aggregate_data_from_pre;
@@ -2603,7 +2601,6 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_existing_aggregate_data);
   Py_CLEAR(clear_module_state->__pyx_n_s_get);
   Py_CLEAR(clear_module_state->__pyx_n_s_get_available_margin);
-  Py_CLEAR(clear_module_state->__pyx_n_s_get_equivalent_tick_from_token);
   Py_CLEAR(clear_module_state->__pyx_n_s_get_instrument_from_token);
   Py_CLEAR(clear_module_state->__pyx_n_s_get_latest_tick_by_instrument_to);
   Py_CLEAR(clear_module_state->__pyx_n_s_get_new_aggregate_data_from_pre);
@@ -2749,7 +2746,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_existing_aggregate_data);
   Py_VISIT(traverse_module_state->__pyx_n_s_get);
   Py_VISIT(traverse_module_state->__pyx_n_s_get_available_margin);
-  Py_VISIT(traverse_module_state->__pyx_n_s_get_equivalent_tick_from_token);
   Py_VISIT(traverse_module_state->__pyx_n_s_get_instrument_from_token);
   Py_VISIT(traverse_module_state->__pyx_n_s_get_latest_tick_by_instrument_to);
   Py_VISIT(traverse_module_state->__pyx_n_s_get_new_aggregate_data_from_pre);
@@ -2905,7 +2901,6 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_existing_aggregate_data __pyx_mstate_global->__pyx_n_s_existing_aggregate_data
 #define __pyx_n_s_get __pyx_mstate_global->__pyx_n_s_get
 #define __pyx_n_s_get_available_margin __pyx_mstate_global->__pyx_n_s_get_available_margin
-#define __pyx_n_s_get_equivalent_tick_from_token __pyx_mstate_global->__pyx_n_s_get_equivalent_tick_from_token
 #define __pyx_n_s_get_instrument_from_token __pyx_mstate_global->__pyx_n_s_get_instrument_from_token
 #define __pyx_n_s_get_latest_tick_by_instrument_to __pyx_mstate_global->__pyx_n_s_get_latest_tick_by_instrument_to
 #define __pyx_n_s_get_new_aggregate_data_from_pre __pyx_mstate_global->__pyx_n_s_get_new_aggregate_data_from_pre
@@ -5640,7 +5635,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   PyObject *__pyx_v_ticks = 0;
   PyObject *__pyx_v_tickers_to_be_saved = 0;
   PyObject *__pyx_v_web_socket = 0;
-  PyObject *__pyx_v_kite_client = 0;
+  CYTHON_UNUSED PyObject *__pyx_v_kite_client = 0;
   #if !CYTHON_METH_FASTCALL
   CYTHON_UNUSED Py_ssize_t __pyx_nargs;
   #endif
@@ -5768,7 +5763,7 @@ PyObject *__pyx_args, PyObject *__pyx_kwds
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ticks, PyObject *__pyx_v_tickers_to_be_saved, PyObject *__pyx_v_web_socket, PyObject *__pyx_v_kite_client) {
+static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTHON_UNUSED PyObject *__pyx_self, PyObject *__pyx_v_ticks, PyObject *__pyx_v_tickers_to_be_saved, PyObject *__pyx_v_web_socket, CYTHON_UNUSED PyObject *__pyx_v_kite_client) {
   int __pyx_v_instrument_token;
   int __pyx_v_equivalent_token;
   int __pyx_v_max_buy_quantity;
@@ -6072,7 +6067,7 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
  * 
  *         instrument = get_instrument_from_token(web_socket, instrument_token)             # <<<<<<<<<<<<<<
  * 
- *         available_margin = kite_client.get_available_margin()
+ *         available_margin = get_available_margin()
  */
     __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_get_instrument_from_token); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 191, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
@@ -6107,16 +6102,16 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
     /* "cython_functions.pyx":193
  *         instrument = get_instrument_from_token(web_socket, instrument_token)
  * 
- *         available_margin = kite_client.get_available_margin()             # <<<<<<<<<<<<<<
+ *         available_margin = get_available_margin()             # <<<<<<<<<<<<<<
  *         max_buy_quantity = int(available_margin / ltp)
  * 
  */
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_v_kite_client, __pyx_n_s_get_available_margin); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 193, __pyx_L1_error)
+    __Pyx_GetModuleGlobalName(__pyx_t_6, __pyx_n_s_get_available_margin); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 193, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __pyx_t_8 = NULL;
     __pyx_t_11 = 0;
     #if CYTHON_UNPACK_METHODS
-    if (likely(PyMethod_Check(__pyx_t_6))) {
+    if (unlikely(PyMethod_Check(__pyx_t_6))) {
       __pyx_t_8 = PyMethod_GET_SELF(__pyx_t_6);
       if (likely(__pyx_t_8)) {
         PyObject* function = PyMethod_GET_FUNCTION(__pyx_t_6);
@@ -6141,7 +6136,7 @@ static PyObject *__pyx_pf_18cython_functions_c_8check_tickers_for_arbitrage(CYTH
 
     /* "cython_functions.pyx":194
  * 
- *         available_margin = kite_client.get_available_margin()
+ *         available_margin = get_available_margin()
  *         max_buy_quantity = int(available_margin / ltp)             # <<<<<<<<<<<<<<
  * 
  *         if max_buy_quantity == 0:
@@ -6806,7 +6801,6 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_existing_aggregate_data, __pyx_k_existing_aggregate_data, sizeof(__pyx_k_existing_aggregate_data), 0, 0, 1, 1},
     {&__pyx_n_s_get, __pyx_k_get, sizeof(__pyx_k_get), 0, 0, 1, 1},
     {&__pyx_n_s_get_available_margin, __pyx_k_get_available_margin, sizeof(__pyx_k_get_available_margin), 0, 0, 1, 1},
-    {&__pyx_n_s_get_equivalent_tick_from_token, __pyx_k_get_equivalent_tick_from_token, sizeof(__pyx_k_get_equivalent_tick_from_token), 0, 0, 1, 1},
     {&__pyx_n_s_get_instrument_from_token, __pyx_k_get_instrument_from_token, sizeof(__pyx_k_get_instrument_from_token), 0, 0, 1, 1},
     {&__pyx_n_s_get_latest_tick_by_instrument_to, __pyx_k_get_latest_tick_by_instrument_to, sizeof(__pyx_k_get_latest_tick_by_instrument_to), 0, 0, 1, 1},
     {&__pyx_n_s_get_new_aggregate_data_from_pre, __pyx_k_get_new_aggregate_data_from_pre, sizeof(__pyx_k_get_new_aggregate_data_from_pre), 0, 0, 1, 1},
@@ -7346,7 +7340,7 @@ if (!__Pyx_RefNanny) {
  * from datetime import datetime
  * from typing import Dict, Union, List             # <<<<<<<<<<<<<<
  * from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
- * from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token
+ * from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue
  */
   __pyx_t_3 = PyList_New(3); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 2, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
@@ -7380,7 +7374,7 @@ if (!__Pyx_RefNanny) {
  * from datetime import datetime
  * from typing import Dict, Union, List
  * from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers             # <<<<<<<<<<<<<<
- * from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token
+ * from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue
  * from mysql_config import add
  */
   __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 3, __pyx_L1_error)
@@ -7400,36 +7394,36 @@ if (!__Pyx_RefNanny) {
   /* "cython_functions.pyx":4
  * from typing import Dict, Union, List
  * from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
- * from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token             # <<<<<<<<<<<<<<
+ * from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue             # <<<<<<<<<<<<<<
  * from mysql_config import add
- * from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue, get_latest_tick_by_instrument_token_from_global_cache
+ * from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, get_available_margin
  */
   __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_INCREF(__pyx_n_s_get_equivalent_tick_from_token);
-  __Pyx_GIVEREF(__pyx_n_s_get_equivalent_tick_from_token);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_get_equivalent_tick_from_token)) __PYX_ERR(0, 4, __pyx_L1_error);
   __Pyx_INCREF(__pyx_n_s_get_instrument_from_token);
   __Pyx_GIVEREF(__pyx_n_s_get_instrument_from_token);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_n_s_get_instrument_from_token)) __PYX_ERR(0, 4, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_get_instrument_from_token)) __PYX_ERR(0, 4, __pyx_L1_error);
+  __Pyx_INCREF(__pyx_n_s_add_buy_and_sell_task_to_queue);
+  __Pyx_GIVEREF(__pyx_n_s_add_buy_and_sell_task_to_queue);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_n_s_add_buy_and_sell_task_to_queue)) __PYX_ERR(0, 4, __pyx_L1_error);
   __pyx_t_2 = __Pyx_Import(__pyx_n_s_equalizer_service_ticker_service, __pyx_t_3, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_equivalent_tick_from_token); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 4, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_equivalent_tick_from_token, __pyx_t_3) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_instrument_from_token); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_instrument_from_token, __pyx_t_3) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_add_buy_and_sell_task_to_queue); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_add_buy_and_sell_task_to_queue, __pyx_t_3) < 0) __PYX_ERR(0, 4, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "cython_functions.pyx":5
  * from Models.arbitrage_opportunity import init_arbitrage_opportunities_from_strat_res_and_tickers
- * from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token
+ * from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue
  * from mysql_config import add             # <<<<<<<<<<<<<<
- * from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue, get_latest_tick_by_instrument_token_from_global_cache
+ * from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, get_available_margin
  * from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
  */
   __pyx_t_2 = PyList_New(1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 5, __pyx_L1_error)
@@ -7447,36 +7441,36 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "cython_functions.pyx":6
- * from equalizer.service.ticker_service import get_equivalent_tick_from_token, get_instrument_from_token
+ * from equalizer.service.ticker_service import get_instrument_from_token, add_buy_and_sell_task_to_queue
  * from mysql_config import add
- * from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue, get_latest_tick_by_instrument_token_from_global_cache             # <<<<<<<<<<<<<<
+ * from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, get_available_margin             # <<<<<<<<<<<<<<
  * from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
  * from Models.raw_ticker_data import init_raw_ticker_data
  */
   __pyx_t_3 = PyList_New(2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
-  __Pyx_INCREF(__pyx_n_s_add_buy_and_sell_task_to_queue);
-  __Pyx_GIVEREF(__pyx_n_s_add_buy_and_sell_task_to_queue);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_add_buy_and_sell_task_to_queue)) __PYX_ERR(0, 6, __pyx_L1_error);
   __Pyx_INCREF(__pyx_n_s_get_latest_tick_by_instrument_to);
   __Pyx_GIVEREF(__pyx_n_s_get_latest_tick_by_instrument_to);
-  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_n_s_get_latest_tick_by_instrument_to)) __PYX_ERR(0, 6, __pyx_L1_error);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 0, __pyx_n_s_get_latest_tick_by_instrument_to)) __PYX_ERR(0, 6, __pyx_L1_error);
+  __Pyx_INCREF(__pyx_n_s_get_available_margin);
+  __Pyx_GIVEREF(__pyx_n_s_get_available_margin);
+  if (__Pyx_PyList_SET_ITEM(__pyx_t_3, 1, __pyx_n_s_get_available_margin)) __PYX_ERR(0, 6, __pyx_L1_error);
   __pyx_t_2 = __Pyx_Import(__pyx_n_s_kiteconnect_global_stuff, __pyx_t_3, 0); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_add_buy_and_sell_task_to_queue); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 6, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_3);
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_add_buy_and_sell_task_to_queue, __pyx_t_3) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_latest_tick_by_instrument_to); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_latest_tick_by_instrument_to, __pyx_t_3) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
+  __pyx_t_3 = __Pyx_ImportFrom(__pyx_t_2, __pyx_n_s_get_available_margin); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 6, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_3);
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_get_available_margin, __pyx_t_3) < 0) __PYX_ERR(0, 6, __pyx_L1_error)
+  __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
 
   /* "cython_functions.pyx":7
  * from mysql_config import add
- * from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue, get_latest_tick_by_instrument_token_from_global_cache
+ * from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, get_available_margin
  * from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us             # <<<<<<<<<<<<<<
  * from Models.raw_ticker_data import init_raw_ticker_data
  * 
@@ -7503,7 +7497,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
   /* "cython_functions.pyx":8
- * from kiteconnect.global_stuff import add_buy_and_sell_task_to_queue, get_latest_tick_by_instrument_token_from_global_cache
+ * from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, get_available_margin
  * from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
  * from Models.raw_ticker_data import init_raw_ticker_data             # <<<<<<<<<<<<<<
  * 

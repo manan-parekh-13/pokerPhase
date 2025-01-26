@@ -1,27 +1,20 @@
+import asyncio
+import logging
+
 from Models.raw_ticker_data import init_raw_ticker_data
+from equalizer.service.order_service import consume_buy_or_sell_tasks
+from kiteconnect.exceptions import OrderException
 from kiteconnect.global_stuff import get_latest_tick_by_instrument_token_from_global_cache, \
-    add_buy_and_sell_task_to_queue
+    get_available_margin, add_margin, remove_order_task_if_avl, remove_margin_or_throw_error
 from datetime import datetime
 from mysql_config import add
-from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us
+from kiteconnect.utils import get_product_type_from_ws_id, convert_date_time_to_us, log_info_and_notify
 from equalizer.service.arbitrage_service import check_arbitrage
 
 
 def is_ticker_stale(ticker):
     latest_ticker_for_instrument = get_latest_tick_by_instrument_token_from_global_cache(ticker['instrument_token'])
     return latest_ticker_for_instrument['ticker_received_time'] > ticker['ticker_received_time']
-
-
-def is_opportunity_stale(opportunity):
-    latest_tick_for_buy_source = get_latest_tick_by_instrument_token_from_global_cache(opportunity.buy_source)
-    if latest_tick_for_buy_source['ticker_received_time'] > opportunity.buy_source_ticker_time:
-        return True
-
-    latest_tick_for_sell_source = get_latest_tick_by_instrument_token_from_global_cache(opportunity.sell_source)
-    if latest_tick_for_sell_source['ticker_received_time'] > opportunity.sell_source_ticker_time:
-        return True
-
-    return False
 
 
 def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_client):
@@ -40,7 +33,7 @@ def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_cli
         if ltp == 0.0:
             continue
 
-        available_margin = kite_client.get_available_margin()
+        available_margin = get_available_margin()
         max_buy_quantity = int(available_margin / ltp)
 
         if max_buy_quantity == 0:
@@ -83,3 +76,24 @@ def get_equivalent_tick_from_token(ws, instrument_token):
     instrument = get_instrument_from_token(ws, instrument_token)
     equivalent_token = instrument.equivalent_token
     return get_latest_tick_by_instrument_token_from_global_cache(equivalent_token)
+
+
+def add_buy_and_sell_task_to_queue(event):
+    try:
+        if remove_order_task_if_avl():
+            remove_margin_or_throw_error(event["reqd_margin"])
+            logging.info(f"Removed margin: {event['reqd_margin']:.2f} for opportunity of {event['trading_symbol']}")
+            asyncio.create_task(consume_buy_or_sell_tasks(event))
+        else:
+            event["opportunity"].order_on_hold = True
+            logging.info(f"Didn't remove any margin for opportunity of {event['trading_symbol']} due to full queue")
+            add(event["opportunity"])
+    except OrderException:
+        event["opportunity"].low_margin_hold = True
+        logging.info(f"Didn't remove any margin for opportunity of {event['trading_symbol']} due to low margin")
+        add(event["opportunity"])
+    except Exception as e:
+        add_margin(event["reqd_margin"])
+        logging.info(f"Added margin: {event['reqd_margin']:.2f} for opportunity of {event['trading_symbol']} "
+                     f"upon exception while adding task to queue")
+        log_info_and_notify("Error while adding task to queue: {}".format(e))

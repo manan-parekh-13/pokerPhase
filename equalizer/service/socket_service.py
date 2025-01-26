@@ -23,9 +23,8 @@ from Models.arbitrage_opportunity import ArbitrageOpportunity
 from mysql_config import add_all
 from kiteconnect.utils import log_info_and_notify, datetime_to_str, dict_to_string
 from kiteconnect.global_stuff import (get_kite_client_from_cache, get_latest_aggregate_data_for_ws_id_from_global_cache,
-                                      get_latest_tick_by_instrument_token_from_global_cache,
-                                      update_latest_ticks_for_instrument_tokens_in_bulk)
-from equalizer.service.aggregate_service import save_latest_aggregate_data_from_cache
+                                      update_latest_ticks_for_instrument_tokens_in_bulk, get_available_margin,
+                                      set_available_margin)
 
 useCython = get_env_variable("USE_CYTHON_FUNC")
 if useCython == "yes":
@@ -112,14 +111,15 @@ def on_order_update(ws, data):
     if data['status'] != kite_client.COMPLETE and data['status'] != kite_client.CANCELLED:
         return
 
-    initial_value = kite_client.get_available_margin_and_positions_for_trading_symbol_exchange(
+    initial_margin = get_available_margin()
+    initial_positions = kite_client.get_open_positions_by_trading_symbol_and_exchange(
         data['tradingsymbol'], data['exchange'])
 
     order_updates = {
         'instrument': f"{data['exchange']}_{data['tradingsymbol']}",
         'received_time': datetime_to_str(update_received_time),
-        'initial_margin': initial_value['available_margin'],
-        'initial_positions': initial_value['open_positions'],
+        'initial_margin': initial_margin,
+        'initial_positions': initial_positions,
         'price': data['average_price'],
         'quantity': data['filled_quantity'],
         'type': data['transaction_type']
@@ -129,13 +129,16 @@ def on_order_update(ws, data):
     latest_margins = kite_client.margins(segment=kite_client.MARGIN_EQUITY)
     latest_positions = get_instrument_wise_positions()
 
-    kite_client.set_available_margin_and_positions(new_margins=latest_margins.get('net'),
-                                                   new_positions=latest_positions)
+    set_available_margin(new_margin=latest_margins.get('net'))
+    kite_client.set_open_positions_by_symbol_and_exchange(new_positions=latest_positions,
+                                                          trading_symbol=data['tradingsymbol'],
+                                                          exchange=data['exchange'])
 
-    final_value = kite_client.get_available_margin_and_positions_for_trading_symbol_exchange(
+    final_margin = get_available_margin()
+    final_positions = kite_client.get_open_positions_by_trading_symbol_and_exchange(
         data['tradingsymbol'], data['exchange'])
-    order_updates['final_margin'] = final_value['available_margin']
-    order_updates['final_positions'] = final_value['open_positions']
+    order_updates['final_margin'] = final_margin
+    order_updates['final_positions'] = final_positions
 
     log_info_and_notify("Order update: \n{}".format(dict_to_string(order_updates)))
 

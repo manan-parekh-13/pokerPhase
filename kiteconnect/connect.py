@@ -196,8 +196,6 @@ class KiteConnect(object):
                  user_id=None,
                  password=None,
                  request_id=None,
-                 available_margin=0,
-                 available_holdings=None,
                  open_positions=None):
         """
         Initialise a new Kite Connect client instance.
@@ -235,10 +233,6 @@ class KiteConnect(object):
         self.timeout = timeout or self._default_timeout
 
         self.lock = threading.Lock()
-
-        self.available_margin = available_margin
-
-        self.available_holdings = available_holdings
 
         self.open_positions = open_positions
 
@@ -303,33 +297,17 @@ class KiteConnect(object):
 
         return None
 
-    def get_available_margin_and_positions_for_trading_symbol_exchange(self, trading_symbol, exchange):
+    def get_open_positions_by_trading_symbol_and_exchange(self, trading_symbol, exchange):
         with self.lock:
-            return {'available_margin': self.available_margin or 0,
-                    'open_positions': self.open_positions.get(f"{exchange}_{trading_symbol}") or 0}
+            return self.open_positions.get(f"{exchange}_{trading_symbol}") or 0
 
-    def get_available_margin(self):
+    def set_open_positions_by_symbol_and_exchange(self, new_positions, trading_symbol, exchange):
         with self.lock:
-            return self.available_margin or 0
+            self.open_positions[f"{exchange}_{trading_symbol}"] = new_positions
 
-    def set_available_margin_and_positions(self, new_margins, new_positions):
+    def set_open_positions(self, new_positions_map):
         with self.lock:
-            self.available_margin = new_margins
-            self.open_positions = new_positions
-
-    def add_margin(self, margin):
-        with self.lock:
-            self.available_margin += margin
-            return self.available_margin
-
-    def remove_margin_or_throw_error(self, reqd_margin):
-        with self.lock:
-            if self.available_margin < reqd_margin:
-                raise ex.OrderException(
-                    "Avl margin {avl_margin} lower than reqd margin: {reqd_margin}".format(
-                        avl_margin=self.available_margin, reqd_margin=reqd_margin)
-                )
-            self.available_margin = self.available_margin - reqd_margin
+            self.open_positions = new_positions_map
 
     def set_request_id(self, request_id):
         """Set the `request_id` received after a creating a login request."""

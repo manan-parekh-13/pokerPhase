@@ -1,10 +1,12 @@
 import logging
+import os
 import threading
 from flask import Flask, jsonify, request, abort
 from kiteconnect.login import login_via_enc_token, login_via_two_f_a
 from kiteconnect.utils import get_env_variable, get_time_diff_in_micro, dict_to_string, set_env_variable
-from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, init_aggregate_data_for_ws_in_global_cache,
-                                      get_kite_client_from_cache, set_event_loop)
+from kiteconnect.global_stuff import (init_latest_tick_data_in_global_cache, get_kite_client_from_cache,
+                                      init_process_pool_executors, init_avl_margin, init_avl_order_tasks,
+                                      set_available_margin)
 from equalizer.service.socket_service import init_kite_web_socket, send_web_socket_updates
 from equalizer.service.instrument_service import get_ws_id_to_token_to_instrument_map
 from environment.loader import load_environment
@@ -12,7 +14,7 @@ from mysql_config import add_all
 from Models import instrument
 from kiteconnect.utils import log_info_and_notify, log_error_and_notify
 import asyncio
-from equalizer.service.order_service import consume_buy_or_sell_tasks, save_order_info
+from equalizer.service.order_service import save_order_info
 from equalizer.service.positions_service import get_positions_resp, get_instrument_wise_positions
 from datetime import datetime, timedelta
 
@@ -83,17 +85,19 @@ async def start_up_equalizer():
 
     # available_holdings_map = get_holdings_available_for_arbitrage_in_map()
     open_positions = get_instrument_wise_positions()
-    kite.set_available_margin_and_positions(new_margins=usable_margin, new_positions=open_positions)
+    kite.set_open_positions(new_positions_map=open_positions)
+    init_avl_margin(usable_margin)
+    init_avl_order_tasks(4)
 
     log_info_and_notify(
         "Available margin: {} \nOpen positions: \n{}".format(usable_margin, dict_to_string(open_positions)))
 
-    logging.debug("main_thread: {}".format(threading.current_thread().name))
+    logging.debug("main_thread: {}, main_process: {}".format(threading.current_thread().name, os.getpid()))
 
     # prepare web socket wise token wise instrument map
     ws_id_to_token_to_instrument_map = get_ws_id_to_token_to_instrument_map()
 
-    set_event_loop(asyncio.get_running_loop())
+    init_process_pool_executors()
 
     for ws_id in ws_id_to_token_to_instrument_map.keys():
         sub_token_map = ws_id_to_token_to_instrument_map[ws_id]
@@ -107,15 +111,13 @@ async def start_up_equalizer():
         # init the latest aggregate data for this ws_id
         # init_aggregate_data_for_ws_in_global_cache(ws_id=ws_id)
 
-        kws = init_kite_web_socket(kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
+        kws = init_kite_web_socket(
+            kite, True, 3, sub_token_map, ws_id, try_ordering, is_data_ws)
         kws.connect(threaded=True)
 
-    # start consumers to realise arbitrage opportunities in case order web sockets exist
-    num_consumers = 10
-    consumer_tasks = [asyncio.create_task(consume_buy_or_sell_tasks(i)) for i in range(num_consumers)]
     status_update_task = asyncio.create_task(send_web_socket_updates())
 
-    await asyncio.gather(status_update_task, *consumer_tasks)
+    await asyncio.gather(status_update_task)
 
 
 @app.route("/holdings.json", methods=['GET'])
@@ -163,8 +165,9 @@ def instruments():
 def allow_orders():
     kite_client = get_kite_client_from_cache()
     latest_margins = kite_client.margins(segment=kite_client.MARGIN_EQUITY)
+    set_available_margin(latest_margins)
     latest_positions = get_instrument_wise_positions()
-    kite_client.set_available_margin_and_positions(new_margins=latest_margins.get('net'), new_positions=latest_positions)
+    kite_client.set_open_positions(new_positions_map=latest_positions)
     set_env_variable("ALLOW_ORDER", "yes")
 
 
