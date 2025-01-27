@@ -2307,7 +2307,8 @@ static const char __pyx_k_p[] = "p";
 static const char __pyx_k__2[] = ".";
 static const char __pyx_k__3[] = "*";
 static const char __pyx_k_Any[] = "Any";
-static const char __pyx_k__21[] = "?";
+static const char __pyx_k__17[] = "_";
+static const char __pyx_k__22[] = "?";
 static const char __pyx_k_add[] = "add";
 static const char __pyx_k_bcd[] = "bcd";
 static const char __pyx_k_buy[] = "buy";
@@ -2500,8 +2501,9 @@ typedef struct {
   PyObject *__pyx_n_s_Models_raw_ticker_data;
   PyObject *__pyx_n_s_None;
   PyObject *__pyx_n_s_Union;
+  PyObject *__pyx_n_s__17;
   PyObject *__pyx_kp_u__2;
-  PyObject *__pyx_n_s__21;
+  PyObject *__pyx_n_s__22;
   PyObject *__pyx_n_s__3;
   PyObject *__pyx_n_s_add;
   PyObject *__pyx_n_s_add_buy_and_sell_task_to_queue;
@@ -2652,16 +2654,16 @@ typedef struct {
   PyObject *__pyx_tuple__12;
   PyObject *__pyx_tuple__14;
   PyObject *__pyx_tuple__16;
-  PyObject *__pyx_tuple__17;
-  PyObject *__pyx_tuple__19;
+  PyObject *__pyx_tuple__18;
+  PyObject *__pyx_tuple__20;
   PyObject *__pyx_codeobj__5;
   PyObject *__pyx_codeobj__7;
   PyObject *__pyx_codeobj__9;
   PyObject *__pyx_codeobj__11;
   PyObject *__pyx_codeobj__13;
   PyObject *__pyx_codeobj__15;
-  PyObject *__pyx_codeobj__18;
-  PyObject *__pyx_codeobj__20;
+  PyObject *__pyx_codeobj__19;
+  PyObject *__pyx_codeobj__21;
 } __pyx_mstate;
 
 #if CYTHON_USE_MODULE_STATE
@@ -2719,8 +2721,9 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_n_s_Models_raw_ticker_data);
   Py_CLEAR(clear_module_state->__pyx_n_s_None);
   Py_CLEAR(clear_module_state->__pyx_n_s_Union);
+  Py_CLEAR(clear_module_state->__pyx_n_s__17);
   Py_CLEAR(clear_module_state->__pyx_kp_u__2);
-  Py_CLEAR(clear_module_state->__pyx_n_s__21);
+  Py_CLEAR(clear_module_state->__pyx_n_s__22);
   Py_CLEAR(clear_module_state->__pyx_n_s__3);
   Py_CLEAR(clear_module_state->__pyx_n_s_add);
   Py_CLEAR(clear_module_state->__pyx_n_s_add_buy_and_sell_task_to_queue);
@@ -2871,16 +2874,16 @@ static int __pyx_m_clear(PyObject *m) {
   Py_CLEAR(clear_module_state->__pyx_tuple__12);
   Py_CLEAR(clear_module_state->__pyx_tuple__14);
   Py_CLEAR(clear_module_state->__pyx_tuple__16);
-  Py_CLEAR(clear_module_state->__pyx_tuple__17);
-  Py_CLEAR(clear_module_state->__pyx_tuple__19);
+  Py_CLEAR(clear_module_state->__pyx_tuple__18);
+  Py_CLEAR(clear_module_state->__pyx_tuple__20);
   Py_CLEAR(clear_module_state->__pyx_codeobj__5);
   Py_CLEAR(clear_module_state->__pyx_codeobj__7);
   Py_CLEAR(clear_module_state->__pyx_codeobj__9);
   Py_CLEAR(clear_module_state->__pyx_codeobj__11);
   Py_CLEAR(clear_module_state->__pyx_codeobj__13);
   Py_CLEAR(clear_module_state->__pyx_codeobj__15);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__18);
-  Py_CLEAR(clear_module_state->__pyx_codeobj__20);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__19);
+  Py_CLEAR(clear_module_state->__pyx_codeobj__21);
   return 0;
 }
 #endif
@@ -2916,8 +2919,9 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_n_s_Models_raw_ticker_data);
   Py_VISIT(traverse_module_state->__pyx_n_s_None);
   Py_VISIT(traverse_module_state->__pyx_n_s_Union);
+  Py_VISIT(traverse_module_state->__pyx_n_s__17);
   Py_VISIT(traverse_module_state->__pyx_kp_u__2);
-  Py_VISIT(traverse_module_state->__pyx_n_s__21);
+  Py_VISIT(traverse_module_state->__pyx_n_s__22);
   Py_VISIT(traverse_module_state->__pyx_n_s__3);
   Py_VISIT(traverse_module_state->__pyx_n_s_add);
   Py_VISIT(traverse_module_state->__pyx_n_s_add_buy_and_sell_task_to_queue);
@@ -3068,16 +3072,16 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
   Py_VISIT(traverse_module_state->__pyx_tuple__12);
   Py_VISIT(traverse_module_state->__pyx_tuple__14);
   Py_VISIT(traverse_module_state->__pyx_tuple__16);
-  Py_VISIT(traverse_module_state->__pyx_tuple__17);
-  Py_VISIT(traverse_module_state->__pyx_tuple__19);
+  Py_VISIT(traverse_module_state->__pyx_tuple__18);
+  Py_VISIT(traverse_module_state->__pyx_tuple__20);
   Py_VISIT(traverse_module_state->__pyx_codeobj__5);
   Py_VISIT(traverse_module_state->__pyx_codeobj__7);
   Py_VISIT(traverse_module_state->__pyx_codeobj__9);
   Py_VISIT(traverse_module_state->__pyx_codeobj__11);
   Py_VISIT(traverse_module_state->__pyx_codeobj__13);
   Py_VISIT(traverse_module_state->__pyx_codeobj__15);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__18);
-  Py_VISIT(traverse_module_state->__pyx_codeobj__20);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__19);
+  Py_VISIT(traverse_module_state->__pyx_codeobj__21);
   return 0;
 }
 #endif
@@ -3123,8 +3127,9 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_n_s_Models_raw_ticker_data __pyx_mstate_global->__pyx_n_s_Models_raw_ticker_data
 #define __pyx_n_s_None __pyx_mstate_global->__pyx_n_s_None
 #define __pyx_n_s_Union __pyx_mstate_global->__pyx_n_s_Union
+#define __pyx_n_s__17 __pyx_mstate_global->__pyx_n_s__17
 #define __pyx_kp_u__2 __pyx_mstate_global->__pyx_kp_u__2
-#define __pyx_n_s__21 __pyx_mstate_global->__pyx_n_s__21
+#define __pyx_n_s__22 __pyx_mstate_global->__pyx_n_s__22
 #define __pyx_n_s__3 __pyx_mstate_global->__pyx_n_s__3
 #define __pyx_n_s_add __pyx_mstate_global->__pyx_n_s_add
 #define __pyx_n_s_add_buy_and_sell_task_to_queue __pyx_mstate_global->__pyx_n_s_add_buy_and_sell_task_to_queue
@@ -3275,16 +3280,16 @@ static int __pyx_m_traverse(PyObject *m, visitproc visit, void *arg) {
 #define __pyx_tuple__12 __pyx_mstate_global->__pyx_tuple__12
 #define __pyx_tuple__14 __pyx_mstate_global->__pyx_tuple__14
 #define __pyx_tuple__16 __pyx_mstate_global->__pyx_tuple__16
-#define __pyx_tuple__17 __pyx_mstate_global->__pyx_tuple__17
-#define __pyx_tuple__19 __pyx_mstate_global->__pyx_tuple__19
+#define __pyx_tuple__18 __pyx_mstate_global->__pyx_tuple__18
+#define __pyx_tuple__20 __pyx_mstate_global->__pyx_tuple__20
 #define __pyx_codeobj__5 __pyx_mstate_global->__pyx_codeobj__5
 #define __pyx_codeobj__7 __pyx_mstate_global->__pyx_codeobj__7
 #define __pyx_codeobj__9 __pyx_mstate_global->__pyx_codeobj__9
 #define __pyx_codeobj__11 __pyx_mstate_global->__pyx_codeobj__11
 #define __pyx_codeobj__13 __pyx_mstate_global->__pyx_codeobj__13
 #define __pyx_codeobj__15 __pyx_mstate_global->__pyx_codeobj__15
-#define __pyx_codeobj__18 __pyx_mstate_global->__pyx_codeobj__18
-#define __pyx_codeobj__20 __pyx_mstate_global->__pyx_codeobj__20
+#define __pyx_codeobj__19 __pyx_mstate_global->__pyx_codeobj__19
+#define __pyx_codeobj__21 __pyx_mstate_global->__pyx_codeobj__21
 /* #### Code section: module_code ### */
 
 /* "cython_functions.pyx":13
@@ -7432,7 +7437,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
   PyObject *__pyx_v_number_of_packets = 0;
   PyObject *__pyx_v_packets = 0;
   PyObject *__pyx_v_j = 0;
-  CYTHON_UNUSED PyObject *__pyx_v_i = NULL;
+  CYTHON_UNUSED PyObject *__pyx_v__ = NULL;
   PyObject *__pyx_v_packet_length = 0;
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
@@ -7535,7 +7540,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
  *     packets: List[bytes] = []
  * 
  *     j: int = 2             # <<<<<<<<<<<<<<
- *     for i in range(number_of_packets):
+ *     for _ in range(number_of_packets):
  *         packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")
  */
   if (!(likely(__Pyx_Py3Int_CheckExact(__pyx_int_2)) || __Pyx_RaiseUnexpectedTypeError("int", __pyx_int_2))) __PYX_ERR(0, 250, __pyx_L1_error)
@@ -7547,7 +7552,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
   /* "cython_functions.pyx":251
  * 
  *     j: int = 2
- *     for i in range(number_of_packets):             # <<<<<<<<<<<<<<
+ *     for _ in range(number_of_packets):             # <<<<<<<<<<<<<<
  *         packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")
  *         packets.append(bin_t[j + 2: j + 2 + packet_length])
  */
@@ -7607,12 +7612,12 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
       __Pyx_GOTREF(__pyx_t_6);
     }
     if (!(likely(__Pyx_Py3Int_CheckExact(__pyx_t_6))||((__pyx_t_6) == Py_None) || __Pyx_RaiseUnexpectedTypeError("int", __pyx_t_6))) __PYX_ERR(0, 251, __pyx_L1_error)
-    __Pyx_XDECREF_SET(__pyx_v_i, ((PyObject*)__pyx_t_6));
+    __Pyx_XDECREF_SET(__pyx_v__, ((PyObject*)__pyx_t_6));
     __pyx_t_6 = 0;
 
     /* "cython_functions.pyx":252
  *     j: int = 2
- *     for i in range(number_of_packets):
+ *     for _ in range(number_of_packets):
  *         packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")             # <<<<<<<<<<<<<<
  *         packets.append(bin_t[j + 2: j + 2 + packet_length])
  *         j = j + 2 + packet_length
@@ -7645,7 +7650,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
     __pyx_t_8 = 0;
 
     /* "cython_functions.pyx":253
- *     for i in range(number_of_packets):
+ *     for _ in range(number_of_packets):
  *         packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")
  *         packets.append(bin_t[j + 2: j + 2 + packet_length])             # <<<<<<<<<<<<<<
  *         j = j + 2 + packet_length
@@ -7698,7 +7703,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
     /* "cython_functions.pyx":251
  * 
  *     j: int = 2
- *     for i in range(number_of_packets):             # <<<<<<<<<<<<<<
+ *     for _ in range(number_of_packets):             # <<<<<<<<<<<<<<
  *         packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")
  *         packets.append(bin_t[j + 2: j + 2 + packet_length])
  */
@@ -7738,7 +7743,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
   __Pyx_XDECREF(__pyx_v_number_of_packets);
   __Pyx_XDECREF(__pyx_v_packets);
   __Pyx_XDECREF(__pyx_v_j);
-  __Pyx_XDECREF(__pyx_v_i);
+  __Pyx_XDECREF(__pyx_v__);
   __Pyx_XDECREF(__pyx_v_packet_length);
   __Pyx_XGIVEREF(__pyx_r);
   __Pyx_RefNannyFinishContext();
@@ -7750,7 +7755,7 @@ static PyObject *__pyx_pf_18cython_functions_c_12_split_packets(CYTHON_UNUSED Py
  * 
  * def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:             # <<<<<<<<<<<<<<
  *     """Parse binary data to a (list of) ticks structure."""
- *     packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+ *     packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet
  */
 
 /* Python wrapper */
@@ -7923,7 +7928,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
   /* "cython_functions.pyx":260
  * def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:
  *     """Parse binary data to a (list of) ticks structure."""
- *     packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet             # <<<<<<<<<<<<<<
+ *     packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet             # <<<<<<<<<<<<<<
  *     data: Dict[int, Dict[str, Any]] = {}
  * 
  */
@@ -7957,7 +7962,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
 
   /* "cython_functions.pyx":261
  *     """Parse binary data to a (list of) ticks structure."""
- *     packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+ *     packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet
  *     data: Dict[int, Dict[str, Any]] = {}             # <<<<<<<<<<<<<<
  * 
  *     for packet in packets:
@@ -8068,7 +8073,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
  *         if segment == web_socket.EXCHANGE_MAP["cds"]:
  *             divisor: float = 10000000.0             # <<<<<<<<<<<<<<
  *         elif segment == web_socket.EXCHANGE_MAP["bcd"]:
- *             divisor: float = 10000.0
+ *             divisor = 10000.0
  */
       __pyx_v_divisor = 10000000.0;
 
@@ -8086,7 +8091,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
  *         if segment == web_socket.EXCHANGE_MAP["cds"]:
  *             divisor: float = 10000000.0
  *         elif segment == web_socket.EXCHANGE_MAP["bcd"]:             # <<<<<<<<<<<<<<
- *             divisor: float = 10000.0
+ *             divisor = 10000.0
  *         else:
  */
     __pyx_t_2 = __Pyx_PyObject_GetAttrStr(__pyx_v_web_socket, __pyx_n_s_EXCHANGE_MAP); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 270, __pyx_L1_error)
@@ -8103,9 +8108,9 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
       /* "cython_functions.pyx":271
  *             divisor: float = 10000000.0
  *         elif segment == web_socket.EXCHANGE_MAP["bcd"]:
- *             divisor: float = 10000.0             # <<<<<<<<<<<<<<
+ *             divisor = 10000.0             # <<<<<<<<<<<<<<
  *         else:
- *             divisor: float = 100.0
+ *             divisor = 100.0
  */
       __pyx_v_divisor = 10000.0;
 
@@ -8113,16 +8118,16 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
  *         if segment == web_socket.EXCHANGE_MAP["cds"]:
  *             divisor: float = 10000000.0
  *         elif segment == web_socket.EXCHANGE_MAP["bcd"]:             # <<<<<<<<<<<<<<
- *             divisor: float = 10000.0
+ *             divisor = 10000.0
  *         else:
  */
       goto __pyx_L5;
     }
 
     /* "cython_functions.pyx":273
- *             divisor: float = 10000.0
+ *             divisor = 10000.0
  *         else:
- *             divisor: float = 100.0             # <<<<<<<<<<<<<<
+ *             divisor = 100.0             # <<<<<<<<<<<<<<
  * 
  *         # Prioritizing full mode for best equalizer performance
  */
@@ -8425,7 +8430,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
  * 
  *         d["depth"] = depth             # <<<<<<<<<<<<<<
  *         data[d['instrument_token']] = d
- *     return data
+ * 
  */
     if (unlikely((PyDict_SetItem(__pyx_v_d, __pyx_n_s_depth, __pyx_v_depth) < 0))) __PYX_ERR(0, 299, __pyx_L1_error)
 
@@ -8433,6 +8438,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
  * 
  *         d["depth"] = depth
  *         data[d['instrument_token']] = d             # <<<<<<<<<<<<<<
+ * 
  *     return data
  */
     __pyx_t_2 = __Pyx_PyDict_GetItem(__pyx_v_d, __pyx_n_s_instrument_token); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 300, __pyx_L1_error)
@@ -8450,9 +8456,9 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "cython_functions.pyx":301
- *         d["depth"] = depth
+  /* "cython_functions.pyx":302
  *         data[d['instrument_token']] = d
+ * 
  *     return data             # <<<<<<<<<<<<<<
  */
   __Pyx_XDECREF(__pyx_r);
@@ -8465,7 +8471,7 @@ static PyObject *__pyx_pf_18cython_functions_c_14_parse_binary(CYTHON_UNUSED PyO
  * 
  * def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:             # <<<<<<<<<<<<<<
  *     """Parse binary data to a (list of) ticks structure."""
- *     packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+ *     packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet
  */
 
   /* function exit code */
@@ -8529,8 +8535,9 @@ static int __Pyx_CreateStringTabAndInitStrings(void) {
     {&__pyx_n_s_Models_raw_ticker_data, __pyx_k_Models_raw_ticker_data, sizeof(__pyx_k_Models_raw_ticker_data), 0, 0, 1, 1},
     {&__pyx_n_s_None, __pyx_k_None, sizeof(__pyx_k_None), 0, 0, 1, 1},
     {&__pyx_n_s_Union, __pyx_k_Union, sizeof(__pyx_k_Union), 0, 0, 1, 1},
+    {&__pyx_n_s__17, __pyx_k__17, sizeof(__pyx_k__17), 0, 0, 1, 1},
     {&__pyx_kp_u__2, __pyx_k__2, sizeof(__pyx_k__2), 0, 1, 0, 0},
-    {&__pyx_n_s__21, __pyx_k__21, sizeof(__pyx_k__21), 0, 0, 1, 1},
+    {&__pyx_n_s__22, __pyx_k__22, sizeof(__pyx_k__22), 0, 0, 1, 1},
     {&__pyx_n_s__3, __pyx_k__3, sizeof(__pyx_k__3), 0, 0, 1, 1},
     {&__pyx_n_s_add, __pyx_k_add, sizeof(__pyx_k_add), 0, 0, 1, 1},
     {&__pyx_n_s_add_buy_and_sell_task_to_queue, __pyx_k_add_buy_and_sell_task_to_queue, sizeof(__pyx_k_add_buy_and_sell_task_to_queue), 0, 0, 1, 1},
@@ -8764,22 +8771,22 @@ static CYTHON_SMALL_CODE int __Pyx_InitCachedConstants(void) {
  *     """Split the data to individual packets of ticks."""
  *     # Ignore heartbeat data.
  */
-  __pyx_tuple__17 = PyTuple_Pack(6, __pyx_n_s_bin_t, __pyx_n_s_number_of_packets, __pyx_n_s_packets, __pyx_n_s_j, __pyx_n_s_i, __pyx_n_s_packet_length); if (unlikely(!__pyx_tuple__17)) __PYX_ERR(0, 241, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__17);
-  __Pyx_GIVEREF(__pyx_tuple__17);
-  __pyx_codeobj__18 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 6, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__17, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cython_functions_pyx, __pyx_n_s_split_packets, 241, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__18)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_tuple__18 = PyTuple_Pack(6, __pyx_n_s_bin_t, __pyx_n_s_number_of_packets, __pyx_n_s_packets, __pyx_n_s_j, __pyx_n_s__17, __pyx_n_s_packet_length); if (unlikely(!__pyx_tuple__18)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__18);
+  __Pyx_GIVEREF(__pyx_tuple__18);
+  __pyx_codeobj__19 = (PyObject*)__Pyx_PyCode_New(1, 0, 0, 6, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__18, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cython_functions_pyx, __pyx_n_s_split_packets, 241, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__19)) __PYX_ERR(0, 241, __pyx_L1_error)
 
   /* "cython_functions.pyx":258
  *     return packets
  * 
  * def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:             # <<<<<<<<<<<<<<
  *     """Parse binary data to a (list of) ticks structure."""
- *     packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+ *     packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet
  */
-  __pyx_tuple__19 = PyTuple_Pack(14, __pyx_n_s_web_socket, __pyx_n_s_bin_t, __pyx_n_s_ticker_received_time, __pyx_n_s_packets, __pyx_n_s_data, __pyx_n_s_packet, __pyx_n_s_instrument_token, __pyx_n_s_segment, __pyx_n_s_divisor, __pyx_n_s_d, __pyx_n_s_depth, __pyx_n_s_i, __pyx_n_s_p, __pyx_n_s_quantity); if (unlikely(!__pyx_tuple__19)) __PYX_ERR(0, 258, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_tuple__19);
-  __Pyx_GIVEREF(__pyx_tuple__19);
-  __pyx_codeobj__20 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 14, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__19, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cython_functions_pyx, __pyx_n_s_parse_binary, 258, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__20)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_tuple__20 = PyTuple_Pack(14, __pyx_n_s_web_socket, __pyx_n_s_bin_t, __pyx_n_s_ticker_received_time, __pyx_n_s_packets, __pyx_n_s_data, __pyx_n_s_packet, __pyx_n_s_instrument_token, __pyx_n_s_segment, __pyx_n_s_divisor, __pyx_n_s_d, __pyx_n_s_depth, __pyx_n_s_i, __pyx_n_s_p, __pyx_n_s_quantity); if (unlikely(!__pyx_tuple__20)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_tuple__20);
+  __Pyx_GIVEREF(__pyx_tuple__20);
+  __pyx_codeobj__21 = (PyObject*)__Pyx_PyCode_New(3, 0, 0, 14, 0, CO_OPTIMIZED|CO_NEWLOCALS, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__20, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_cython_functions_pyx, __pyx_n_s_parse_binary, 258, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__21)) __PYX_ERR(0, 258, __pyx_L1_error)
   __Pyx_RefNannyFinishContext();
   return 0;
   __pyx_L1_error:;
@@ -9490,7 +9497,7 @@ if (!__Pyx_RefNanny) {
   __Pyx_GOTREF(__pyx_t_2);
   if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_bin_t, __pyx_n_s_bytes) < 0) __PYX_ERR(0, 241, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_return, __pyx_kp_s_List_bytes) < 0) __PYX_ERR(0, 241, __pyx_L1_error)
-  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_18cython_functions_c_13_split_packets, 0, __pyx_n_s_split_packets, NULL, __pyx_n_s_cython_functions_c, __pyx_d, ((PyObject *)__pyx_codeobj__18)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 241, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_CyFunction_New(&__pyx_mdef_18cython_functions_c_13_split_packets, 0, __pyx_n_s_split_packets, NULL, __pyx_n_s_cython_functions_c, __pyx_d, ((PyObject *)__pyx_codeobj__19)); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 241, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_3, __pyx_t_2);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -9502,7 +9509,7 @@ if (!__Pyx_RefNanny) {
  * 
  * def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:             # <<<<<<<<<<<<<<
  *     """Parse binary data to a (list of) ticks structure."""
- *     packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+ *     packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet
  */
   __pyx_t_3 = __Pyx_PyDict_NewPresized(4); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 258, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
@@ -9510,7 +9517,7 @@ if (!__Pyx_RefNanny) {
   if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_bin_t, __pyx_n_s_bytes) < 0) __PYX_ERR(0, 258, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_ticker_received_time, __pyx_n_s_float) < 0) __PYX_ERR(0, 258, __pyx_L1_error)
   if (PyDict_SetItem(__pyx_t_3, __pyx_n_s_return, __pyx_kp_s_Dict_int_Dict_str_Any) < 0) __PYX_ERR(0, 258, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_18cython_functions_c_15_parse_binary, 0, __pyx_n_s_parse_binary, NULL, __pyx_n_s_cython_functions_c, __pyx_d, ((PyObject *)__pyx_codeobj__20)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 258, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_CyFunction_New(&__pyx_mdef_18cython_functions_c_15_parse_binary, 0, __pyx_n_s_parse_binary, NULL, __pyx_n_s_cython_functions_c, __pyx_d, ((PyObject *)__pyx_codeobj__21)); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 258, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
   __Pyx_CyFunction_SetAnnotationsDict(__pyx_t_2, __pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -14174,7 +14181,7 @@ __Pyx_PyType_GetName(PyTypeObject* tp)
     if (unlikely(name == NULL) || unlikely(!PyUnicode_Check(name))) {
         PyErr_Clear();
         Py_XDECREF(name);
-        name = __Pyx_NewRef(__pyx_n_s__21);
+        name = __Pyx_NewRef(__pyx_n_s__22);
     }
     return name;
 }

@@ -248,7 +248,7 @@ def _split_packets(bin_t: bytes) -> List[bytes]:
     packets: List[bytes] = []
 
     j: int = 2
-    for i in range(number_of_packets):
+    for _ in range(number_of_packets):
         packet_length: int = _unpack_int(bin_t, j, j + 2, byte_format="H")
         packets.append(bin_t[j + 2: j + 2 + packet_length])
         j = j + 2 + packet_length
@@ -257,7 +257,7 @@ def _split_packets(bin_t: bytes) -> List[bytes]:
 
 def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) -> Dict[int, Dict[str, Any]]:
     """Parse binary data to a (list of) ticks structure."""
-    packets: List[bytes] = _split_packets(bin_t)  # split data to individual ticks packet
+    packets: List[bytes] = _split_packets(bin_t)  # Split data to individual ticks packet
     data: Dict[int, Dict[str, Any]] = {}
 
     for packet in packets:
@@ -268,9 +268,9 @@ def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) ->
         if segment == web_socket.EXCHANGE_MAP["cds"]:
             divisor: float = 10000000.0
         elif segment == web_socket.EXCHANGE_MAP["bcd"]:
-            divisor: float = 10000.0
+            divisor = 10000.0
         else:
-            divisor: float = 100.0
+            divisor = 100.0
 
         # Prioritizing full mode for best equalizer performance
         # Other modes will be commented for now
@@ -298,4 +298,5 @@ def _parse_binary(web_socket: Any, bin_t: bytes, ticker_received_time: float) ->
 
         d["depth"] = depth
         data[d['instrument_token']] = d
+
     return data
