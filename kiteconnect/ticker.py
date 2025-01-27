@@ -698,7 +698,7 @@ class KiteTicker(object):
         # If the message is binary, parse it and send it to the callback.
         executor = get_executor_by_process_id(ws.process_id)
         if self.on_ticks and is_binary and len(payload) > 4:
-            executor.submit(self.on_ticks, self, _parse_binary(self, payload, ticker_received_time))
+            executor.submit(self.on_ticks(self, _parse_binary(self, payload, ticker_received_time)))
 
         # Parse text messages
         if not is_binary:

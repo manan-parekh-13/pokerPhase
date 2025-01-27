@@ -131,8 +131,8 @@ def init_avl_order_tasks(num_of_tasks):
 def remove_order_task_if_avl():
     with process_lock:
         global avl_order_tasks
-        if avl_order_tasks > 0:
-            avl_order_tasks -= 1
+        if avl_order_tasks.value > 0:
+            avl_order_tasks.value -= 1
             return True
         else:
             return False
@@ -141,7 +141,7 @@ def remove_order_task_if_avl():
 def add_to_avl_order_task():
     with process_lock:
         global avl_order_tasks
-        avl_order_tasks += 1
+        avl_order_tasks.value += 1
 
 
 def is_opportunity_stale(opportunity):

@@ -119,18 +119,18 @@ def _unpack_int(bin_t, start, end, byte_format="I"):
     return struct.unpack(">" + byte_format, bin_t[start:end])[0]
 
 
-def _split_packets(self, bin_t):
+def _split_packets(bin_t):
     """Split the data to individual packets of ticks."""
     # Ignore heartbeat data.
     if len(bin_t) < 2:
         return []
 
-    number_of_packets = self._unpack_int(bin_t, 0, 2, byte_format="H")
+    number_of_packets = _unpack_int(bin_t, 0, 2, byte_format="H")
     packets = []
 
     j = 2
     for i in range(number_of_packets):
-        packet_length = self._unpack_int(bin_t, j, j + 2, byte_format="H")
+        packet_length = _unpack_int(bin_t, j, j + 2, byte_format="H")
         packets.append(bin_t[j + 2: j + 2 + packet_length])
         j = j + 2 + packet_length
 
