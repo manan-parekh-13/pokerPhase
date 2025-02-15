@@ -49,6 +49,19 @@ sudo systemctl start docker
 sudo systemctl enable docker
 echo "Docker service started."
 
+# ---------------- ADD ENVIRONMENT VARIABLES ----------------
+echo "Adding environment variables to ~/.bashrc..."
+cat <<EOF >> ~/.bashrc
+export PYTHONPATH=/home/ec2-user/pokerPhase:\$PYTHONPATH
+export USER_ID=AWZ743
+export FLASK_ENV=prod
+export FLASK_APP=/home/ec2-user/pokerPhase/equalizer/web.py
+alias stop='/home/ec2-user/pokerPhase/scripts/stop_equalizer.sh'
+alias start='/home/ec2-user/pokerPhase/scripts/start_equalizer.sh'
+EOF
+source ~/.bashrc
+echo "Environment variables added."
+
 # ---------------- SETUP MYSQL ----------------
 sudo docker pull mysql:8
 echo "MySQL image pulled successfully."
@@ -57,7 +70,7 @@ echo "MySQL container started."
 
 # ---------------- SETUP PokerPhase ENVIRONMENT ----------------
 echo "Setting up PokerPhase environment..."
-cd pokerPhase
+cd /pokerPhase
 pip3 install -r requirements.txt -r dev_requirements.txt
 python3 -m venv myenv
 echo "PokerPhase environment setup complete."
@@ -72,19 +85,6 @@ echo "SSH keep-alive configured."
 echo "Setting timezone to Asia/Kolkata..."
 sudo timedatectl set-timezone Asia/Kolkata
 echo "Timezone set successfully."
-
-# ---------------- ADD ENVIRONMENT VARIABLES ----------------
-echo "Adding environment variables to ~/.bashrc..."
-cat <<EOF >> ~/.bashrc
-export PYTHONPATH=/home/ec2-user/pokerPhase:\$PYTHONPATH
-export USER_ID=AWZ743
-export FLASK_ENV=prod
-export FLASK_APP=/home/ec2-user/pokerPhase/equalizer/web.py
-alias stop='/home/ec2-user/pokerPhase/scripts/stop_equalizer.sh'
-alias start='/home/ec2-user/pokerPhase/scripts/start_equalizer.sh'
-EOF
-source ~/.bashrc
-echo "Environment variables added."
 
 # ---------------- INSTALL PY-SPY PROFILER ----------------
 echo "Installing py-spy..."
