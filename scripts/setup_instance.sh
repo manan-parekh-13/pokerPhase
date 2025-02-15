@@ -49,19 +49,6 @@ sudo systemctl start docker
 sudo systemctl enable docker
 echo "Docker service started."
 
-# ---------------- ADD ENVIRONMENT VARIABLES ----------------
-echo "Adding environment variables to ~/.bashrc..."
-cat <<EOF >> ~/.bashrc
-export PYTHONPATH=/home/ec2-user/pokerPhase:\$PYTHONPATH
-export USER_ID=AWZ743
-export FLASK_ENV=prod
-export FLASK_APP=/home/ec2-user/pokerPhase/equalizer/web.py
-alias stop='/home/ec2-user/pokerPhase/scripts/stop_equalizer.sh'
-alias start='/home/ec2-user/pokerPhase/scripts/start_equalizer.sh'
-EOF
-source ~/.bashrc
-echo "Environment variables added."
-
 # ---------------- SETUP MYSQL ----------------
 sudo docker pull mysql:8
 echo "MySQL image pulled successfully."
