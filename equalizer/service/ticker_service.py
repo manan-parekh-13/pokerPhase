@@ -19,6 +19,7 @@ def is_ticker_stale(ticker):
 
 
 def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_client):
+    logging.info(f"Process id: {os.getpid()}")
     for instrument_token, latest_tick_for_instrument in ticks.items():
         opportunity_check_started_at = convert_date_time_to_us(datetime.now())
 
@@ -35,7 +36,7 @@ def check_tickers_for_arbitrage(ticks, tickers_to_be_saved, web_socket, kite_cli
             continue
 
         available_margin = get_available_margin()
-        max_buy_quantity = int(available_margin / ltp)
+        max_buy_quantity = int(available_margin / 2 * ltp)
 
         if max_buy_quantity == 0:
             continue
@@ -87,10 +88,11 @@ def add_buy_and_sell_task_to_queue(event):
             asyncio.run(consume_buy_or_sell_tasks(event))
         else:
             event["opportunity"].order_on_hold = True
-            logging.info(f"Didn't remove any margin for opportunity of {event['trading_symbol']} due to full queue")
+            logging.info(f"Didn't remove any margin for opportunity of {event['trading_symbol']} due to full queue for process_id: {os.getpid()}")
             add(event["opportunity"])
     except OrderException:
         event["opportunity"].low_margin_hold = True
+        add_to_avl_order_task()
         avl_margin = get_available_margin()
         logging.info(f"Available margin {avl_margin:.2f} < reqd margin {event['reqd_margin']:.2f} for opportunity of {event['trading_symbol']}")
         add(event["opportunity"])
