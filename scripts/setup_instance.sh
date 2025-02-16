@@ -72,12 +72,6 @@ EOF
 source ~/.bashrc
 echo "Environment variables added."
 
-# ---------------- SETUP MYSQL ----------------
-sudo docker pull mysql:8
-echo "MySQL image pulled successfully."
-sudo docker run --name mysql-server -e MYSQL_ROOT_PASSWORD=$MYSQL_PASSWORD -d -p 3308:3306 mysql:8
-echo "MySQL container started."
-
 # ---------------- SETUP PokerPhase ENVIRONMENT ----------------
 echo "Setting up PokerPhase environment..."
 cd /pokerPhase
@@ -100,6 +94,12 @@ echo "Timezone set successfully."
 echo "Installing py-spy..."
 pip3 install py-spy
 echo "py-spy installed."
+
+# ---------------- SETUP MYSQL ----------------
+sudo docker pull mysql:8
+echo "MySQL image pulled successfully."
+sudo docker run --name mysql-server -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" -d -p 3308:3306 mysql:8
+echo "MySQL container started."
 
 # ---------------- SCRIPT COMPLETION ----------------
 echo "Setup complete! All logs are being sent to AWS CloudWatch."
