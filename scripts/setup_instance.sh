@@ -49,10 +49,33 @@ sudo systemctl start docker
 sudo systemctl enable docker
 echo "Docker service started."
 
+# ---------------- GET ENVIRONMENT VARIABLES FROM SSM ----------------
+echo "Fetching environment variables from ssm param store."
+MYSQL_PASSWORD=$(aws ssm get-parameter --name "MYSQL_ROOT_PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+GMAIL_API_KEY=$(aws ssm get-parameter --name "GMAIL_API_KEY" --with-decryption --query "Parameter.Value" --output text)
+PASSWORD=$(aws ssm get-parameter --name "PASSWORD" --with-decryption --query "Parameter.Value" --output text)
+echo "Fetched environment variables."
+
+# ---------------- ADD ENVIRONMENT VARIABLES ----------------
+echo "Adding environment variables to ~/.bashrc..."
+cat <<EOF >> ~/.bashrc
+export PYTHONPATH=/home/ec2-user/pokerPhase:\$PYTHONPATH
+export GMAIL_API_KEY=$GMAIL_API_KEY
+export USER_ID=AWZ743
+export MYSQL_PASSWORD=$MYSQL_PASSWORD
+export PASSWORD=$PASSWORD
+export FLASK_ENV=prod
+export FLASK_APP=/home/ec2-user/pokerPhase/equalizer/web.py
+alias stop='/home/ec2-user/pokerPhase/scripts/stop_equalizer.sh'
+alias start='/home/ec2-user/pokerPhase/scripts/start_equalizer.sh'
+EOF
+source ~/.bashrc
+echo "Environment variables added."
+
 # ---------------- SETUP MYSQL ----------------
 sudo docker pull mysql:8
 echo "MySQL image pulled successfully."
-sudo docker run --name mysql-server -d -p 3308:3306 mysql:8
+sudo docker run --name mysql-server -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD -d -p 3308:3306 mysql:8
 echo "MySQL container started."
 
 # ---------------- SETUP PokerPhase ENVIRONMENT ----------------
