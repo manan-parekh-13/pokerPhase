@@ -104,12 +104,20 @@ echo "MySQL container started."
 
 # --------------- INIT POKER PHASE DB -------------------
 sudo aws s3 cp s3://poker-phase-mysql/db_init.sql.gz /backup/db_init.sql.gz --debug
+sleep 10
 echo "Downloaded init db file from s3."
 gunzip -c /backup/db_init.sql.gz | sudo tee /backup/db_init.sql > /dev/null
 sleep 10
 sudo docker exec -it mysql-server /bin/bash
 mysql -u root -p"$MYSQL_ROOT_PASSWORD" pokerPhase --quick < /backup/db_init.sql
 echo "Mysql db init completed."
+
+# ----------- REMOVE ELASTIC-IP ------------------------------------
+INSTANCE_ID=$(aws ec2 describe-instances --filters Name=tag:Name,Values=active,Name=instance-state-name,Values=running --query "Reservations[*].Instances[*].InstanceId" --output text)
+ELASTIC_IP=$(aws ec2 describe-addresses --filters Name=instance-id,Values="$INSTANCE_ID" --query "Addresses[*].PublicIp" --output text)
+aws ec2 dissociate-address --public-ip "$ELASTIC_IP" --instance-id "$INSTANCE_ID"
+aws ec2 release-address --public-ip "$ELASTIC_IP"
+echo "Elastic IP released."
 
 # ---------------- SCRIPT COMPLETION ----------------
 echo "Setup complete! All logs are being sent to AWS CloudWatch."
