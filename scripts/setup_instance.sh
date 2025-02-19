@@ -96,10 +96,19 @@ pip3 install py-spy
 echo "py-spy installed."
 
 # ---------------- SETUP MYSQL ----------------
+sudo mkdir /backup
 sudo docker pull mysql:8
 echo "MySQL image pulled successfully."
-sudo docker run --name mysql-server -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" -d -p 3308:3306 mysql:8
+sudo docker run -d --name mysql-server -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" -e MYSQL_DATABASE=pokerPhase -p 3308:3306 -v /backup:/backup mysql:8
 echo "MySQL container started."
+
+# --------------- INIT POKER PHASE DB -------------------
+sudo aws s3 cp s3://poker-phase-mysql/db_init.sql.gz /backup/db_init.sql.gz --debug
+echo "Downloaded init db file from s3."
+gunzip -c /backup/db_init.sql.gz | sudo tee /backup/db_init.sql > /dev/null
+sudo docker exec -it mysql-server /bin/bash
+mysql -u root -p"$MYSQL_PASSWORD" pokerPhase --quick < /backup/db_init.sql
+echo "Mysql db init completed."
 
 # ---------------- SCRIPT COMPLETION ----------------
 echo "Setup complete! All logs are being sent to AWS CloudWatch."
