@@ -113,6 +113,7 @@ echo "MySQL container started."
 
 # --------------- INIT POKER PHASE DB -------------------
 sudo aws s3 cp s3://poker-phase-mysql/db_init.sql.gz /backup/db_init.sql.gz --debug
+sleep 10
 echo "Downloaded init db file from s3.";
 gunzip -c /backup/db_init.sql.gz | sudo tee /backup/db_init.sql > /dev/null
 echo "Unzipped the file.";
