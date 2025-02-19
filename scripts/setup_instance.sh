@@ -76,6 +76,7 @@ export FLASK_ENV=prod
 export FLASK_APP=/home/ec2-user/pokerPhase/equalizer/web.py
 alias stop='/home/ec2-user/pokerPhase/scripts/stop_equalizer.sh'
 alias start='/home/ec2-user/pokerPhase/scripts/start_equalizer.sh'
+alias exec_mysql='sudo docker exec -it mysql-server bash'
 EOF
 source ~/.bashrc
 echo "Environment variables added."
@@ -84,7 +85,7 @@ echo "Environment variables added."
 echo "Setting up PokerPhase environment..."
 cd /pokerPhase
 pip3 install -r requirements.txt -r dev_requirements.txt
-python3 -m venv myenv
+sudo python3 -m venv myenv
 echo "PokerPhase environment setup complete."
 
 # ---------------- CONFIGURE SSH KEEP-ALIVE ----------------
@@ -112,17 +113,16 @@ echo "MySQL container started."
 
 # --------------- INIT POKER PHASE DB -------------------
 sudo aws s3 cp s3://poker-phase-mysql/db_init.sql.gz /backup/db_init.sql.gz --debug
-sleep 10
-send_slack_message "Downloaded init db file from s3.";
+echo "Downloaded init db file from s3.";
 gunzip -c /backup/db_init.sql.gz | sudo tee /backup/db_init.sql > /dev/null
-send_slack_message "Unzipped the file.";
-send_slack_message "Waiting for MySQL to be ready..."
+echo "Unzipped the file.";
+echo "Waiting for MySQL to be ready..."
 until sudo docker exec mysql-server mysqladmin ping -u root -p"$MYSQL_PASSWORD" --silent; do
   sleep 5
 done
-send_slack_message "MySQL is ready."
+echo "MySQL is ready."
 sudo docker exec -i mysql-server mysql -u root -p"$MYSQL_PASSWORD" -v pokerPhase < /backup/db_init.sql
-send_slack_message "Mysql db init completed.";
+echo "Mysql db init completed.";
 
 # ----------- REMOVE ELASTIC-IP ------------------------------------
 #INSTANCE_ID=$(aws ec2 describe-instances \
