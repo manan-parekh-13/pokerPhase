@@ -116,17 +116,25 @@ sleep 10
 send_slack_message "Downloaded init db file from s3.";
 gunzip -c /backup/db_init.sql.gz | sudo tee /backup/db_init.sql > /dev/null
 send_slack_message "Unzipped the file.";
+send_slack_message "Waiting for MySQL to be ready..."
+until sudo docker exec mysql-server mysqladmin ping -u root -p"$MYSQL_PASSWORD" --silent; do
+  sleep 5
+done
+send_slack_message "MySQL is ready."
 sudo docker exec -i mysql-server mysql -u root -p"$MYSQL_PASSWORD" -v pokerPhase < /backup/db_init.sql
 send_slack_message "Mysql db init completed.";
 
 # ----------- REMOVE ELASTIC-IP ------------------------------------
-INSTANCE_ID=$(aws ec2 describe-instances --filters Name=tag:Name,Values=active,Name=instance-state-name,Values=running --query "Reservations[*].Instances[*].InstanceId" --output text)
-ELASTIC_IP=$(aws ec2 describe-addresses --filters Name=instance-id,Values="$INSTANCE_ID" --query "Addresses[*].PublicIp" --output text)
-send_slack_message "$INSTANCE_ID"
-send_slack_message "$ELASTIC_IP"
-aws ec2 dissociate-address --public-ip "$ELASTIC_IP" --instance-id "$INSTANCE_ID"
-aws ec2 release-address --public-ip "$ELASTIC_IP"
-send_slack_message "Elastic IP released."
+#INSTANCE_ID=$(aws ec2 describe-instances \
+#    --filters "Name=tag:Name,Values=active" "Name=instance-state-name,Values=running" \
+#    --query "Reservations[*].Instances[*].InstanceId" --output text)
+#ELASTIC_IP=$(aws ec2 describe-addresses \
+#    --filters "Name=instance-id,Values=$INSTANCE_ID" \
+#    --query "Addresses[*].PublicIp" --output text)send_slack_message "$INSTANCE_ID"
+#send_slack_message "$ELASTIC_IP"
+#aws ec2 dissociate-address --public-ip "$ELASTIC_IP" --instance-id "$INSTANCE_ID"
+#aws ec2 release-address --public-ip "$ELASTIC_IP"
+#send_slack_message "Elastic IP released."
 
 # ------------- START EQUALIZER --------------------------------
 /pokerPhase/scripts/start_equalizer.sh
