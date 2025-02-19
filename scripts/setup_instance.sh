@@ -107,8 +107,9 @@ sudo aws s3 cp s3://poker-phase-mysql/db_init.sql.gz /backup/db_init.sql.gz --de
 echo "Downloaded init db file from s3."
 gunzip -c /backup/db_init.sql.gz | sudo tee /backup/db_init.sql > /dev/null
 sudo docker exec -it mysql-server /bin/bash
-mysql -u root -p"$MYSQL_PASSWORD" pokerPhase --quick < /backup/db_init.sql
+mysql -u root -p"$MYSQL_ROOT_PASSWORD" pokerPhase --quick < /backup/db_init.sql
 echo "Mysql db init completed."
 
 # ---------------- SCRIPT COMPLETION ----------------
 echo "Setup complete! All logs are being sent to AWS CloudWatch."
+
