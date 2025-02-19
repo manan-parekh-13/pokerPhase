@@ -18,7 +18,7 @@ send_slack_message() {
 cd "$APP_DIR"
 
 # Activate virtual environment
-source "/pokerPhase/bin/activate" || { send_slack_message "Failed to activate virtual environment"; exit 1; }
+sudo source "/pokerPhase/bin/activate" || { send_slack_message "Failed to activate virtual environment"; exit 1; }
 
 # Pull latest code from Git
 git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
@@ -27,8 +27,8 @@ git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull fai
 cd "$APP_DIR/cython" && python setup.py build_ext --inplace || { send_slack_message "Failed to build cython"; exit 1; }
 
 # Start mysql docker container
-sudo docker start mysql-server;
-sleep 10
+#sudo docker start mysql-server;
+#sleep 10
 
 # Start Flask server using flask and log output
 nohup flask run --host=0.0.0.0 --port=5000 >> "$LOG_FILE" 2>&1 &
