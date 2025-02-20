@@ -24,7 +24,7 @@ source "/pokerPhase/myenv/bin/activate" || { send_slack_message "Failed to activ
 #git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
 
 # Create cython build
-cd "$APP_DIR/cython" && python setup.py build_ext --inplace || { send_slack_message "Failed to build cython"; exit 1; }
+cd "$APP_DIR/cython" && sudo python3 setup.py build_ext --inplace -v || { send_slack_message "Failed to build cython"; exit 1; }
 
 # Start mysql docker container
 #sudo docker start mysql-server;
