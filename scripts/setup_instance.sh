@@ -8,6 +8,17 @@ send_slack_message() {
   curl -X POST -H 'Content-type: application/json' --data "{\"text\":\"${message}\"}" $SLACK_WEBHOOK_URL
 }
 
+check_string_in_file() {
+    local file="$1"
+    local string="$2"
+
+    if grep -Fxq "$string" "$file"; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
+
 # ---------------- SETUP LOGGING ----------------
 echo "Setting up logging..."
 LOG_FILE="/var/log/pokerPhase.log"
@@ -65,21 +76,29 @@ PASSWORD=$(aws ssm get-parameter --name "PASSWORD" --with-decryption --query "Pa
 echo "Fetched environment variables."
 
 # ---------------- ADD ENVIRONMENT VARIABLES ----------------
+FILE="~/.bashrc"
+STRING="GMAIL_API_KEY"
+
+if [[ $(check_string_in_file "$FILE" "$STRING") == "false" ]]; then
+
+echo "String not found in the file."
 echo "Adding environment variables to ~/.bashrc..."
 cat <<EOF >> ~/.bashrc
-export PYTHONPATH=/home/ec2-user/pokerPhase:\$PYTHONPATH
+export PYTHONPATH=/pokerPhase:\$PYTHONPATH
 export GMAIL_API_KEY=$GMAIL_API_KEY
 export USER_ID=AWZ743
 export MYSQL_PASSWORD=$MYSQL_PASSWORD
 export PASSWORD=$PASSWORD
 export FLASK_ENV=prod
-export FLASK_APP=/home/ec2-user/pokerPhase/equalizer/web.py
-alias stop='/home/ec2-user/pokerPhase/scripts/stop_equalizer.sh'
-alias start='/home/ec2-user/pokerPhase/scripts/start_equalizer.sh'
+export FLASK_APP=/pokerPhase/equalizer/web.py
+alias stop='/pokerPhase/scripts/stop_equalizer.sh'
+alias start='/pokerPhase/scripts/start_equalizer.sh'
 alias exec_mysql='sudo docker exec -it mysql-server bash'
 EOF
 source ~/.bashrc
 echo "Environment variables added."
+
+fi
 
 # ---------------- SETUP PokerPhase ENVIRONMENT ----------------
 echo "Setting up PokerPhase environment..."
@@ -89,10 +108,16 @@ sudo python3 -m venv myenv
 echo "PokerPhase environment setup complete."
 
 # ---------------- CONFIGURE SSH KEEP-ALIVE ----------------
+FILE="/etc/ssh/sshd_config"
+STRING="ClientAliveInterval"
+if [[ $(check_string_in_file "$FILE" "$STRING") == "false" ]]; then
+
 echo "Configuring SSH keep-alive..."
 echo -e "\nClientAliveInterval 60\nClientAliveCountMax 3" | sudo tee -a /etc/ssh/sshd_config
 sudo systemctl restart sshd
 echo "SSH keep-alive configured."
+
+fi
 
 # ---------------- SET TIMEZONE ----------------
 echo "Setting timezone to Asia/Kolkata..."
@@ -103,6 +128,10 @@ echo "Timezone set successfully."
 echo "Installing py-spy..."
 pip3 install py-spy
 echo "py-spy installed."
+
+# ---------------- SETUP CYTHON ----------------
+#sudo rm -rf /pokerPhase/cython
+#sudo aws s3 cp s3://poker-phase-code/cython.zip /cython.zip --debug
 
 # ---------------- SETUP MYSQL ----------------
 sudo mkdir /backup
