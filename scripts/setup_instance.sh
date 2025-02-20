@@ -130,13 +130,13 @@ pip3 install py-spy
 echo "py-spy installed."
 
 # ---------------- DOWNLOAD CYTHON BUILD ----------------
-sudo mkdir /backup
-cd /backup
-sudo aws s3 cp s3://poker-phase-code/cython.tar.gz /backup/cython.tar.gz --debug
-sudo tar -xvzf cython.tar.gz -C cython
-cd /cython
-sudo rm -rf /pokerPhase/cython
-sudo mv cython/ /pokerPhase
+#sudo mkdir /backup
+#cd /backup
+#sudo aws s3 cp s3://poker-phase-code/cython.tar.gz /backup/cython.tar.gz --debug
+#sudo tar -xvzf cython.tar.gz -C cython
+#cd /cython
+#sudo rm -rf /pokerPhase/cython
+#sudo mv cython/ /pokerPhase
 
 # ---------------- SETUP MYSQL ----------------
 sudo docker pull mysql:8
