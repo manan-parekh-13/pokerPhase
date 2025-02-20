@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-HOME_PATH="/home/ec2-user"
+HOME_PATH=""
 APP_DIR="$HOME_PATH/pokerPhase"
 VENV_DIR="$APP_DIR/myenv"
 SLACK_WEBHOOK_URL="https://hooks.slack.com/services/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"
