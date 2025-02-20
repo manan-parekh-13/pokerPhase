@@ -18,7 +18,7 @@ send_slack_message() {
 cd "$APP_DIR"
 
 # Activate virtual environment
-sudo source "/pokerPhase/bin/activate" || { send_slack_message "Failed to activate virtual environment"; exit 1; }
+sudo source "/pokerPhase/myenv/bin/activate" || { send_slack_message "Failed to activate virtual environment"; exit 1; }
 
 # Pull latest code from Git
 git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
