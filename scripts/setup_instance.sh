@@ -129,12 +129,16 @@ echo "Installing py-spy..."
 pip3 install py-spy
 echo "py-spy installed."
 
-# ---------------- SETUP CYTHON ----------------
-#sudo rm -rf /pokerPhase/cython
-#sudo aws s3 cp s3://poker-phase-code/cython.zip /cython.zip --debug
+# ---------------- DOWNLOAD CYTHON BUILD ----------------
+sudo mkdir /backup
+cd /backup
+sudo aws s3 cp s3://poker-phase-code/cython.tar.gz /backup/cython.tar.gz --debug
+sudo tar -xvzf cython.tar.gz -C cython
+cd /cython
+sudo rm -rf /pokerPhase/cython
+sudo mv cython/ /pokerPhase
 
 # ---------------- SETUP MYSQL ----------------
-sudo mkdir /backup
 sudo docker pull mysql:8
 echo "MySQL image pulled successfully."
 sudo docker run -d --name mysql-server -e MYSQL_ROOT_PASSWORD="$MYSQL_PASSWORD" -e MYSQL_DATABASE=pokerPhase -p 3308:3306 -v /backup:/backup mysql:8
