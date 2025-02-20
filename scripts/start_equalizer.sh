@@ -23,8 +23,10 @@ source "/pokerPhase/myenv/bin/activate" || { send_slack_message "Failed to activ
 # Pull latest code from Git
 #git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
 
-# Create cython build
-cd "$APP_DIR/cython" && sudo python3 setup.py build_ext --inplace -v || { send_slack_message "Failed to build cython"; exit 1; }
+# Create cython build - do this on t4g.medium and save snapshot to s3 to be used by next launched instance
+#cd "$APP_DIR/cython" && sudo python3 setup.py build_ext --inplace -v -j $(nproc) || { send_slack_message "Failed to build cython"; exit 1; }
+#sudo zip -r pokerPhase.zip /pokerPhase
+#aws s3 cp pokerPhase.zip s3://poker-phase-code/
 
 # Start mysql docker container
 #sudo docker start mysql-server;
