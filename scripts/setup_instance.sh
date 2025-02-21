@@ -8,8 +8,6 @@ send_telegram_message() {
   curl -X POST -H 'Content-type: application/json' -d "{\"chat_id\": \"-4694389902\", \"text\": \"${message}\"}" $TELEGRAM_WEBHOOK_URL
 }
 
-curl -X POST "https://api.telegram.org/bot7255610692:AAHSO6A4KxV9dVAhsNN1vizs1tZ97IyP48o/sendMessage"      -H "Content-Type: application/json"      -d '{"chat_id": "-4694389902", "text": "Hello from IPv6 instance!"}'
-
 check_string_in_file() {
     local file="$1"
     local string="$2"
