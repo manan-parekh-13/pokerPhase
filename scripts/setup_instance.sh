@@ -170,7 +170,7 @@ sudo docker exec -i mysql-server mysql -u root -p"$MYSQL_PASSWORD" -v pokerPhase
 echo "Mysql db init completed.";
 
 # ----------- REMOVE ELASTIC-IP ------------------------------------
-aws lambda invoke --function-name detachElasticIp --cli-binary-format raw-in-base64-out /dev/null
+#aws lambda invoke --function-name detachElasticIp --cli-binary-format raw-in-base64-out /dev/null
 
 # ------------- START EQUALIZER --------------------------------
 /pokerPhase/scripts/start_equalizer.sh
