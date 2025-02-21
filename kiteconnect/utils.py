@@ -71,8 +71,8 @@ def log_error_and_notify(message):
 
 def send_telegram_message(message):
     webhook_url = get_env_variable('SLACK_UPDATE_CHANNEL_WEBHOOK')
-    data = {'text': message}
-    headers = {'Content-Type': 'application/json', 'chat_id': '-4694389902'}
+    data = {'text': message, 'chat_id': '-4694389902'}
+    headers = {'Content-Type': 'application/json'}
     response = requests.post(webhook_url, data=json.dumps(data), headers=headers)
     if response.status_code != 200:
         logging.error(f"Failed to send Slack message: {response.text}")
