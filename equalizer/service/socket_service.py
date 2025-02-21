@@ -173,4 +173,4 @@ async def send_web_socket_updates():
             log_info_and_notify("No opportunity found!")
         else:
             log_info_and_notify("Latest opportunity at {}".format(convert_us_to_date_time(latest_opportunity.created_at)))
-        await asyncio.sleep(60 * 60)
+        await asyncio.sleep(30 * 60)
