@@ -20,19 +20,6 @@ cd "$APP_DIR"
 # Activate virtual environment
 source "/pokerPhase/myenv/bin/activate" || { send_slack_message "Failed to activate virtual environment"; exit 1; }
 
-# Pull latest code from Git
-#git pull origin master >> "$LOG_FILE" 2>&1 || { send_slack_message "Git pull failed"; exit 1; }
-
-# Create cython build - do this on t4g.medium and save snapshot to s3 to be used by next launched instance
-#cd "$APP_DIR/cython" && sudo python3 setup.py build_ext --inplace -v -j $(nproc) || { send_slack_message "Failed to build cython"; exit 1; }
-#cd ..
-#sudo tar -czvf cython.tar.gz cython
-#aws s3 cp cython.zip s3://poker-phase-code/
-
-# Start mysql docker container
-#sudo docker start mysql-server;
-#sleep 10
-
 sudo mkdir /logs
 sudo chmod 777 /logs
 
