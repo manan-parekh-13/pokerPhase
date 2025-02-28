@@ -103,6 +103,28 @@ echo "Environment variables added."
 
 fi
 
+# ---------------- ATTACH SHUTDOWN SCRIPT ----------------------
+echo "Creating config to call shutdown script on instance shutdown, reboot, halt."
+sudo cat <<EOF | sudo tee /etc/systemd/system/shutdown.service > /dev/null
+[Unit]
+Description=Backup & Stuff before Shutdown
+Requires=docker.service
+Before=shutdown.target reboot.target halt.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/true
+ExecStop=/bin/bash /pokerPhase/scripts/shutdown_instance.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=halt.target reboot.target shutdown.target
+EOF
+echo "Created config for calling shutdown script."
+sudo systemctl daemon-reload
+sudo systemctl enable shutdown.service
+echo "Shutdown script enabled."
+
 # ---------------- SETUP PokerPhase ENVIRONMENT ----------------
 echo "Setting up PokerPhase environment..."
 cd /pokerPhase
@@ -168,9 +190,6 @@ done
 echo "MySQL is ready."
 sudo docker exec -i mysql-server mysql -u root -p"$MYSQL_PASSWORD" -v pokerPhase < /backup/db_init.sql
 echo "Mysql db init completed.";
-
-# ----------- REMOVE ELASTIC-IP ------------------------------------
-#aws lambda invoke --function-name detachElasticIp --cli-binary-format raw-in-base64-out /dev/null
 
 # ------------- START EQUALIZER --------------------------------
 /pokerPhase/scripts/start_equalizer.sh
