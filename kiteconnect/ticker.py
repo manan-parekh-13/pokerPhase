@@ -394,7 +394,7 @@ class KiteTicker(object):
     RECONNECT_MAX_TRIES = 50
     # Default root API endpoint. It's possible to
     # override this by passing the `root` parameter during initialisation.
-    ROOT_URI = "wss://ws.zerodha.com"
+    ROOT_URI = "wss://[2606:4700:9642:3edd:964:486:6812:7428]:443"
 
     # Available streaming modes.
     MODE_FULL = "full"
