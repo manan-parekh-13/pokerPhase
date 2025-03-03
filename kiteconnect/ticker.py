@@ -21,7 +21,8 @@ from autobahn.twisted.websocket import WebSocketClientProtocol, \
 import threading
 from .__version__ import __version__, __title__
 from .global_stuff import get_executor_by_process_id
-from .utils import get_env_variable, convert_date_time_to_us
+from .utils import get_env_variable, convert_date_time_to_us, resolve_ipv6
+from twisted.internet.abstract import isIPv6Address
 
 useCython = get_env_variable("USE_CYTHON_FUNC")
 if useCython == "yes":
@@ -172,6 +173,14 @@ class KiteTickerClientFactory(WebSocketClientFactory, ReconnectingClientFactory)
         self.on_noreconnect = None
 
         super(KiteTickerClientFactory, self).__init__(*args, **kwargs)
+
+        host = self.factor.host
+        if not isIPv6Address(host):
+            resolved_ipv6 = resolve_ipv6(host)
+            if resolved_ipv6:
+                self.factor.host = resolved_ipv6
+            else:
+                raise Exception(f"Could not resolve IPv6 address for {host}")
 
     def startedConnecting(self, connector):  # noqa
         """On connecting start or reconnection."""

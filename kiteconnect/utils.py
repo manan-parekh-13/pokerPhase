@@ -5,6 +5,7 @@ import requests
 import json
 import logging
 import struct
+import socket
 
 AWS_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
 LOCAL_WEBHOOK_URL = 'https://hooks.slack.com/services/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'
@@ -181,3 +182,11 @@ def _parse_binary(web_socket, bin_t, ticker_received_time):
         d["depth"] = depth
         data[d['instrument_token']] = d
     return data
+
+
+def resolve_ipv6(host):
+    try:
+        for res in socket.getaddrinfo(host, None, socket.AF_INET6):
+            return res[4][0]
+    except socket.gaierror:
+        return None
