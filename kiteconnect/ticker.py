@@ -174,11 +174,11 @@ class KiteTickerClientFactory(WebSocketClientFactory, ReconnectingClientFactory)
 
         super(KiteTickerClientFactory, self).__init__(*args, **kwargs)
 
-        host = self.factor.host
+        host = self.factory.host
         if not isIPv6Address(host):
             resolved_ipv6 = resolve_ipv6(host)
             if resolved_ipv6:
-                self.factor.host = resolved_ipv6
+                self.factory.host = resolved_ipv6
             else:
                 raise Exception(f"Could not resolve IPv6 address for {host}")
 
