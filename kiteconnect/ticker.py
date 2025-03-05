@@ -174,7 +174,7 @@ class KiteTickerClientFactory(WebSocketClientFactory, ReconnectingClientFactory)
 
         super(KiteTickerClientFactory, self).__init__(*args, **kwargs)
 
-        logging.info(json.dumps(self, indent=4))
+        logging.info(json.dumps(self.protocol, indent=4))
         host = self.protocol.host
         if not isIPv6Address(host):
             resolved_ipv6 = resolve_ipv6(host)
